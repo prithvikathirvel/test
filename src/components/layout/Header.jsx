@@ -4,6 +4,7 @@ import { Typography, Box, Avatar, Menu, MenuItem, IconButton, Divider } from "@m
 import { stringAvatar } from "@/utils/commonFunction"
 import { Settings, LogOut, User, ChevronDown } from "lucide-react"
 import { useState } from "react"
+import { redirect } from "next/navigation";
 
 export default function Header({ title = "Home Page" }) {
   const [anchorEl, setAnchorEl] = useState(null)
@@ -15,6 +16,10 @@ export default function Header({ title = "Home Page" }) {
 
   const handleClose = () => {
     setAnchorEl(null)
+  }
+
+  const handleLogout = () => {
+    redirect("/login")
   }
 
   return (
@@ -75,7 +80,7 @@ export default function Header({ title = "Home Page" }) {
             Settings
           </MenuItem>
           <Divider sx={{ my: 0.5 }} />
-          <MenuItem sx={{ py: 1, px: 2, gap: 1.5, fontSize: '13px', color: '#d32f2f' }}>
+          <MenuItem sx={{ py: 1, px: 2, gap: 1.5, fontSize: '13px', color: '#d32f2f' }} onClick={handleLogout}>
             <LogOut size={16} />
             Logout
           </MenuItem>

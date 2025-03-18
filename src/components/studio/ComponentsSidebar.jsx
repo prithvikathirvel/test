@@ -2,41 +2,116 @@
 
 import React, { useEffect } from "react";
 import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, InputBase } from "@mui/material";
-import { Search, ChevronDown, Database, Workflow, Bot } from "lucide-react";
+import { Search, ChevronDown, Database, Workflow, Bot, TextCursorInput, FileText, Code } from "lucide-react";
 import { useSelector } from "react-redux";
 
 export default function ComponentsSidebar() {
   const tools = useSelector((state) => state.studio.tools.data);
   const agents = useSelector((state) => state.studio.agents.data);
   const models = useSelector((state) => state.studio.models.data);
+  const inputs = useSelector((state) => state.studio.inputs.data);
+
+  // Custom node types that aren't in the Redux store
+  const customNodeTypes = [
+    {
+      type: 'Agent',
+      label: 'Custom Agent',
+      category: 'agents'
+    },
+    {
+      type: 'Code Tool',
+      label: 'Code Tool',
+      category: 'tools'
+    },
+    {
+      type: 'Database Tool',
+      label: 'Database Tool',
+      category: 'tools'
+    },
+    {
+      type: 'AI Model',
+      label: 'Custom AI Model',
+      category: 'models'
+    },
+    {
+      type: 'Document Input',
+      label: 'Document Input',
+      category: 'inputs'
+    }
+  ];
 
   const nodeTypes = [
     {
+      title: "Inputs",
+      icon: <TextCursorInput size={18} />,
+      nodes: [
+        ...inputs.map((input, index) => ({ 
+          type: input.name, 
+          label: input.name,
+          key: `input-${index}`
+        })),
+        ...customNodeTypes
+          .filter(node => node.category === 'inputs')
+          .map((node, index) => ({
+            type: node.type,
+            label: node.label,
+            key: `custom-input-${index}`
+          }))
+      ]
+    },
+    {
       title: "Agents",
-      icon: <Database size={18} />,
-      nodes: agents.map((agent, index) => ({ 
-        type: agent.name, 
-        label: agent.name,
-        key: `agent-${index}`
-      }))
+      icon: <Bot size={18} />,
+      nodes: [
+        ...agents.map((agent, index) => ({ 
+          type: agent.name, 
+          label: agent.name,
+          key: `agent-${index}`
+        })),
+        ...customNodeTypes
+          .filter(node => node.category === 'agents')
+          .map((node, index) => ({
+            type: node.type,
+            label: node.label,
+            key: `custom-agent-${index}`
+          }))
+      ]
     },
     {
       title: "Tools",
       icon: <Workflow size={18} />,
-      nodes: tools.map((tool, index) => ({ 
-        type: tool.name, 
-        label: tool.name,
-        key: `tool-${index}`
-      }))
+      nodes: [
+        ...tools.map((tool, index) => ({ 
+          type: tool.name, 
+          label: tool.name,
+          key: `tool-${index}`
+        })),
+        ...customNodeTypes
+          .filter(node => node.category === 'tools')
+          .map((node, index) => ({
+            type: node.type,
+            label: node.label,
+            key: `custom-tool-${index}`
+          }))
+      ]
     },
     {
       title: "AI Models",
-      icon: <Bot size={18} />,
-      nodes: models.map((model, index) => ({ 
-        type: model.name, 
-        label: model.name,
-        key: `model-${index}`
-      }))
+      icon: <Database size={18} />,
+      nodes: [
+        ...models.map((model, index) => ({ 
+          type: model.name, 
+          label: model.name,
+          key: `model-${index}`
+        })),
+        ...customNodeTypes
+          .filter(node => node.category === 'models')
+          .map((node, index) => ({
+            type: node.type,
+            label: node.label,
+            key: `custom-model-${index}`
+          }))
+      ]
     }
   ]
   

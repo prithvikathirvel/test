@@ -75,6 +75,21 @@ const initialRootState = {
   ],
       loading: false,
       error: null
+    }, 
+    inputs: {
+      data: [
+        {
+          "_id": "67d8047470caa6365b4127ed",
+          "name": "Input Node",
+          "type":"Input",
+          "createdBy": "Aakash",
+          "updatedBy": "Aakash",
+          "createdAt": "2025-03-17T11:16:04.490Z",
+          "updatedAt": "2025-03-17T11:16:04.490Z"
+      }
+      ],
+      loading: false,
+      error: null
     }
   }
 };

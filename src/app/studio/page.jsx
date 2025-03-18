@@ -16,8 +16,7 @@ import { useNodeTypes } from "@/components/FlowNodes"
 import Sidenav from "@/components/layout/Sidenav"
 import Header from "@/components/layout/Header"
 import ComponentsSidebar from "@/components/studio/ComponentsSidebar"
-import { Play } from "lucide-react"
-import { useSelector } from "react-redux"
+import { Play, Save ,Rocket} from "lucide-react"
 const drawerWidth = 280
 
 function Studio() {
@@ -73,9 +72,10 @@ function Studio() {
             <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#666' }}>
               Flow Editor
             </Typography>
+            <Box className="min-w-[280px] flex flex-row justify-between">
             <Button
               variant="contained"
-              startIcon={<Play size={16} />}
+              startIcon={<Save size={16} />}
               onClick={handleRunFlow}
               sx={{
                 backgroundColor: '#6c5ce7',
@@ -87,8 +87,27 @@ function Studio() {
                 py: 0.75
               }}
             >
-              Run Flow
+              Save Flow
+            </Button> 
+
+            <Button
+              variant="contained"
+              startIcon={<Rocket size={16} />}
+              onClick={handleRunFlow}
+              sx={{
+                backgroundColor: '#6c5ce7',
+                '&:hover': {
+                  backgroundColor: '#5f50e3'
+                },
+                textTransform: 'none',
+                fontSize: '14px',
+                py: 0.75
+              }}
+            >
+              Deploy Flow
             </Button>
+           </Box>
+
           </Box>
           <Grid container spacing={2} className="h-full p-1">
             <Grid size={3} className="bg-white !border-r-1 border-gray-200">
