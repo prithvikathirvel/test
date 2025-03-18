@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Typography, Box, Avatar, Menu, MenuItem, IconButton, Divider } from "@mui/material"
 import { stringAvatar } from "@/utils/commonFunction"

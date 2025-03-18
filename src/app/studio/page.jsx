@@ -12,22 +12,19 @@ import ReactFlow, {
   addEdge
 } from "reactflow"
 import "reactflow/dist/style.css"
-import { nodeTypes } from "@/components/FlowNodes"
+import { useNodeTypes } from "@/components/FlowNodes"
 import Sidenav from "@/components/layout/Sidenav"
 import Header from "@/components/layout/Header"
 import ComponentsSidebar from "@/components/studio/ComponentsSidebar"
 import { Play } from "lucide-react"
-import { Provider } from "react-redux"
-import { store } from "@/redux/store"
 import { useSelector } from "react-redux"
 const drawerWidth = 280
 
 function Studio() {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
-  const tools = useSelector((state) => state.studio.tools)
-  console.log(tools, 'tools from studio')
-
+  const nodeTypes = useNodeTypes()
+  
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
@@ -124,10 +121,8 @@ function Studio() {
   )
 }
 
-export default function StudioWithProvider() {
+export default function StudioPage() {
   return (
-    <Provider store={store}>
-      <Studio />
-    </Provider>
+    <Studio />
   )
 }

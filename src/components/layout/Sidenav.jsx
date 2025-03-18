@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { Box, IconButton, List, ListItem, ListItemIcon, ListItemText } from "@mui/material"
 import {

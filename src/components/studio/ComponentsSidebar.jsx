@@ -1,41 +1,42 @@
-"use client"
+"use client";
 
-import React, { useEffect } from "react"
-import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, InputBase } from "@mui/material"
-import { Search, ChevronDown, Database, Workflow, Bot } from "lucide-react"
-import { useSelector } from "react-redux"
+import React, { useEffect } from "react";
+import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, InputBase } from "@mui/material";
+import { Search, ChevronDown, Database, Workflow, Bot } from "lucide-react";
+import { useSelector } from "react-redux";
 
 export default function ComponentsSidebar() {
-  const tools = useSelector((state) => state.studio.tools.data)
-  console.log(tools, 'tools')
+  const tools = useSelector((state) => state.studio.tools.data);
+  const agents = useSelector((state) => state.studio.agents.data);
+  const models = useSelector((state) => state.studio.models.data);
 
   const nodeTypes = [
     {
       title: "Agents",
       icon: <Database size={18} />,
-      nodes: [
-        { type: "csvInput", label: "CSV Input" },
-        { type: "jsonInput", label: "JSON Input" },
-        { type: "apiInput", label: "API Input" }
-      ]
+      nodes: agents.map((agent, index) => ({ 
+        type: agent.name, 
+        label: agent.name,
+        key: `agent-${index}`
+      }))
     },
     {
       title: "Tools",
       icon: <Workflow size={18} />,
-      nodes: Array.isArray(tools) ? tools.map((tool, index) => ({ 
-        type: tool.toolName, 
-        label: tool.toolName,
+      nodes: tools.map((tool, index) => ({ 
+        type: tool.name, 
+        label: tool.name,
         key: `tool-${index}`
-      })) : []
+      }))
     },
     {
       title: "AI Models",
       icon: <Bot size={18} />,
-      nodes: [
-        { type: "Gemini", label: "Gemini" },
-        { type: "ChatGpt", label: "ChatGPT" },
-        { type: "Claude", label: "Claude" }
-      ]
+      nodes: models.map((model, index) => ({ 
+        type: model.name, 
+        label: model.name,
+        key: `model-${index}`
+      }))
     }
   ]
   

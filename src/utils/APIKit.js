@@ -8,7 +8,6 @@ const APIKit = axios.create({
   }
 });
 
-
 APIKit.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -18,7 +17,11 @@ APIKit.interceptors.request.use(
     return config;
   },
   (error) => {
-    return Promise.reject(error);
+    console.error('Request error:', error);
+    return Promise.reject({
+      message: 'Request failed',
+      error
+    });
   }
 );
 
@@ -30,11 +33,23 @@ APIKit.interceptors.response.use(
         localStorage.removeItem('token');
         window.location.href = '/login';
       }
-      return Promise.reject(error.response);
+      return Promise.reject({
+        message: error.response.data?.message || 'Server error',
+        status: error.response.status,
+        data: error.response.data
+      });
     } else if (error.request) {
-      return Promise.reject({ message: 'No response from server' });
+      console.error('No response from server:', error.request);
+      return Promise.reject({
+        message: 'No response from server. Please check your network connection.',
+        error
+      });
     } else {
-      return Promise.reject({ message: 'Request failed' });
+      console.error('Request failed:', error);
+      return Promise.reject({
+        message: 'Request failed. Please try again.',
+        error
+      });
     }
   }
 );

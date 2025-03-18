@@ -1,17 +1,19 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { persistReducer, persistStore } from "redux-persist";
-import storage from "redux-persist/lib/storage";
 import { combineReducers } from "redux";
+import storage from "redux-persist/lib/storage";
 import authReducer from "./slices/authSlice";
 import studioReducer from "./slices/studioSlice";
 import { FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from "redux-persist/es/constants";
 import initialRootState from "./initialRootState";
+import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
 
 const persistConfig = {
   key: "root",
   storage,
   version: 1,
-  migrate: (state) => Promise.resolve(state),
+  whitelist: ["auth"], 
+  stateReconciler: autoMergeLevel2
 };
 
 const rootReducer = combineReducers({
@@ -25,9 +27,7 @@ export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: {
-        ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-      },
+      serializableCheck: false,
     }),
   preloadedState: initialRootState
 });

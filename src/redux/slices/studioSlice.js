@@ -38,6 +38,7 @@ const studioSlice = createSlice({
       .addCase(fetchTools.pending, (state) => {
         state.tools.loading = true;
         state.tools.error = null;
+
       })
       .addCase(fetchTools.fulfilled, (state, action) => {
         state.tools.loading = false;
@@ -47,7 +48,6 @@ const studioSlice = createSlice({
       .addCase(fetchTools.rejected, (state, action) => {
         state.tools.loading = false;
         state.tools.error = action.error.message;
-        state.tools.data = [];
       });
   }
 });
