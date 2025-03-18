@@ -1,0 +1,99 @@
+@import 'tailwindcss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --max-width: 1100px;
+  --border-radius: 12px;
+  --font-mono: ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono",
+  "Roboto Mono", "Oxygen Mono", "Ubuntu Monospace", "Source Code Pro",
+  "Fira Mono", "Droid Sans Mono", "Courier New", monospace;
+
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+
+  --primary-glow: conic-gradient(
+    from 180deg at 50% 50%,
+    #16abff33 0deg,
+    #0885ff33 55deg,
+    #54d6ff33 120deg,
+    #0071ff33 160deg,
+    transparent 360deg
+  );
+  --secondary-glow: radial-gradient(
+    rgba(255, 255, 255, 1),
+    rgba(255, 255, 255, 0)
+  );
+
+  --tile-start-rgb: 239, 245, 249;
+  --tile-end-rgb: 228, 232, 233;
+  --tile-border: conic-gradient(
+    #00000080,
+    #00000040,
+    #00000030,
+    #00000020,
+    #00000010,
+    #00000010,
+    #00000080
+  );
+}
+
+@layer base {
+
+  .react-flow__node {
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 14px;
+    color: #1a1a1a;
+    text-align: center;
+    border-width: 1px;
+    border-style: solid;
+    border-color: #e9ecef;
+    background-color: white;
+  }
+
+  .react-flow__node-input {
+    background-color: #e3f2fd;
+    border-color: #90caf9;
+  }
+
+  .react-flow__node-output {
+    background-color: #f3e5f5;
+    border-color: #ce93d8;
+  }
+
+  .react-flow__handle {
+    width: 8px;
+    height: 8px;
+    background-color: #1a73e8;
+    border-color: white;
+  }
+
+  .react-flow__edge-path {
+    stroke: #1a73e8;
+    stroke-width: 2;
+  }
+
+  .react-flow__minimap {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+  }
+
+  .react-flow__controls {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    background-color: white;
+  }
+
+  .react-flow__controls button {
+    background-color: transparent;
+    border-bottom: 1px solid #e9ecef;
+    color: #1a73e8;
+  }
+
+  .react-flow__controls button:hover {
+    background-color: #e3f2fd;
+  }
+}
