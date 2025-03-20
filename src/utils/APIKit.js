@@ -1,8 +1,9 @@
 import axios from 'axios';
 
 const APIKit = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://fakestoreapi.com',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
   timeout: 30000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json'
   }

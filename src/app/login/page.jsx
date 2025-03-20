@@ -1,7 +1,7 @@
 "use client";
  
 import { useState } from "react";
-import LoginDrawer from "@/components/Login/LoginDrawer";
+import LoginDrawer from "@/components/Drawer/LoginDrawer";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { redirect } from "next/navigation";
 import AnimatedText from "@/components/Common/AnimatedText";
@@ -12,7 +12,7 @@ export default function LoginPage() {
   const handleLogin = (username,password) => {
     console.log("Logging in with:", { username, password });
     if(username == 'admin' && password == "admin"){
-      redirect("/");
+      redirect("/studio");
     }
   };
  

@@ -6,92 +6,62 @@ const initialRootState = {
   studio: {
     tools: {
       data: [
-        {
-            "_id": "67d8047470caa6365b4127ed",
-            "name": "API caller",
-            "type":"Tool",
-            "createdBy": "Aakash",
-            "updatedBy": "Aakash",
-            "createdAt": "2025-03-17T11:16:04.490Z",
-            "updatedAt": "2025-03-17T11:16:04.490Z"
-        },
-        {
-            "_id": "67d80529a813bb2b019723cd",
-            "name": "PDF Parser",
-            "type":"Tool",
-            "createdBy": "Aakash",
-            "updatedBy": "Aakash",
-            "createdAt": "2025-03-17T11:19:05.883Z",
-            "updatedAt": "2025-03-17T11:19:05.883Z"
-        },
-        {
-            "_id": "67d805f6abcc23bb1d65327e",
-            "name": "Send Mail",
-            "type":"Tool",
-            "createdBy": "Aakash",
-            "updatedBy": "Aakash",
-            "createdAt": "2025-03-17T11:22:30.130Z",
-            "updatedAt": "2025-03-17T11:22:30.130Z"
-        }
-    ],
-      loading: false,
-      error: null
-    }, 
-    agents: {
-      data: [{
-        "_id": "67d8047470caa6365b4127ed",
-        "name": "PDF Summaizer",
-        "type":"Agent",
-        "capabilities":["pdfSummaizer"],
-        "createdBy": "Aakash",
-        "updatedBy": "Aakash",
-        "createdAt": "2025-03-17T11:16:04.490Z",
-        "updatedAt": "2025-03-17T11:16:04.490Z"
-    }],
-      loading: false,
-      error: null
-    }, 
-
-    models : {
-      data: 
-      [{
-        "_id": "67d8047470caa6365b4127ed",
-        "name": "Gemini",
-        "type":"Model",
-        "createdBy": "Aakash",
-        "updatedBy": "Aakash",
-        "createdAt": "2025-03-17T11:16:04.490Z",
-        "updatedAt": "2025-03-17T11:16:04.490Z"
-    },
-    {
-      "_id": "67d8047470caa6365b4127ed",
-      "name": "Chatgpt",
-      "type":"Model",
-      "createdBy": "Aakash",
-      "updatedBy": "Aakash",
-      "createdAt": "2025-03-17T11:16:04.490Z",
-      "updatedAt": "2025-03-17T11:16:04.490Z"
-  }
-  ],
-      loading: false,
-      error: null
-    }, 
-    inputs: {
-      data: [
-        {
-          "_id": "67d8047470caa6365b4127ed",
-          "name": "Input Node",
-          "type":"Input",
-          "createdBy": "Aakash",
-          "updatedBy": "Aakash",
-          "createdAt": "2025-03-17T11:16:04.490Z",
-          "updatedAt": "2025-03-17T11:16:04.490Z"
-      }
       ],
+      loading: false,
+      error: null
+    },
+    agents: {
+      data: [],
+      loading: false,
+      error: null
+    },
+    models: {
+      data: [],
+      loading: false,
+      error: null
+    },
+    inputs: {
+      data: [{
+        "id": "input-001",
+        "name": "Text Input",
+        "type": "input",
+        "description": "Basic text input component",
+        "sections": [
+          {
+            "title": "Configuration",
+            "items": [
+              {
+                "id": "config-002",
+                "label": "Data Type",
+                "value": "string",
+                "type": "dataType"
+              },
+              {
+                "id": "config-003",
+                "label": "Required",
+                "value": true,
+                "type": "required"
+              }
+            ]
+          }
+        ],
+        "status": "active",
+        "version": "1.0.0",
+        "isPublic": true,
+        "createdBy": "Prithiv"
+      }],
+      loading: false,
+      error: null
+    },
+    flow: {
+      nodes: [],
+      edges: [],
+      viewMode: 'graph',  
+      specification: null,
       loading: false,
       error: null
     }
   }
-};
+}
 
 export default initialRootState;

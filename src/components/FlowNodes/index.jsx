@@ -1,388 +1,155 @@
 "use client";
 
-import { Box, Typography, Select, MenuItem, TextField, Button, Divider, FormControl, InputLabel, Radio, RadioGroup, FormControlLabel, Chip } from "@mui/material";
+import { Box, Typography, IconButton, Select, MenuItem, TextField, Button } from "@mui/material";
 import { Handle, Position } from "reactflow";
-import { Bot, Workflow, Database, Circle, CloudUpload, Link as LinkIcon, TextCursorInput, FileOutput, Settings, Code } from "lucide-react";
+import { Bot, Workflow, Database, Circle, CloudUpload, Link as LinkIcon } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useMemo, useState } from "react";
+import { TextCursorInput } from "lucide-react";
 
-// Base GenericNode component that all node types extend
-const GenericNode = ({ data, children }) => {
-  // Extract props from data or use defaults
-  const { 
-    type = 'Node', 
-    name = 'Unnamed Node', 
-    description = '',
-    icon, 
-    color,
-    showHeader = true,
-    showContent = false,
-    showFooter = false,
-    headerContent,
-    footerContent,
-    width = 250
-  } = data;
-  
-  // Get node color based on type
-  const getNodeColor = () => {
-    if (color) return color;
-    
-    switch (type) {
-      case 'Tool':
-        return '#00b894';
-      case 'Agent':
-        return '#6c5ce7';
-      case 'Model':
-        return '#0984e3';
-      case 'Input':
-        return '#0284e3';
-      case 'Output':
-        return '#e17055';
-      default:
-        return '#6c5ce7';
-    }
-  };
+const getNodeIcon = (type, tools, agents, models, inputs) => {
+  const item = [...tools, ...agents, ...models, ...inputs].find((item) => item.type === type);
 
-  // Get node icon based on type
-  const getNodeIcon = () => {
-    if (icon) return icon;
-    
-    switch (type) {
-      case 'Tool':
-        return <Database size={18} />;
-      case 'Agent':
-        return <Bot size={18} />;
-      case 'Model':
-        return <Workflow size={18} />;
-      case 'Input':
-        return <TextCursorInput size={18} />;
-      case 'Output':
-        return <FileOutput size={18} />;
-      default:
-        return <Circle size={18} />;
-    }
-  };
+  if (!item) return <Workflow size={20} />;
 
-  const nodeColor = getNodeColor();
-  const nodeIcon = getNodeIcon();
+  switch (item.type?.toLowerCase()) {
+    case "tool":
+      return <Workflow size={20} />;
+    case "agent":
+      return <Bot size={20} />;
+    case "model":
+      return <Database size={20} />;
+    case "input":
+      return <TextCursorInput size={20} />;
+    default:
+      return <Workflow size={20} />; 
+  }
+};
+
+const getNodeColor = (type, tools, agents, models, inputs) => {
+  const item = [...tools, ...agents, ...models, ...inputs].find((item) => item.name === type);
+
+  if (!item) return "#6c5ce7";
+
+  switch (item.type?.toLowerCase()) {
+    case "tool":
+      return "#6c5ce7";
+    case "agent":
+      return "#00b894";
+    case "model":
+      return "#0984e3";
+    case "input":
+      return "#0284e3";
+    default:
+      return "#6c5ce7";
+  }
+};
+
+function CustomNode({ data, type }) {
+  const tools = useSelector((state) => state.studio.tools.data);
+  const agents = useSelector((state) => state.studio.agents.data);
+  const models = useSelector((state) => state.studio.models.data);
+  const inputs = useSelector((state) => state.studio.inputs.data);
+
+  const color = getNodeColor(type, tools, agents, models, inputs);
+  const icon = getNodeIcon(type, tools, agents, models, inputs);
 
   return (
     <Box
       sx={{
-        width,
-        border: `1px solid ${nodeColor}`,
-        borderRadius: '8px',
-        backgroundColor: 'white',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-        overflow: 'hidden',
+        padding: "12px 16px",
+        borderRadius: "8px",
+        backgroundColor: "#fff",
+        minWidth: "180px",
+        border: "2px solid",
+        borderColor: color,
+        boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+        position: "relative",
+        "&:hover": {
+          boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+        },
       }}
     >
-      {/* Left and Right handles */}
       <Handle
         type="target"
         position={Position.Left}
-        style={{ background: nodeColor, width: 8, height: 8, left: -4 }}
+        style={{
+          background: color,
+          width: 8,
+          height: 8,
+          left: -4,
+        }}
       />
+      <Box className="flex items-center gap-2">
+        <Box sx={{ color }}>{icon}</Box>
+        <Typography sx={{ fontSize: "14px", fontWeight: 500 }}>{data.name}</Typography>
+        <IconButton
+          size="small"
+          sx={{
+            ml: "auto",
+            width: 20,
+            height: 20,
+            backgroundColor: `${color}20`,
+            color,
+            "&:hover": {
+              backgroundColor: `${color}30`,
+            },
+          }}
+        >
+          <Circle size={12} />
+        </IconButton>
+      </Box>
       <Handle
         type="source"
         position={Position.Right}
-        style={{ background: nodeColor, width: 8, height: 8, right: -4 }}
+        style={{
+          background: color,
+          width: 8,
+          height: 8,
+          right: -4,
+        }}
       />
-      
-      {/* Header Section */}
-      {showHeader && (
-        <Box
-          sx={{
-            backgroundColor: nodeColor,
-            color: 'white',
-            padding: '8px 12px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            {nodeIcon}
-            <Typography sx={{ fontSize: '14px', fontWeight: 500 }}>
-              {name}
-            </Typography>
-          </Box>
-          
-          <Typography sx={{ fontSize: '12px', fontWeight: 400, opacity: 0.8 }}>
-            {type}
-          </Typography>
-        </Box>
-      )}
-      
-      {/* Custom Header Content */}
-      {headerContent && (
-        <Box sx={{ p: 1.5, backgroundColor: `${nodeColor}10` }}>
-          {headerContent}
-        </Box>
-      )}
-      
-      {/* Main Content Section */}
-      {showContent && (
-        <Box sx={{ p: 1.5 }}>
-          {description && (
-            <Typography sx={{ fontSize: '12px', color: '#666', mb: 1 }}>
-              {description}
-            </Typography>
-          )}
-          
-          {/* Main content (passed as children) */}
-          {children}
-        </Box>
-      )}
-      
-      {/* Footer Section */}
-      {showFooter && footerContent && (
-        <>
-          <Divider sx={{ mx: 1 }} />
-          <Box sx={{ p: 1.5, backgroundColor: '#f8f9fa' }}>
-            {footerContent}
-          </Box>
-        </>
-      )}
     </Box>
   );
-};
+}
 
-// Agent Node Component
-const AgentNode = ({ data }) => {
-  const [agentType, setAgentType] = useState(data.agentType || 'prebuilt');
-  const [selectedModel, setSelectedModel] = useState(data.selectedModel || '');
-  const [prompt, setPrompt] = useState(data.prompt || '');
-  const [showTools, setShowTools] = useState(data.showTools !== false);
-  const [showConfig, setShowConfig] = useState(data.showConfig !== false);
-  
-  const models = useSelector((state) => state.studio.models.data || []);
-  
-  // Handle agent type change
-  const handleAgentTypeChange = (event) => {
-    setAgentType(event.target.value);
-  };
-  
-  // Handle model selection change
-  const handleModelChange = (event) => {
-    setSelectedModel(event.target.value);
-  };
-  
-  // Handle prompt change
-  const handlePromptChange = (event) => {
-    setPrompt(event.target.value);
-  };
-  
-  // Configuration section content
-  const configSection = (
-    <Box sx={{ mt: 1 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Typography sx={{ fontSize: '12px', fontWeight: 500, color: '#666' }}>Agent Type:</Typography>
-        <RadioGroup
-          row
-          value={agentType}
-          onChange={handleAgentTypeChange}
-          sx={{ '& .MuiFormControlLabel-label': { fontSize: '12px' } }}
-        >
-          <FormControlLabel value="prebuilt" control={<Radio size="small" sx={{ '& .MuiSvgIcon-root': { fontSize: 16 } }} />} label="Prebuilt" />
-          <FormControlLabel value="custom" control={<Radio size="small" sx={{ '& .MuiSvgIcon-root': { fontSize: 16 } }} />} label="Custom" />
-        </RadioGroup>
-      </Box>
-      
-      <FormControl fullWidth size="small" sx={{ mb: 1 }}>
-        <InputLabel id="model-select-label" sx={{ fontSize: '12px' }}>Model</InputLabel>
-        <Select
-          labelId="model-select-label"
-          value={selectedModel}
-          onChange={handleModelChange}
-          label="Model"
-          sx={{ fontSize: '12px' }}
-        >
-          {models.map((model) => (
-            <MenuItem key={model.id} value={model.name} sx={{ fontSize: '12px' }}>
-              {model.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-      
-      {agentType === 'custom' && (
-        <TextField
-          fullWidth
-          multiline
-          rows={3}
-          placeholder="Enter agent prompt..."
-          value={prompt}
-          onChange={handlePromptChange}
-          size="small"
-          sx={{ 
-            '& .MuiInputBase-input': { fontSize: '12px' },
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '4px',
-            }
-          }}
-        />
-      )}
-    </Box>
-  );
-  
-  // Tools section content
-  const toolsSection = (
-    <Box sx={{ mt: 1 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Typography sx={{ fontSize: '12px', fontWeight: 500, color: '#666' }}>Tools:</Typography>
-        <Button 
-          variant="outlined" 
-          size="small"
-          startIcon={<Settings size={14} />}
-          sx={{ 
-            fontSize: '10px', 
-            py: 0.5, 
-            borderRadius: '4px',
-            textTransform: 'none'
-          }}
-        >
-          Configure
-        </Button>
-      </Box>
-      
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-        {agentType === 'prebuilt' ? (
-          // Prebuilt agent has fixed tools
-          ['Search', 'Calculator', 'Weather'].map((tool) => (
-            <Chip 
-              key={tool} 
-              label={tool} 
-              size="small" 
-              sx={{ 
-                fontSize: '10px', 
-                height: '22px',
-                backgroundColor: '#00b89420',
-                color: '#00b894',
-                '& .MuiChip-label': { px: 1 }
-              }} 
-            />
-          ))
-        ) : (
-          // Custom agent has a drop area for tools
-          <Box
-            sx={{
-              width: '100%',
-              p: 1,
-              border: '1px dashed #ccc',
-              borderRadius: '4px',
-              textAlign: 'center',
-              fontSize: '11px',
-              color: '#999',
-            }}
-          >
-            Drop tools here
-          </Box>
-        )}
-      </Box>
-    </Box>
-  );
-  
-  return (
-    <GenericNode 
-      data={{ 
-        ...data, 
-        type: 'Agent',
-        showContent: true,
-        showFooter: showTools || showConfig
-      }}
-    >
-      {/* Configuration Section */}
-      {showConfig && configSection}
-      
-      {/* Tools Section */}
-      {showTools && (
-        <>
-          {showConfig && <Divider sx={{ my: 1 }} />}
-          {toolsSection}
-        </>
-      )}
-    </GenericNode>
-  );
-};
-
-// Tool Node Component
-const ToolNode = ({ data }) => {
-  return (
-    <GenericNode 
-      data={{ 
-        ...data, 
-        type: 'Tool',
-        showContent: true,
-        showFooter: false
-      }}
-    >
-      {/* Tool content can be added here if needed */}
-      {data.showCode && (
-        <Box sx={{ 
-          mt: 1, 
-          p: 1, 
-          backgroundColor: '#f8f9fa', 
-          borderRadius: '4px',
-          fontSize: '11px',
-          fontFamily: 'monospace'
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
-            <Code size={14} />
-            <Typography sx={{ fontSize: '11px', fontWeight: 500 }}>Code</Typography>
-          </Box>
-          <Box sx={{ color: '#666' }}>
-            {data.code || 'function example() { ... }'}
-          </Box>
-        </Box>
-      )}
-    </GenericNode>
-  );
-};
-
-// Input Node Component
-const InputNode = ({ data }) => {
-  const [inputType, setInputType] = useState(data.inputType || 'text');
-  const [inputValue, setInputValue] = useState(data.inputValue || '');
+const InputCustomNode = ({ data, ...props }) => {
+  const [inputType, setInputType] = useState('local');
+  const [inputValue, setInputValue] = useState('');
   const [file, setFile] = useState(null);
-  const [showConfig, setShowConfig] = useState(data.showConfig !== false);
 
-  // Handle input type change
   const handleInputTypeChange = (event) => {
     setInputType(event.target.value);
     setInputValue('');
     setFile(null);
   };
 
-  // Handle file upload
   const handleFileUpload = (event) => {
     const uploadedFile = event.target.files[0];
     setFile(uploadedFile);
     setInputValue(uploadedFile.name);
   };
 
-  // Handle text/url input change
-  const handleInputChange = (event) => {
+  const handleUrlChange = (event) => {
     setInputValue(event.target.value);
   };
 
-  // Render different input components based on type
   const renderInputComponent = () => {
     switch (inputType) {
-      case 'file':
+      case 'local':
         return (
-          <Box sx={{ width: '100%', textAlign: 'center', py: 1 }}>
+          <Box sx={{ width: '100%', textAlign: 'center',height:'150px' }}>
             <Button 
               component="label" 
               variant="contained" 
               startIcon={<CloudUpload size={16} />}
               sx={{ 
-                backgroundColor: '#0284e3', 
-                '&:hover': { backgroundColor: '#0277d1' },
-                borderRadius: '6px',
+                backgroundColor: '#6c5ce7', 
+                '&:hover': { backgroundColor: '#5a4bd1' },
+                borderRadius: '8px',
                 textTransform: 'none',
                 fontSize: '0.85rem',
-                py: 0.5
+                py: 0.8
               }}
             >
               Upload File
@@ -394,7 +161,29 @@ const InputNode = ({ data }) => {
             </Button>
           </Box>
         );
-      case 'url':
+      case 'drive':
+        return (
+          <Box sx={{ width: '100%', textAlign: 'center' }}>
+            <Button 
+              variant="outlined" 
+              startIcon={<LinkIcon size={16} />}
+              sx={{ 
+                borderColor: '#6c5ce7', 
+                color: '#6c5ce7',
+                '&:hover': { 
+                  backgroundColor: 'rgba(108, 92, 231, 0.1)' 
+                },
+                borderRadius: '8px',
+                textTransform: 'none',
+                fontSize: '0.85rem',
+                py: 0.8
+              }}
+            >
+              Connect Google Drive
+            </Button>
+          </Box>
+        );
+      case 'customUrl':
         return (
           <TextField 
             fullWidth 
@@ -402,272 +191,135 @@ const InputNode = ({ data }) => {
             variant="outlined" 
             placeholder="Enter URL" 
             value={inputValue}
-            onChange={handleInputChange}
+            onChange={handleUrlChange}
             sx={{ 
               '& .MuiOutlinedInput-root': {
-                borderRadius: '6px',
+                borderRadius: '8px',
                 '&.Mui-focused fieldset': {
-                  borderColor: '#0284e3',
+                  borderColor: '#6c5ce7',
                 },
               },
             }}
           />
         );
-      case 'text':
       default:
-        return (
-          <TextField 
-            fullWidth 
-            multiline
-            rows={3}
-            size="small"
-            variant="outlined" 
-            placeholder="Enter text input" 
-            value={inputValue}
-            onChange={handleInputChange}
-            sx={{ 
-              '& .MuiOutlinedInput-root': {
-                borderRadius: '6px',
-                '&.Mui-focused fieldset': {
-                  borderColor: '#0284e3',
-                },
-              },
-            }}
-          />
-        );
+        return null;
     }
   };
 
-  // Configuration section
-  const configSection = (
-    <Box sx={{ mb: showConfig ? 1 : 0 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography sx={{ fontSize: '12px', fontWeight: 500, color: '#666' }}>Input Type:</Typography>
+  return (
+    <Box 
+      sx={{
+        width: 280,
+        height: 'auto',
+        border: '1px solid #6c5ce7',
+        borderRadius: '12px',
+        p: 2,
+        position: 'relative',
+        backgroundColor: 'white',
+        boxShadow: '0 4px 12px rgba(108, 92, 231, 0.15)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2
+      }}
+    >
+      {/* Right handle */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="right"
+        style={{ 
+          background: '#6c5ce7', 
+          width: 10, 
+          height: 10,
+          right: -5
+        }}
+      />
+      
+      <Box sx={{ 
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        mb: 1
+      }}>
+        <Typography 
+          sx={{ 
+            fontSize: '0.9rem', 
+            fontWeight: 600, 
+            color: '#6c5ce7',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5
+          }}
+        >
+          <TextCursorInput size={18} />
+          Input Source
+        </Typography>
+        
         <Select
           value={inputType}
           onChange={handleInputTypeChange}
           variant="standard"
           sx={{ 
-            fontSize: '12px',
+            fontSize: '0.85rem',
+            '&:before': { borderBottom: '1px solid #6c5ce7' },
+            '&:hover:not(.Mui-disabled):before': { borderBottom: '1px solid #6c5ce7' },
             '& .MuiSelect-select': { 
               paddingBottom: 0,
-              color: '#0284e3',
+              color: '#6c5ce7',
               fontWeight: 500
             }
           }}
         >
-          <MenuItem value="text" sx={{ fontSize: '12px' }}>Text</MenuItem>
-          <MenuItem value="file" sx={{ fontSize: '12px' }}>File</MenuItem>
-          <MenuItem value="url" sx={{ fontSize: '12px' }}>URL</MenuItem>
+          <MenuItem value="local" sx={{ fontSize: '0.85rem' }}>Local File</MenuItem>
+          <MenuItem value="drive" sx={{ fontSize: '0.85rem' }}>Google Drive</MenuItem>
+          <MenuItem value="customUrl" sx={{ fontSize: '0.85rem' }}>Custom URL</MenuItem>
         </Select>
       </Box>
-    </Box>
-  );
-
-  return (
-    <GenericNode 
-      data={{ 
-        ...data, 
-        type: 'Input',
-        showContent: true,
-        showFooter: false
-      }}
-    >
-      {/* Configuration Section */}
-      {showConfig && configSection}
       
-      {/* Divider if both sections are shown */}
-      {showConfig && <Divider sx={{ my: 1 }} />}
+      <Box sx={{ 
+        borderTop: '1px solid #e0e0e0',
+        pt: 2,
+        width: '100%'
+      }}>
+        {renderInputComponent()}
+      </Box>
       
-      {/* Input Component */}
-      {renderInputComponent()}
-      
-      {/* Display selected file/input */}
       {inputValue && (
         <Box sx={{ 
           mt: 1, 
           width: '100%', 
           textAlign: 'center',
           color: '#666',
-          fontSize: '11px',
-          backgroundColor: 'rgba(2, 132, 227, 0.08)',
-          borderRadius: '4px',
-          p: 0.5,
+          fontSize: '0.75rem',
+          backgroundColor: 'rgba(108, 92, 231, 0.08)',
+          borderRadius: '6px',
+          p: 1,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap'
         }}>
-          {inputType === 'file' ? `File: ${inputValue}` : `Input: ${inputValue.substring(0, 30)}${inputValue.length > 30 ? '...' : ''}`}
+          {inputValue}
         </Box>
       )}
-    </GenericNode>
+    </Box>
   );
 };
 
-// Output Node Component
-const OutputNode = ({ data }) => {
-  const [showPreview, setShowPreview] = useState(data.showPreview !== false);
-  
-  // Sample output data
-  const outputData = data.outputData || { type: 'text', content: 'No output data available' };
-  
-  // Render output preview based on type
-  const renderOutputPreview = () => {
-    switch (outputData.type) {
-      case 'image':
-        return (
-          <Box sx={{ 
-            width: '100%', 
-            height: '100px', 
-            backgroundColor: '#f0f0f0', 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            borderRadius: '4px',
-            color: '#666',
-            fontSize: '12px'
-          }}>
-            [Image Preview]
-          </Box>
-        );
-      case 'json':
-        return (
-          <Box sx={{ 
-            p: 1, 
-            backgroundColor: '#f8f9fa', 
-            borderRadius: '4px',
-            fontSize: '11px',
-            fontFamily: 'monospace',
-            color: '#666',
-            maxHeight: '100px',
-            overflow: 'auto'
-          }}>
-            {JSON.stringify(outputData.content, null, 2)}
-          </Box>
-        );
-      case 'text':
-      default:
-        return (
-          <Box sx={{ 
-            p: 1, 
-            backgroundColor: '#f8f9fa', 
-            borderRadius: '4px',
-            fontSize: '12px',
-            color: '#666',
-            maxHeight: '100px',
-            overflow: 'auto'
-          }}>
-            {outputData.content}
-          </Box>
-        );
-    }
-  };
-  
-  return (
-    <GenericNode 
-      data={{ 
-        ...data, 
-        type: 'Output',
-        showContent: true,
-        showFooter: false
-      }}
-    >
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-        <Typography sx={{ fontSize: '12px', fontWeight: 500, color: '#666' }}>Output Type:</Typography>
-        <Chip 
-          label={outputData.type || 'text'} 
-          size="small" 
-          sx={{ 
-            fontSize: '10px', 
-            height: '20px',
-            backgroundColor: '#e1705520',
-            color: '#e17055',
-            '& .MuiChip-label': { px: 1 }
-          }} 
-        />
-      </Box>
-      
-      {/* Output Preview */}
-      {showPreview && renderOutputPreview()}
-    </GenericNode>
-  );
-};
-
-// Model Node Component
-const ModelNode = ({ data }) => {
-  return (
-    <GenericNode 
-      data={{ 
-        ...data, 
-        type: 'Model',
-        showContent: true,
-        showFooter: false
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
-        <Typography sx={{ fontSize: '12px', fontWeight: 500, color: '#666' }}>Model:</Typography>
-        <Typography sx={{ fontSize: '12px', color: '#0984e3', fontWeight: 500 }}>
-          {data.modelName || 'Default Model'}
-        </Typography>
-      </Box>
-      
-      {data.parameters && (
-        <Box sx={{ 
-          p: 1, 
-          backgroundColor: '#f8f9fa', 
-          borderRadius: '4px',
-          fontSize: '11px',
-          color: '#666'
-        }}>
-          <Typography sx={{ fontSize: '11px', fontWeight: 500, mb: 0.5 }}>Parameters:</Typography>
-          {Object.entries(data.parameters).map(([key, value]) => (
-            <Box key={key} sx={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px' }}>
-              <Typography sx={{ fontSize: '10px', color: '#666' }}>{key}:</Typography>
-              <Typography sx={{ fontSize: '10px', color: '#0984e3', fontWeight: 500 }}>{value}</Typography>
-            </Box>
-          ))}
-        </Box>
-      )}
-    </GenericNode>
-  );
-};
-
-// Export the useNodeTypes hook
 export const useNodeTypes = () => {
-  const tools = useSelector((state) => state.studio.tools.data || []);
-  const agents = useSelector((state) => state.studio.agents.data || []);
-  const models = useSelector((state) => state.studio.models.data || []);
-  const inputs = useSelector((state) => state.studio.inputs.data || []);
-  const outputs = useSelector((state) => state.studio.outputs?.data || []);
+  const tools = useSelector((state) => state.studio.tools.data);
+  const agents = useSelector((state) => state.studio.agents.data);
+  const models = useSelector((state) => state.studio.models.data);
+  const inputs = useSelector((state) => state.studio.inputs.data);
 
   return useMemo(() => {
-    const nodeTypes = {};
-    
-    // Map tools to ToolNode
-    tools.forEach(item => {
-      nodeTypes[item.name] = ToolNode;
-    });
-    
-    // Map agents to AgentNode
-    agents.forEach(item => {
-      nodeTypes[item.name] = AgentNode;
-    });
-    
-    // Map models to ModelNode
-    models.forEach(item => {
-      nodeTypes[item.name] = ModelNode;
-    });
-    
-    // Map inputs to InputNode
-    inputs.forEach(item => {
-      nodeTypes[item.name] = InputNode;
-    });
-    
-    // Map outputs to OutputNode
-    outputs.forEach(item => {
-      nodeTypes[item.name] = OutputNode;
-    });
-    
-    return nodeTypes;
-  }, [tools, agents, models, inputs, outputs]);
+    return [...tools, ...agents, ...models, ...inputs].reduce((acc, item) => {
+      if (item.type?.toLowerCase() === 'input') {
+        acc[item.type] = InputCustomNode;
+      } else {
+        acc[item.type] = CustomNode;
+      }
+      return acc;
+    }, {});
+  }, [tools, agents, models, inputs]);
 };

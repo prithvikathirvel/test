@@ -6,7 +6,34 @@ const initialState = initialRootState.studio;
 
 export const fetchTools = createAsyncThunk('studio/fetchTools', async () => {
   try {
-    const response = await APIKit.get(`/products`);
+    const response = await APIKit.get(`/tools`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+});
+
+export const fetchAgents = createAsyncThunk('studio/fetchAgents', async () => {
+  try {
+    const response = await APIKit.get(`/agents`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+});
+
+export const fetchModels = createAsyncThunk('studio/fetchModels', async () => {
+  try {
+    const response = await APIKit.get(`/models`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+});
+
+export const fetchInputs = createAsyncThunk('studio/fetchInputs', async () => {
+  try {
+    const response = await APIKit.get(`/inputs`);
     return response.data;
   } catch (error) {
     throw error;
@@ -48,6 +75,51 @@ const studioSlice = createSlice({
       .addCase(fetchTools.rejected, (state, action) => {
         state.tools.loading = false;
         state.tools.error = action.error.message;
+      });
+
+    builder
+      .addCase(fetchAgents.pending, (state) => {
+        state.agents.loading = true;
+        state.agents.error = null;
+      })
+      .addCase(fetchAgents.fulfilled, (state, action) => {
+        state.agents.loading = false;
+        state.agents.data = action.payload;
+        state.agents.error = null;
+      })
+      .addCase(fetchAgents.rejected, (state, action) => {
+        state.agents.loading = false;
+        state.agents.error = action.error.message;
+      }); 
+
+    builder
+      .addCase(fetchModels.pending, (state) => {
+        state.models.loading = true;
+        state.models.error = null;
+      })
+      .addCase(fetchModels.fulfilled, (state, action) => {
+        state.models.loading = false;
+        state.models.data = action.payload;
+        state.models.error = null;
+      })
+      .addCase(fetchModels.rejected, (state, action) => {
+        state.models.loading = false;
+        state.models.error = action.error.message;
+      });
+
+    builder
+      .addCase(fetchInputs.pending, (state) => {
+        state.inputs.loading = true;
+        state.inputs.error = null;
+      })
+      .addCase(fetchInputs.fulfilled, (state, action) => {
+        state.inputs.loading = false;
+        state.inputs.data = action.payload;
+        state.inputs.error = null;
+      })
+      .addCase(fetchInputs.rejected, (state, action) => {
+        state.inputs.loading = false;
+        state.inputs.error = action.error.message;
       });
   }
 });

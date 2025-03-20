@@ -1,196 +1,139 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, InputBase } from "@mui/material";
-import { Search, ChevronDown, Database, Workflow, Bot, TextCursorInput, FileText, Code } from "lucide-react";
+import { Search, ChevronDown, Database, Workflow, Bot, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSelector } from "react-redux";
 
-export default function ComponentsSidebar() {
+export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideBar }) {
   const tools = useSelector((state) => state.studio.tools.data);
   const agents = useSelector((state) => state.studio.agents.data);
   const models = useSelector((state) => state.studio.models.data);
-  const inputs = useSelector((state) => state.studio.inputs.data);
-
-  // Custom node types that aren't in the Redux store
-  const customNodeTypes = [
-    {
-      type: 'Agent',
-      label: 'Custom Agent',
-      category: 'agents'
-    },
-    {
-      type: 'Code Tool',
-      label: 'Code Tool',
-      category: 'tools'
-    },
-    {
-      type: 'Database Tool',
-      label: 'Database Tool',
-      category: 'tools'
-    },
-    {
-      type: 'AI Model',
-      label: 'Custom AI Model',
-      category: 'models'
-    },
-    {
-      type: 'Document Input',
-      label: 'Document Input',
-      category: 'inputs'
-    }
-  ];
-
+  
   const nodeTypes = [
     {
-      title: "Inputs",
-      icon: <TextCursorInput size={18} />,
-      nodes: [
-        ...inputs.map((input, index) => ({ 
-          type: input.name, 
-          label: input.name,
-          key: `input-${index}`
-        })),
-        ...customNodeTypes
-          .filter(node => node.category === 'inputs')
-          .map((node, index) => ({
-            type: node.type,
-            label: node.label,
-            key: `custom-input-${index}`
-          }))
-      ]
-    },
-    {
       title: "Agents",
-      icon: <Bot size={18} />,
-      nodes: [
-        ...agents.map((agent, index) => ({ 
-          type: agent.name, 
-          label: agent.name,
-          key: `agent-${index}`
-        })),
-        ...customNodeTypes
-          .filter(node => node.category === 'agents')
-          .map((node, index) => ({
-            type: node.type,
-            label: node.label,
-            key: `custom-agent-${index}`
-          }))
-      ]
+      icon: <Database size={18} />,
+      nodes: mapToNodes(agents, "agent")
     },
     {
       title: "Tools",
       icon: <Workflow size={18} />,
-      nodes: [
-        ...tools.map((tool, index) => ({ 
-          type: tool.name, 
-          label: tool.name,
-          key: `tool-${index}`
-        })),
-        ...customNodeTypes
-          .filter(node => node.category === 'tools')
-          .map((node, index) => ({
-            type: node.type,
-            label: node.label,
-            key: `custom-tool-${index}`
-          }))
-      ]
+      nodes: mapToNodes(tools, "tool")
     },
     {
       title: "AI Models",
-      icon: <Database size={18} />,
-      nodes: [
-        ...models.map((model, index) => ({ 
-          type: model.name, 
-          label: model.name,
-          key: `model-${index}`
-        })),
-        ...customNodeTypes
-          .filter(node => node.category === 'models')
-          .map((node, index) => ({
-            type: node.type,
-            label: node.label,
-            key: `custom-model-${index}`
-          }))
-      ]
+      icon: <Bot size={18} />,
+      nodes: mapToNodes(models, "model")
     }
-  ]
+  ];
   
-  const onDragStart = (event, nodeType) => {
-    event.dataTransfer.setData("application/reactflow", nodeType)
-    event.dataTransfer.effectAllowed = "move"
+  function mapToNodes(items, prefix) {
+    return items.map((item, index) => ({
+     ...item,
+     key: `${prefix}-${index}`,
+     id: `${prefix}-${index}`
+    }));
   }
+  
+  const onDragStart = (event, nodeType, node) => {
+    event.dataTransfer.setData("application/node-spec", JSON.stringify(node));
+    event.dataTransfer.setData("application/reactflow", nodeType);
+    event.dataTransfer.effectAllowed = "move";
+  };
 
   return (
     <Box className="p-3">
-      <Box 
-        className="flex items-center gap-2 mb-4 px-3 py-1.5 border border-gray-200 rounded-md"
-        sx={{ 
-          '&:focus-within': {
-            borderColor: '#6c5ce7',
-            boxShadow: '0 0 0 2px rgba(108, 92, 231, 0.1)'
+      <Box className="flex flex-row-reverse mb-5">
+        {minimizeSideBar ? 
+          <ChevronLeft size={18} onClick={handleMinimizeSideBar} /> : 
+          <ChevronRight size={18} onClick={handleMinimizeSideBar} />
+        }
+      </Box>
+      
+      <SearchBox />
+
+      {nodeTypes.map((section, index) => (
+        <ComponentSection 
+          key={section.title}
+          section={section}
+          isFirstSection={index === 0}
+          onDragStart={onDragStart}
+        />
+      ))}
+    </Box>
+  );
+}
+
+function SearchBox() {
+  return (
+    <Box 
+      className="flex items-center gap-2 mb-4 px-3 py-1.5 border border-gray-200 rounded-md"
+      sx={{ 
+        '&:focus-within': {
+          borderColor: '#6c5ce7',
+          boxShadow: '0 0 0 2px rgba(108, 92, 231, 0.1)'
+        }
+      }}
+    >
+      <Search size={18} className="text-gray-400" />
+      <InputBase 
+        placeholder="Search Components"
+        className="flex-1"
+        sx={{
+          fontSize: '14px',
+          '& input::placeholder': {
+            color: '#9ca3af',
+            opacity: 1
+          }
+        }}
+      />
+    </Box>
+  );
+}
+
+function ComponentSection({ section, isFirstSection, onDragStart }) {
+  return (
+    <Accordion 
+      defaultExpanded={isFirstSection}
+      disableGutters
+      elevation={0}
+      sx={{
+        border: 'none',
+        '&:before': { display: 'none' },
+        '& .MuiAccordionSummary-root': {
+          minHeight: '48px',
+          px: 1,
+        }
+      }}
+    >
+      <AccordionSummary 
+        expandIcon={<ChevronDown size={18} />}
+        sx={{
+          '& .MuiAccordionSummary-content': {
+            gap: 1.5
           }
         }}
       >
-        <Search size={18} className="text-gray-400" />
-        <InputBase 
-          placeholder="Search Components"
-          className="flex-1"
-          sx={{
-            fontSize: '14px',
-            '& input::placeholder': {
-              color: '#9ca3af',
-              opacity: 1
-            }
-          }}
-        />
-      </Box>
-
-      {nodeTypes.map((section, index) => (
-        <Accordion 
-          key={section.title}
-          defaultExpanded={index === 0}
-          disableGutters
-          elevation={0}
-          sx={{
-            border: 'none',
-            '&:before': {
-              display: 'none',
-            },
-            '& .MuiAccordionSummary-root': {
-              minHeight: '48px',
-              px: 1,
-            }
-          }}
-        >
-          <AccordionSummary 
-            expandIcon={<ChevronDown size={18} />}
-            sx={{
-              '& .MuiAccordionSummary-content': {
-                gap: 1.5
-              }
-            }}
+        {section.icon}
+        <Typography sx={{ fontSize: '14px', fontWeight: 500 }}>
+          {section.title}
+        </Typography>
+      </AccordionSummary>
+      <AccordionDetails sx={{ p: 0 }}>
+        {section.nodes.map((node, nodeIndex) => (
+          <Box
+            key={node.key || nodeIndex}
+            draggable
+            onDragStart={(event) => onDragStart(event, node.type, node)}
+            className="flex items-center gap-2 p-2 mb-2 rounded-md cursor-move hover:bg-gray-50 border border-gray-200"
           >
-            {section.icon}
-            <Typography sx={{ fontSize: '14px', fontWeight: 500 }}>
-              {section.title}
+            <Typography sx={{ fontSize: '13px' }}>
+              {node.name}
             </Typography>
-          </AccordionSummary>
-          <AccordionDetails sx={{ p: 0 }}>
-            {section.nodes.map((node, nodeIndex) => (
-              <Box
-                key={node.key || nodeIndex}
-                draggable
-                onDragStart={(event) => onDragStart(event, node.type)}
-                className="flex items-center gap-2 p-2 mb-2 rounded-md cursor-move hover:bg-gray-50 border border-gray-200"
-              >
-                <Typography sx={{ fontSize: '13px' }}>
-                  {node.label}
-                </Typography>
-              </Box>
-            ))}
-          </AccordionDetails>
-        </Accordion>
-      ))}
-    </Box>
-  )
+          </Box>
+        ))}
+      </AccordionDetails>
+    </Accordion>
+  );
 }
