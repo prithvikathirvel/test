@@ -27,9 +27,9 @@ const getNodeIcon = (type, tools, agents, models, inputs) => {
 };
 
 const getNodeColor = (type, tools, agents, models, inputs) => {
-  const item = [...tools, ...agents, ...models, ...inputs].find((item) => item.name === type);
+  const item = [...tools, ...agents, ...models, ...inputs].find((item) => item.type === type);
 
-  if (!item) return "#6c5ce7";
+  if (!item) return "#ddd";
 
   switch (item.type?.toLowerCase()) {
     case "tool":

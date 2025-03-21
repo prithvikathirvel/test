@@ -1,4 +1,5 @@
 import { toast } from "react-toastify";
+import { lighten, darken } from '@mui/material/styles';
 
 const showToaster = (type, message) => {
   switch (type) {
@@ -53,8 +54,38 @@ function stringAvatar(name) {
   };
 }
 
+function convertToTitleCase(str) {
+  if (!str) {
+      return "Undefined Title"
+  }
+  return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
+}
+
+const getChipStyles = (baseColor) => ({
+  backgroundColor: lighten(baseColor, 0.6),
+  color: darken(baseColor, 0.4),
+});
+
+const getNodeColor = (nodeType) => {
+  switch (nodeType?.toLowerCase()) {
+    case 'tool':
+      return '#6c5ce7';
+    case 'agent':
+      return '#00b894';
+    case 'model':
+      return '#0984e3';
+    case 'input':
+      return '#0284e3';
+    default:
+      return '#6c5ce7';
+  }
+};
+
 export {
   showToaster,
   stringAvatar,
-  stringToColor
+  stringToColor,
+  convertToTitleCase, 
+  getChipStyles,
+  getNodeColor
 }

@@ -1,9 +1,10 @@
 "use client";
 
 import React from "react";
-import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, InputBase } from "@mui/material";
+import { Box, Typography, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { Search, ChevronDown, Database, Workflow, Bot, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSelector } from "react-redux";
+import SearchBox from '@/components/Common/SearchBox';
 
 export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideBar }) {
   const tools = useSelector((state) => state.studio.tools.data);
@@ -51,7 +52,10 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
         }
       </Box>
       
-      <SearchBox />
+      <SearchBox 
+        placeholder="Search Components" 
+        className="mb-4"
+      />
 
       {nodeTypes.map((section, index) => (
         <ComponentSection 
@@ -61,33 +65,6 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
           onDragStart={onDragStart}
         />
       ))}
-    </Box>
-  );
-}
-
-function SearchBox() {
-  return (
-    <Box 
-      className="flex items-center gap-2 mb-4 px-3 py-1.5 border border-gray-200 rounded-md"
-      sx={{ 
-        '&:focus-within': {
-          borderColor: '#6c5ce7',
-          boxShadow: '0 0 0 2px rgba(108, 92, 231, 0.1)'
-        }
-      }}
-    >
-      <Search size={18} className="text-gray-400" />
-      <InputBase 
-        placeholder="Search Components"
-        className="flex-1"
-        sx={{
-          fontSize: '14px',
-          '& input::placeholder': {
-            color: '#9ca3af',
-            opacity: 1
-          }
-        }}
-      />
     </Box>
   );
 }
