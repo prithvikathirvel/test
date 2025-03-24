@@ -1,3 +1,5 @@
+const colors = require('./src/utils/colors').default;
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -7,10 +9,7 @@ module.exports = {
   ],
   theme: {
     extend: {
-      colors: {
-        'dark-purple': '#6c5ce7',
-        'light-white': 'rgba(255,255,255,0.18)'
-      }
+      colors: colors
     },
   },
   plugins: [],

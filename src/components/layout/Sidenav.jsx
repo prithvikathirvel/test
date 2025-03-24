@@ -27,60 +27,30 @@ const Menus = [
 
 export default function Sidenav({ open, setOpen }) {
   return (
-    <div className={`${open ? "w-55" : "w-16"} bg-[#6c5ce7] h-screen p-3 pt-8 duration-300 relative`}>
-      {/* <IconButton
-        onClick={() => setOpen(!open)}
-        size="small"
-        sx={{
-          position: "absolute",
-          top: "10px",
-          right: "-12px",
-          width: "24px",
-          height: "24px",
-          borderRadius: "50%",
-          backgroundColor: open ? "#6c5ce7" : "white",
-          boxShadow: "0 3px 10px rgb(0,0,0,0.2)",
-          border: open ? "2px solid #6c5ce7" : "2px solid transparent",
-          transform: !open ? "rotate(180deg)" : "rotate(0deg)",
-          transition: "all 0.3s ease",
-          "&:hover": {
-            backgroundColor: "white",
-          },
-          zIndex: 10,
-        }}
-      >
-        {open ? <ChevronLeft size={18} color={open ? "white" : "black"} /> : <ChevronRight size={18} />}
-      </IconButton> */}
-
-      <List className="pt-6">
-        {Menus.map((menu, index) => (
-          <ListItem
-            key={index}
-            className={`rounded-md cursor-pointer hover:bg-white/20 text-white min-h-[48px]
-            ${menu.gap ? "mt-9" : "mt-2"} ${index === 0 && "bg-white/20"}`}
-            sx={{
-              padding: "8px 12px",
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.2)"
-              }
-            }}
-          >
-            <ListItemIcon className="min-w-[32px]">
-              <Box className="text-white">{menu.icon}</Box>
-            </ListItemIcon>
-            <ListItemText 
-              primary={menu.title} 
-              className={`${!open && "hidden"} origin-left duration-200`}
-              primaryTypographyProps={{
-                style: {
-                  fontSize: '0.875rem',
-                  fontWeight: 500
-                }
-              }}
-            />
-          </ListItem>
-        ))}
-      </List>
+    <div className={`${open ? "w-64" : "w-16"} bg-[#6c5ce7] h-dvh flex flex-col transition-all duration-300`}>
+      <div className="flex-1 py-8">
+        <List>
+          {Menus.map((menu) => (
+            <ListItem
+              key={menu.title}
+              className="mb-2 px-3"
+            >
+              <div className="flex items-center w-full rounded-lg p-2 text-white hover:bg-white/10 transition-colors cursor-pointer">
+                <ListItemIcon className="min-w-10 !text-white">
+                  {menu.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={menu.title}
+                  className={`${!open && "hidden"} transition-opacity`}
+                  primaryTypographyProps={{
+                    className: "text-sm font-medium text-white"
+                  }}
+                />
+              </div>
+            </ListItem>
+          ))}
+        </List>
+      </div>
     </div>
   )
 }

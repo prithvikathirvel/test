@@ -30,6 +30,19 @@ export const flowSlice = createSlice({
     updateSpecification: (state) => {
       state.specification = generateSpecification(state.nodes, state.edges);
     },
+    deleteNode: (state, action) => {
+      const nodeId = action.payload;
+      // Filter out the node to be deleted
+      state.nodes = state.nodes.filter(node => node.id !== nodeId);
+      
+      // Filter out any edges connected to the deleted node
+      state.edges = state.edges.filter(
+        edge => edge.source !== nodeId && edge.target !== nodeId
+      );
+      
+      // Update the specification
+      state.specification = generateSpecification(state.nodes, state.edges);
+    },
   },
 });
 
@@ -64,6 +77,6 @@ const generateSpecification = (nodes, edges) => {
   return specification;
 };
 
-export const { setNodes, setEdges, toggleViewMode, setViewMode, updateSpecification } = flowSlice.actions;
+export const { setNodes, setEdges, toggleViewMode, setViewMode, updateSpecification, deleteNode } = flowSlice.actions;
 
 export default flowSlice.reducer;

@@ -38,6 +38,12 @@
     #00000010,
     #00000080
   );
+
+  --color-rerr: #FFA500;
+  --color-orange: #FFA500;
+  --color-primary: #6c5ce7;
+  --color-dark-purple: #6c5ce7;
+  --color-light-white: rgba(255, 255, 255, 0.18);
 }
 
 @layer base {

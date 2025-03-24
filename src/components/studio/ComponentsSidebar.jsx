@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Box, Typography, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { Search, ChevronDown, Database, Workflow, Bot, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSelector } from "react-redux";
-import SearchBox from '@/components/Common/SearchBox';
+import InputBox from '@/components/Common/InputBox';
 
 export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideBar }) {
   const tools = useSelector((state) => state.studio.tools.data);
@@ -43,6 +43,8 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
     event.dataTransfer.effectAllowed = "move";
   };
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   return (
     <Box className="p-3">
       <Box className="flex flex-row-reverse mb-5">
@@ -52,9 +54,12 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
         }
       </Box>
       
-      <SearchBox 
+      <InputBox 
         placeholder="Search Components" 
         className="mb-4"
+        label="Components"
+        isShowLabel={true}
+        onChange={(e) => setSearchQuery(e)}
       />
 
       {nodeTypes.map((section, index) => (
@@ -71,6 +76,7 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
 
 function ComponentSection({ section, isFirstSection, onDragStart }) {
   return (
+
     <Accordion 
       defaultExpanded={isFirstSection}
       disableGutters
@@ -104,6 +110,13 @@ function ComponentSection({ section, isFirstSection, onDragStart }) {
             draggable
             onDragStart={(event) => onDragStart(event, node.type, node)}
             className="flex items-center gap-2 p-2 mb-2 rounded-md cursor-move hover:bg-gray-50 border border-gray-200"
+            sx={{
+              //borderLeft: `10px solid ${color}`,
+              '&:hover': {
+                backgroundColor: 'gray.50',
+                border: '1px solid gray.200'
+              }
+            }}
           >
             <Typography sx={{ fontSize: '13px' }}>
               {node.name}

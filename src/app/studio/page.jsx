@@ -107,17 +107,26 @@ function Studio() {
     setModalOpen(true);
   };
 
+  // Handle node deletion from ReactFlow
+  const handleNodeDelete = useCallback((nodeId) => {
+    setNodesState((nodes) => nodes.filter(node => node.id !== nodeId));
+    setEdgesState((edges) => edges.filter(edge => 
+      edge.source !== nodeId && edge.target !== nodeId
+    ));
+  }, [setNodesState, setEdgesState]);
+
   return (
-    <div className="flex">
-      <Sidenav open={open} setOpen={setOpen} />
-      <div className="h-screen flex-1 p-1">
-        <Header title="Sify Aurora" />
-        <Box sx={{ height: "calc(100vh - 60px)"}}>
-          <Box className="!border-b-1 border-gray-300 flex items-center justify-between" sx={{ height: '50px', backgroundColor: 'white', px: 2 }}>
-            <Typography sx={{ fontSize: '14px', fontWeight: 500, color: '#666' }}>
-              {viewMode === 'graph' ? 'Flow Editor' : 'Flow Specification'}
-            </Typography>
-            <Box className="flex gap-2">
+    <div className="h-full w-full overflow-hidden">
+      <Box className="h-full w-full">
+                    
+        <Grid container spacing={0} className="h-full">
+          <Grid size={2.5} className="h-full overflow-auto">
+            <ComponentsSidebar />
+          </Grid>
+          <Grid size={9.5} className="h-full relative overflow-hidden">
+
+          <Box className="p-2 absolute top-0 right-0 flex !justify-end z-10">
+          <Box className="!flex gap-2">
               <ButtonGroup variant="outlined" size="small" sx={{ mr: 2 }}>
                 <Tooltip title="Toggle View Mode">
                   <Button onClick={handleToggleViewMode}>
@@ -159,14 +168,11 @@ function Studio() {
               >
                 Deploy Flow
               </Button>
-            </Box>
-          </Box>
-          <Grid container spacing={2} className="h-full p-1">
-            <Grid size={2.5} className="bg-white !border-r-1 border-gray-200 transition-width duration-300">
-              <ComponentsSidebar />
-            </Grid>
-            <Grid size={9.5} className="bg-white !border-r-1 border-gray-200 relative">
-              {viewMode === 'graph' ? (
+        </Box>
+      </Box>
+            
+            {viewMode === 'graph' ? (
+              <div className="h-full w-full">
                 <ReactFlow
                   nodes={nodes}
                   edges={edges}
@@ -186,16 +192,23 @@ function Studio() {
                   <Background />
                   <Controls />
                 </ReactFlow>
-              ) : (
+              </div>
+            ) : (
+              <div className="h-full overflow-auto">
                 <JsonSpecView />
-              )}
+              </div>
+            )}
 
-              <SideDrawer />
-              <NodeDetailsModal open={modalOpen} onClose={() => setModalOpen(false)} node={selectedNode} />
-            </Grid>
+            <SideDrawer />
+            <NodeDetailsModal 
+              open={modalOpen} 
+              onClose={() => setModalOpen(false)} 
+              node={selectedNode} 
+              onDeleteNode={handleNodeDelete}
+            />
           </Grid>
-        </Box>
-      </div>
+        </Grid>
+      </Box>
     </div>
   );
 }

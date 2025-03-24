@@ -1,5 +1,6 @@
 import { toast } from "react-toastify";
 import { lighten, darken } from '@mui/material/styles';
+import { File, Image, Video, AudioLines, FileText } from 'lucide-react';
 
 const showToaster = (type, message) => {
   switch (type) {
@@ -81,11 +82,23 @@ const getNodeColor = (nodeType) => {
   }
 };
 
+const FileTypeIcon = ({ fileName }) => {
+  if (!fileName) return <File />;
+  const ext = fileName.split('.').pop().toLowerCase();
+  
+  if (['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(ext)) return <Image className="text-blue-500" />;
+  if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) return <Video className="text-purple-500" />;
+  if (['mp3', 'wav', 'ogg'].includes(ext)) return <AudioLines className="text-green-500" />;
+  if (['pdf'].includes(ext)) return <FileText className="text-red-500" />;
+  return <File className="text-gray-500" />;
+};
+
 export {
   showToaster,
   stringAvatar,
   stringToColor,
   convertToTitleCase, 
   getChipStyles,
-  getNodeColor
+  getNodeColor, 
+  FileTypeIcon
 }

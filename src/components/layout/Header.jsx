@@ -23,30 +23,32 @@ export default function Header({ title = "Home Page" }) {
   }
 
   return (
-    <Box className="flex items-center justify-between p-2 min-h-[40px] border-b-1 border-[#ebf0f4]">
-      <Typography className="!text-[15px] !font-bold" > 
-        {title}
-      </Typography>
+    <Box className="w-full border-b border-gray-200 bg-white">
+      <Box className="flex items-center justify-between px-4 py-2 min-h-[64px]">
+        <Typography className="text-[15px] !font-bold !font-montserrat !tracking-widest"> 
+          {title.toUpperCase()}
+        </Typography>
 
-      <Box>
         <Box
           onClick={handleClick}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            borderRadius: '4px',
-            padding: '4px 8px',
-            cursor: 'pointer',
-            '&:hover': {
-              backgroundColor: '#f5f5f5'
-            }
-          }}
+          className="flex items-center gap-2 rounded-lg px-3 py-1.5 cursor-pointer transition-all hover:bg-gray-100"
         >
-          <Avatar {...stringAvatar('Prithvi')} sx={{ width: 24, height: 24,fontSize: '15px' }} />
-          <Typography sx={{ fontSize: '13px', fontWeight: 500 }}>Prithvi</Typography>
-          <ChevronDown size={16} />
+          <Avatar
+            {...stringAvatar("Prithvi")}
+            sx={{
+              width: 32,
+              height: 32,
+              fontSize: "14px",
+              background: "linear-gradient(135deg, #3a7bd5, #00d2ff)",
+            }}
+          />
+       <Box sx={{ display: { xs: "none", sm: "block" } }}>
+            <Typography sx={{ fontSize: "14px", fontWeight: 600, lineHeight: 1.2 }}>Prithvi</Typography>
+            <Typography sx={{ fontSize: "12px", color: "#666", lineHeight: 1.2 }}>Admin</Typography>
+          </Box>
+          <ChevronDown size={16} color="#666" />
         </Box>
+
         <Menu
           id="account-menu"
           anchorEl={anchorEl}
@@ -56,36 +58,58 @@ export default function Header({ title = "Home Page" }) {
           slotProps={{
             paper: {
               sx: {
-                width: '200px',
-                border: '1px solid #e0e0e0',
-                borderRadius: '4px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                mt: 1
-              }
-            }
+                width: "240px",
+                border: "1px solid #e0e0e0",
+                borderRadius: "12px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                mt: 1.5,
+              },
+            },
           }}
-          transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-          anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          transformOrigin={{ horizontal: "right", vertical: "top" }}
+          anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         >
-          <Box sx={{ p: 1, borderBottom: '1px solid #e0e0e0' , marginBottom: '5px',borderRadius: '15px'}}>
-            <Typography sx={{ fontSize: '14px', fontWeight: 600 }}>Prithvi</Typography>
-            <Typography sx={{ fontSize: '12px', color: '#666' }}>prithvi@example.com</Typography>
+          <Box sx={{ p: 2, borderBottom: "1px solid #f0f0f0" }}>
+            <Typography sx={{ fontSize: "15px", fontWeight: 600 }}>Prithvi</Typography>
+            <Typography sx={{ fontSize: "13px", color: "#666", mt: 0.5 }}>prithvi@example.com</Typography>
           </Box>
-          <MenuItem sx={{ py: 1, px: 2, gap: 1.5, fontSize: '13px' }}>
-            <User size={16} />
-            Profile
-          </MenuItem>
-          <MenuItem sx={{ py: 1, px: 2, gap: 1.5, fontSize: '13px' }}>
-            <Settings size={16} />
-            Settings
-          </MenuItem>
+
+          <Box sx={{ py: 1 }}>
+            <MenuItem sx={{ py: 1.5, px: 2, gap: 1.5, fontSize: "14px" }}>
+              <User size={18} />
+              Profile
+            </MenuItem>
+            <MenuItem sx={{ py: 1.5, px: 2, gap: 1.5, fontSize: "14px" }}>
+              <Settings size={18} />
+              Settings
+            </MenuItem>
+          </Box>
+
           <Divider sx={{ my: 0.5 }} />
-          <MenuItem sx={{ py: 1, px: 2, gap: 1.5, fontSize: '13px', color: '#d32f2f' }} onClick={handleLogout}>
-            <LogOut size={16} />
-            Logout
-          </MenuItem>
+
+          <Box sx={{ py: 1 }}>
+            <MenuItem
+              sx={{
+                py: 1.5,
+                px: 2,
+                gap: 1.5,
+                fontSize: "14px",
+                color: "#d32f2f",
+                "&:hover": {
+                  backgroundColor: "rgba(211, 47, 47, 0.04)",
+                },
+              }}
+              onClick={handleLogout}
+            >
+              <LogOut size={18} />
+              Logout
+            </MenuItem>
+          </Box>
         </Menu>
-      </Box>
+        
     </Box>
+    </Box>
+
+    
   )
 }
