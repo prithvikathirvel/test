@@ -5,14 +5,14 @@ import { Box, Typography, Accordion, AccordionSummary, AccordionDetails } from "
 import { Search, ChevronDown, Database, Workflow, Bot, ChevronLeft, ChevronRight,  } from "lucide-react";
 import { useSelector } from "react-redux";
 import InputBox from '@/components/Common/InputBox';
-import { FileInput, ImageInput, VideoInput } from "lucide-react";
+import { FileInput,CloudUpload } from "lucide-react";
 
 export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideBar }) {
   const tools = useSelector((state) => state.studio.tools.data);
   const agents = useSelector((state) => state.studio.agents.data);
   const models = useSelector((state) => state.studio.models.data);
   const inputNodes = useSelector((state) => state.studio.inputs.data);
-  const agentFlows = useSelector((state) => state.studio.agentFlows.data);
+  const outputNodes = useSelector((state) => state.studio.outputs.data);  
   
   const nodeTypes = [
     {
@@ -36,9 +36,9 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
       nodes: mapToNodes(models, "model")
     },
     {
-      title : "Agent Flows",
-      icon: <Workflow size={18} />,
-      nodes: mapToNodes(agentFlows, "agentFlows")
+      title : "Outputs",
+      icon: <CloudUpload size={18} />,
+      nodes: mapToNodes(outputNodes, "output")
     }
   ];
   

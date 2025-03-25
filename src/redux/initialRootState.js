@@ -1,4 +1,4 @@
-import inputNodes from "@/utils/dataModels";
+import {inputNodes, outputNodes} from "@/utils/dataModels";
 
 const initialRootState = {
   auth: {
@@ -23,6 +23,11 @@ const initialRootState = {
     },
     inputs: {
       data: inputNodes,
+      loading: false,
+      error: null
+    },
+    outputs: {
+      data: outputNodes,
       loading: false,
       error: null
     },

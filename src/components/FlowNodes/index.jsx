@@ -7,8 +7,8 @@ import { useSelector } from "react-redux";
 import { useMemo } from "react";
 import { TextCursorInput } from "lucide-react";
 
-const getNodeIcon = (type, tools, agents, models, inputs, agentFlows) => {
-  const item = [...tools, ...agents, ...models, ...inputs, ...agentFlows].find((item) => item.type === type);
+const getNodeIcon = (type, tools, agents, models, inputs, agentFlows, outputs) => {
+  const item = [...tools, ...agents, ...models, ...inputs, ...agentFlows, ...outputs].find((item) => item.type === type);
 
   if (!item) return <Workflow size={20} />;
 
@@ -19,7 +19,7 @@ const getNodeIcon = (type, tools, agents, models, inputs, agentFlows) => {
       return <Bot size={20} />;
     case "model":
       return <Database size={20} />;
-    case "inputs":
+    case "input":
       return <TextCursorInput size={20} />;
     case "output":
       return <CloudUpload size={20} />;
@@ -28,8 +28,8 @@ const getNodeIcon = (type, tools, agents, models, inputs, agentFlows) => {
   }
 };
 
-const getNodeColor = (type, tools, agents, models, inputs, agentFlows) => {
-  const item = [...tools, ...agents, ...models, ...inputs, ...agentFlows].find((item) => item.type === type);
+const getNodeColor = (type, tools, agents, models, inputs, agentFlows, outputs) => {
+  const item = [...tools, ...agents, ...models, ...inputs, ...agentFlows, ...outputs].find((item) => item.type === type);
 
   if (!item) return "#ddd";
 
@@ -41,6 +41,8 @@ const getNodeColor = (type, tools, agents, models, inputs, agentFlows) => {
     case "model":
       return "#0984e3";
     case "input":
+      return "#0284e3";
+    case "output":
       return "#0284e3";
     case "agentFlow":
       return "#FF7F50";
@@ -55,9 +57,10 @@ function CustomNode({ data, type }) {
   const models = useSelector((state) => state.studio.models.data);
   const inputs = useSelector((state) => state.studio.inputs.data);
   const agentFlows = useSelector((state) => state.studio.agentFlows.data);
+  const outputs = useSelector((state) => state.studio.outputs.data);
 
-  const color = getNodeColor(type, tools, agents, models, inputs, agentFlows);
-  const icon = getNodeIcon(type, tools, agents, models, inputs, agentFlows);
+  const color = getNodeColor(type, tools, agents, models, inputs, agentFlows, outputs);
+  const icon = getNodeIcon(type, tools, agents, models, inputs, agentFlows, outputs);
 
   const nodeType = type?.toLowerCase() || data?.type?.toLowerCase();
 
@@ -131,14 +134,15 @@ export const useNodeTypes = () => {
   const agents = useSelector((state) => state.studio.agents.data);
   const models = useSelector((state) => state.studio.models.data);
   const inputs = useSelector((state) => state.studio.inputs.data);
+  const outputs = useSelector((state) => state.studio.outputs.data);
   const agentFlows = useSelector((state) => state.studio.agentFlows.data);
 
   return useMemo(() => {
     const nodeTypes = {};
-    [...tools, ...agents, ...models, ...inputs, ...agentFlows].forEach(item => {   
+    [...tools, ...agents, ...models, ...inputs, ...outputs, ...agentFlows].forEach(item => {   
       nodeTypes[item.type] = CustomNode;
     });
     
     return nodeTypes;
-  }, [tools, agents, models, inputs, agentFlows]);
+  }, [tools, agents, models, inputs, outputs, agentFlows]);
 };

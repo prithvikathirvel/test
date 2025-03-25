@@ -9,54 +9,7 @@ const initialState = {
   error: null
 };
 
-export const loadSpecification = createAsyncThunk(
-  'flow/loadSpecification',
-  async (specificationPayload, { dispatch }) => {
-    // Extract the graphSpec from the payload
-    const graphSpec = specificationPayload.graphSpec;
 
-    // Transform nodes with more detailed positioning and data
-    const nodes = graphSpec.nodes.map((node, index) => ({
-      id: node.node_id,
-      type: node.type || 'default',
-      position: {
-        x: 250 * index, // Spread nodes horizontally
-        y: 100 * index  // Stagger vertically
-      },
-      data: {
-        label: node.name,
-        description: node.description,
-        input: node.input,
-        type: node.type
-      }
-    }));
-
-    // Create edges based on the provided edges array or node's next property
-    const edges = graphSpec.edges.length > 0 
-      ? graphSpec.edges.map(edge => ({
-          id: `${edge.from}-${edge.to}`,
-          source: edge.from,
-          target: edge.to
-        }))
-      : graphSpec.nodes.flatMap(node => 
-          (node.next || []).map(nextNodeId => ({
-            id: `${node.node_id}-${nextNodeId}`,
-            source: node.node_id,
-            target: nextNodeId
-          }))
-    );
-
-    // Dispatch actions to set nodes and edges
-    dispatch(setNodes(nodes));
-    dispatch(setEdges(edges));
-
-    return { 
-      nodes, 
-      edges, 
-      specification: graphSpec 
-    };
-  }
-);
 
 export const flowSlice = createSlice({
   name: 'flow',
@@ -127,20 +80,6 @@ export const flowSlice = createSlice({
       });
       state.specification = generateSpecification(state.nodes, state.edges);
     },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(loadSpecification.fulfilled, (state, action) => {
-        state.nodes = action.payload.nodes;
-        state.edges = action.payload.edges;
-        state.specification = action.payload.specification;
-      })
-      .addCase(loadSpecification.rejected, (state, action) => {
-        console.error('Failed to load specification', action.error);
-        state.nodes = [];
-        state.edges = [];
-        state.specification = null;
-      });
   }
 });
 

@@ -31,7 +31,8 @@
     "react-toastify": "^11.0.5",
     "reactflow": "^11.11.4",
     "redux-persist": "^6.0.0",
-    "typed.js": "^2.1.0"
+    "typed.js": "^2.1.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
