@@ -2,16 +2,24 @@
 
 import React, { useState } from "react";
 import { Box, Typography, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
-import { Search, ChevronDown, Database, Workflow, Bot, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, ChevronDown, Database, Workflow, Bot, ChevronLeft, ChevronRight,  } from "lucide-react";
 import { useSelector } from "react-redux";
 import InputBox from '@/components/Common/InputBox';
+import { FileInput, ImageInput, VideoInput } from "lucide-react";
 
 export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideBar }) {
   const tools = useSelector((state) => state.studio.tools.data);
   const agents = useSelector((state) => state.studio.agents.data);
   const models = useSelector((state) => state.studio.models.data);
+  const inputNodes = useSelector((state) => state.studio.inputs.data);
+  const agentFlows = useSelector((state) => state.studio.agentFlows.data);
   
   const nodeTypes = [
+    {
+      title:"Inputs", 
+      icon: <FileInput size={18} />,
+      nodes: mapToNodes(inputNodes, "input")
+    },
     {
       title: "Agents",
       icon: <Database size={18} />,
@@ -26,6 +34,11 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
       title: "AI Models",
       icon: <Bot size={18} />,
       nodes: mapToNodes(models, "model")
+    },
+    {
+      title : "Agent Flows",
+      icon: <Workflow size={18} />,
+      nodes: mapToNodes(agentFlows, "agentFlows")
     }
   ];
   
@@ -33,7 +46,8 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
     return items.map((item, index) => ({
      ...item,
      key: `${prefix}-${index}`,
-     id: `${prefix}-${index}`
+     id: item.id,
+     //id: `${prefix}-${index}`
     }));
   }
   

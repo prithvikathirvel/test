@@ -1,3 +1,5 @@
+import inputNodes from "@/utils/dataModels";
+
 const initialRootState = {
   auth: {
     isAuthenticated: false,
@@ -5,8 +7,7 @@ const initialRootState = {
   },
   studio: {
     tools: {
-      data: [
-      ],
+      data: [],
       loading: false,
       error: null
     },
@@ -21,35 +22,12 @@ const initialRootState = {
       error: null
     },
     inputs: {
-      data: [{
-        "id": "input-001",
-        "name": "Text Input",
-        "type": "input",
-        "description": "Basic text input component",
-        "sections": [
-          {
-            "title": "Configuration",
-            "items": [
-              {
-                "id": "config-002",
-                "label": "Data Type",
-                "value": "string",
-                "type": "dataType"
-              },
-              {
-                "id": "config-003",
-                "label": "Required",
-                "value": true,
-                "type": "required"
-              }
-            ]
-          }
-        ],
-        "status": "active",
-        "version": "1.0.0",
-        "isPublic": true,
-        "createdBy": "Prithiv"
-      }],
+      data: inputNodes,
+      loading: false,
+      error: null
+    },
+    agentFlows: {
+      data: [],
       loading: false,
       error: null
     },

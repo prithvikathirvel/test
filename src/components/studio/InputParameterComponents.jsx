@@ -8,10 +8,10 @@ import DashedBox from '@/components/Common/DashedBox';
 
 
 const UploadArea = ({ onUpload, paramKey }) => (
-  <DashedBox 
+  <DashedBox
     className="p-4 border-2 hover:bg-gray-100 transition-all cursor-pointer flex flex-col items-center justify-center"
   >
-    <Box 
+    <Box
       onClick={() => document.getElementById(`file-upload-${paramKey}`).click()}
       className="w-full h-full flex flex-col items-center"
     >
@@ -46,16 +46,16 @@ const FilePreview = ({ file, fileId, onRemove }) => (
         </Box>
       </Box>
       <Box className="flex space-x-1">
-        <Chip 
-          icon={<Check size={14} />} 
-          label="Uploaded" 
-          size="small" 
+        <Chip
+          icon={<Check size={14} />}
+          label="Uploaded"
+          size="small"
           className="bg-green-100 text-green-700 mr-2"
         />
-        <Button 
-          variant="text" 
-          color="error" 
-          size="small" 
+        <Button
+          variant="text"
+          color="error"
+          size="small"
           onClick={onRemove}
           className="min-w-0 p-1"
         >
@@ -66,8 +66,8 @@ const FilePreview = ({ file, fileId, onRemove }) => (
   </Paper>
 );
 
-const ParameterHeader = ({ title, icon, description}) => (
-  <Box className="flex items-center gap-2">
+const ParameterHeader = ({ title, icon, description }) => (
+  <Box className="flex items-center gap-2 mb-2">
     {icon}
     <Typography variant="subtitle2" className="font-medium">
       {convertToTitleCase(title)}
@@ -83,20 +83,20 @@ const ParameterHeader = ({ title, icon, description}) => (
 );
 
 const ObjectParameterHeader = ({ title, description }) => (
-  <ParameterHeader 
+  <ParameterHeader
     title={title}
     icon={<Code size={18} />}
     description={description}
   />
 );
 
-const KeyValueInput = ({ 
-  newKey, 
-  newValue, 
-  onKeyChange, 
-  onValueChange, 
-  onAdd, 
-  color, 
+const KeyValueInput = ({
+  newKey,
+  newValue,
+  onKeyChange,
+  onValueChange,
+  onAdd,
+  color,
   onKeyPress,
   disabled = false
 }) => (
@@ -128,291 +128,214 @@ const KeyValueInput = ({
       onClick={onAdd}
       disabled={!newKey || !newValue}
     >
-      <Plus size={15} color="white"/>
+      <Plus size={15} color="white" />
     </Button>
   </Box>
 );
 
-export const StringParameter = ({ param, color }) => {
-  const [value, setValue] = useState(param.value || '');
+const StringParameter = ({ param = {}, color, onUpdate }) => {
 
-  return (
-    <InputBox 
-      placeholder={`Enter ${param.key}`} 
-      className="mb-4"
-      icon={""}
-      color={color}
-      value={param.value}
-      label={param.key}
-      isShowLabel={true}
-      onChange={(e) => setValue(e)}
-    />
-  );
-};
-
-export const FileParameter = ({ param }) => {
-  const [file, setFile] = useState(null);
-  const [fileId, setFileId] = useState(param.value || '');
-  
-  const handleFileChange = (event) => {
-    if (event.target.files && event.target.files[0]) {
-      setFile(event.target.files[0]);
-      setFileId('file_' + Math.random().toString(36).substring(2, 10));
-    }
-  };
-
-  return (
-    <Box className="mb-2">
-      <ParameterHeader title={param.key} icon={<FileText size={18} />} description={param.description} />
-      
-      {!file ? (
-        <UploadArea onUpload={handleFileChange} paramKey={param.key} />
-      ) : (
-        <FilePreview 
-          file={file} 
-          fileId={fileId} 
-          onRemove={() => {
-            setFile(null);
-            setFileId('');
-          }}
-        />
-      )}
-    </Box>
-  );
-};
-
-export const NumberParameter = ({ param, color }) => {
-  const [value, setValue] = useState(param.value || '');
-
-  const handleSearch = (newValue) => {
-    const numValue = Number(newValue);
-    if (!isNaN(numValue)) {
-      setValue(numValue);
+  const handleChange = (value) => {
+    if (onUpdate) {
+      onUpdate({ ...param, value });
     }
   };
 
   return (
     <Box className="w-full">
-      <ParameterHeader 
-        title={param.key}
-        icon={<Code size={16} color={color} />}
-        color={color}
-      />
+
       <InputBox
         placeholder={`Enter ${param.key}`}
-        className="bg-white"
+        className="mb-4"
         icon={""}
         color={color}
-        value={String(value)}
-        isShowLabel={false}
-        onChange={handleSearch}
-        type="number"
+        value={param.value}
+        label={param.key}
+        isShowLabel={true}
+        onChange={() => handleChange}
       />
     </Box>
   );
 };
 
-export const BooleanParameter = ({ param, color }) => {
-  const [value, setValue] = useState(param.value === 'true' || param.value === true);
+const NumberParameter = ({ param = {}, color, onUpdate }) => {
+  const handleChange = (value) => {
+    if (onUpdate) {
+      onUpdate({ ...param, value: Number(value) });
+    }
+  };
 
   return (
-    <Box className="mb-2">
-      <ParameterHeader 
-        title={param.key}
-        icon={<Code size={16} color={color} />}
-        color={color}
+    <Box className="w-full">
+      <ParameterHeader
+        title={param.name}
+        description={param.description}
+        icon={<Code size={16} />}
       />
-      <Box className="flex space-x-2">
-        <Button
-          variant={value ? "contained" : "outlined"}
-          color="primary"
-          onClick={() => setValue(true)}
-          className={`rounded-lg ${value ? 'bg-blue-500' : 'border-blue-500 text-blue-500'}`}
-        >
-          Yes
-        </Button>
-        <Button
-          variant={!value ? "contained" : "outlined"}
-          color="primary"
-          onClick={() => setValue(false)}
-          className={`rounded-lg ${!value ? 'bg-blue-500' : 'border-blue-500 text-blue-500'}`}
-        >
-          No
-        </Button>
+      <Box className="w-full">
+
+        <InputBox
+          type="number"
+          placeholder={`Enter ${param.key}`}
+          className="mb-4"
+          icon={""}
+          color={color}
+          value={param.value}
+          label={param.key}
+          isShowLabel={true}
+          onChange={() => handleChange}
+        />
       </Box>
     </Box>
   );
 };
 
-export const ObjectParameter = ({ param, color = "#4f46e5", isAddNew = true, initialValues = { a: 1, b: true }, onChange }) => {
-  const [objectValues, setObjectValues] = useState(param.value || initialValues);
-  const [newKey, setNewKey] = useState("");
-  const [newValue, setNewValue] = useState("");
-  const [error, setError] = useState(null);
-
-  const handleValueChange = (key, value) => {
-    const updatedValues = { ...objectValues, [key]: value };
-    setObjectValues(updatedValues);
-    if (onChange) onChange(updatedValues);
-  };
-
-  const handleAddNewField = () => {
-    if (!newKey.trim()) {
-      setError("Key cannot be empty");
-      return;
-    }
-
-    if (objectValues.hasOwnProperty(newKey)) {
-      setError("Key already exists");
-      return;
-    }
-
-    let processedValue = newValue;
-    if (!isNaN(Number(newValue)) && newValue.trim() !== "") {
-      processedValue = Number(newValue);
-    } else if (newValue.toLowerCase() === "true") {
-      processedValue = true;
-    } else if (newValue.toLowerCase() === "false") {
-      processedValue = false;
-    }
-
-    handleValueChange(newKey, processedValue);
-    setNewKey("");
-    setNewValue("");
-    setError(null);
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter" && newKey && newValue) {
-      handleAddNewField();
+const BooleanParameter = ({ param = {}, color, onUpdate }) => {
+  const handleChange = (event) => {
+    if (onUpdate) {
+      onUpdate({ ...param, value: event.target.checked });
     }
   };
-
-  const renderKeyValuePair = (key, value) => (
-    <Box key={key} className="grid grid-cols-[1fr_1fr_auto] gap-4 items-center mb-3">
-      <InputBox
-        value={key}
-        isShowLabel={false}
-        className="bg-white"
-        height="30px"
-        disabled={true}
-        icon=''
-        color={color}
-      />
-      {typeof value === "boolean" ? (
-        <Box className="flex items-center gap-2">
-          <Switch 
-            checked={value} 
-            onChange={(e) => handleValueChange(key, e.target.checked)} 
-            color="primary" 
-          />
-          <Typography variant="body2">{value ? "True" : "False"}</Typography>
-        </Box>
-      ) : (
-        <InputBox
-          value={String(value)}
-          isShowLabel={false}
-          className="bg-white"
-          color={color}
-          height="30px"
-          onChange={(newValue) => {
-            const processedValue = typeof objectValues[key] === "number" && !isNaN(Number(newValue)) 
-              ? Number(newValue) 
-              : newValue;
-            handleValueChange(key, processedValue);
-          }}
-          icon=''
-        />
-      )}
-      <IconButton 
-        onClick={() => {
-          const newValues = { ...objectValues };
-          delete newValues[key];
-          setObjectValues(newValues);
-          if (onChange) onChange(newValues);
-        }} 
-        size="small" 
-        className="text-gray-500 hover:text-red-500"
-      >
-        <Trash2 size={16} />
-      </IconButton>
-    </Box>
-  );
 
   return (
-    <Box className="space-y-3">
-      <ObjectParameterHeader 
+    <Box className="w-full">
+      <Box className="flex items-center justify-between">
+        <ParameterHeader
+          title={param.name}
+          description={param.description}
+          icon={<Code size={16} />}
+        />
+        <Switch
+          checked={param.value || false}
+          onChange={handleChange}
+          sx={{
+            '& .MuiSwitch-switchBase.Mui-checked': {
+              color: color,
+              '&:hover': { backgroundColor: `${color}14` },
+            },
+            '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+              backgroundColor: color,
+            },
+          }}
+        />
+      </Box>
+    </Box>
+  );
+};
+
+const ObjectParameter = ({ param = {}, color, onUpdate }) => {
+  const [objectValue, setObjectValue] = useState(param.value || {});
+
+  const handleChange = (newValue) => {
+    setObjectValue(newValue);
+    if (onUpdate) {
+      onUpdate({ ...param, value: newValue });
+    }
+  };
+
+  return (
+    <Box className="w-full">
+      <ParameterHeader
         title={param.key}
         description={param.description}
+        icon={<Code size={16} />}
       />
-
-      <DashedBox className="!p-4">
-        <Box className="grid grid-cols-[1fr_1fr_auto] gap-4 mb-3 px-1">
-          <Typography variant="caption" className="font-medium text-gray-500">Key</Typography>
-          <Typography variant="caption" className="font-medium text-gray-500">Value</Typography>
-          <Box />
-        </Box>
-
-        <Box className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-          {Object.entries(objectValues).length === 0 ? (
-            <Box className="text-center py-4 text-sm text-gray-500">
-              No properties defined. Add a new key-value pair below.
-            </Box>
-          ) : (
-            Object.entries(objectValues).map(([key, value]) => renderKeyValuePair(key, value))
-          )}
-        </Box>
-
-        {isAddNew && (
-          <Box className="pt-2">
-            <Divider />
-            <Box className={`grid gap-4 mt-4 ${error ? "mb-1" : "mb-3"}`}>
-              <KeyValueInput 
-                newKey={newKey}
-                newValue={newValue}
-                onKeyChange={(value) => {
-                  setNewKey(value);
-                  setError(null);
-                }}
-                onValueChange={setNewValue}
-                onAdd={handleAddNewField}
-                color={color}
-                onKeyPress={handleKeyPress}
-              />
-            </Box>
-            {error && (
-              <Box className="flex items-center gap-2 text-red-500 text-sm mt-2 bg-red-50 p-2 rounded-md border border-red-200">
-                <X size={14} />
-                <Typography variant="caption" className="text-red-600 font-medium">
-                  {error}
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        )}
+      <DashedBox className="mt-2 p-4">
+        {/* Object parameter editing UI */}
+        <pre className="text-sm">{JSON.stringify(objectValue, null, 2)}</pre>
       </DashedBox>
     </Box>
   );
 };
 
-export const getParameterComponent = (param, color) => {
+const FileParameter = ({ param = {}, onUpdate }) => {
+  const [file, setFile] = useState(null);
+  const [fileId, setFileId] = useState(param.value || '');
+
+  const handleFileChange = (event) => {
+    if (event.target.files && event.target.files[0]) {
+      const selectedFile = event.target.files[0];
+
+      const reader = new FileReader();
+
+      reader.readAsDataURL(selectedFile);
+      setFile(selectedFile);
+      reader.onload = async () => {
+        const base64Data = reader.result;
+        const fileContent = base64Data.split(',')[1];
+        console.log('Base64 content:', fileContent);
+        
+        const newFileId = 'file_' + Math.random().toString(36).substring(2, 10);
+        setFileId(newFileId);
+
+        if (onUpdate) {
+          console.log('File parameter updated:', param);  
+          onUpdate({
+            ...param,
+            value: {
+              name: selectedFile.name,
+              type: selectedFile.type,
+              size: selectedFile.size,
+              content: fileContent,
+              id: newFileId
+            }
+          });
+        }
+      };
+    }
+  };
+
+
+  return (
+    <Box className="mb-2">
+      <ParameterHeader
+        title={param.key}
+        icon={<FileText size={18} />}
+        description={param.description}
+      />
+
+      {!file ? (
+        <UploadArea
+          onUpload={handleFileChange}
+          paramKey={param.name}
+        />
+      ) : (
+        <FilePreview
+          file={file}
+          fileId={fileId}
+          onRemove={() => {
+            setFile(null);
+            setFileId('');
+            if (onUpdate) {
+              onUpdate({ ...param, value: null });
+            }
+          }}
+        />
+      )}
+    </Box>
+  );
+};
+
+export const getParameterComponent = (param, color, onUpdate) => {
+  const props = { param, color, onUpdate };
+
+  if (!param) {
+    console.warn('Undefined parameter passed to getParameterComponent');
+    return null;
+  }
+
   switch (param.type?.toLowerCase()) {
     case 'string':
-    case 'text':
-      return <StringParameter param={param} color={color} />;
-    case 'file':
-    case 'upload':
-      return <FileParameter param={param} color={color} />;
+      return <StringParameter {...props} />;
     case 'number':
-    case 'integer':
-    case 'float':
-      return <NumberParameter param={param} color={color} />;
+      return <NumberParameter {...props} />;
     case 'boolean':
-    case 'bool':
-      return <BooleanParameter param={param} color={color} />;
+      return <BooleanParameter {...props} />;
     case 'object':
-      return <ObjectParameter param={param} color={color} />;
+      return <ObjectParameter {...props} />;
+    case 'file':
+      return <FileParameter {...props} />;
     default:
-      return <StringParameter param={param} color={color} />;
+      return <StringParameter {...props} />;
   }
 };

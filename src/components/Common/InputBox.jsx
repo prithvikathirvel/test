@@ -23,7 +23,7 @@ const InputBox = ({
 }) => {
   const [inputValue, setInputValue] = useState(value);
 
-  const handleSearchChange = (event) => {
+  const handleChange = (event) => {
     const value = event.target.value;
     setInputValue(value);
     if (onChange) {
@@ -53,7 +53,7 @@ const InputBox = ({
           disabled={disabled}
           placeholder={placeholder}
           value={inputValue}
-          onChange={handleSearchChange}
+          onChange={handleChange}
           className="flex-1"
           type={type}
           sx={{

@@ -31,14 +31,16 @@ export const fetchModels = createAsyncThunk('studio/fetchModels', async () => {
   }
 });
 
-export const fetchInputs = createAsyncThunk('studio/fetchInputs', async () => {
+export const fetchDeployedNodes = createAsyncThunk('studio/agentFlows', async () => {
   try {
-    const response = await APIKit.get(`/inputs`);
+    const response = await APIKit.get(`/agent-flows`);
     return response.data;
   } catch (error) {
     throw error;
   }
 });
+
+
 
 const studioSlice = createSlice({
   name: "studio",
@@ -69,7 +71,7 @@ const studioSlice = createSlice({
       })
       .addCase(fetchTools.fulfilled, (state, action) => {
         state.tools.loading = false;
-        state.tools.data = action.payload;
+        state.tools.data = [{...action.payload[0],id:action.payload[0]._id}];
         state.tools.error = null;
       })
       .addCase(fetchTools.rejected, (state, action) => {
@@ -84,7 +86,7 @@ const studioSlice = createSlice({
       })
       .addCase(fetchAgents.fulfilled, (state, action) => {
         state.agents.loading = false;
-        state.agents.data = action.payload;
+        state.agents.data = [{...action.payload[0],id:action.payload[0]._id}];
         state.agents.error = null;
       })
       .addCase(fetchAgents.rejected, (state, action) => {
@@ -99,7 +101,7 @@ const studioSlice = createSlice({
       })
       .addCase(fetchModels.fulfilled, (state, action) => {
         state.models.loading = false;
-        state.models.data = action.payload;
+        state.models.data = [{...action.payload[0],id:action.payload[0]._id}];
         state.models.error = null;
       })
       .addCase(fetchModels.rejected, (state, action) => {
@@ -108,19 +110,20 @@ const studioSlice = createSlice({
       });
 
     builder
-      .addCase(fetchInputs.pending, (state) => {
-        state.inputs.loading = true;
-        state.inputs.error = null;
+      .addCase(fetchDeployedNodes.pending, (state) => {
+        state.agentFlows.loading = true;
+        state.agentFlows.error = null;
       })
-      .addCase(fetchInputs.fulfilled, (state, action) => {
-        state.inputs.loading = false;
-        state.inputs.data = action.payload;
-        state.inputs.error = null;
+      .addCase(fetchDeployedNodes.fulfilled, (state, action) => {
+        state.agentFlows.loading = false;
+        state.agentFlows.data = [{...action.payload[0],type:"agentFlow",id:action.payload[0]._id}];
+        state.agentFlows.error = null;
       })
-      .addCase(fetchInputs.rejected, (state, action) => {
-        state.inputs.loading = false;
-        state.inputs.error = action.error.message;
+      .addCase(fetchDeployedNodes.rejected, (state, action) => {
+        state.agentFlows.loading = false;
+        state.agentFlows.error = action.error.message;
       });
+ 
   }
 });
 

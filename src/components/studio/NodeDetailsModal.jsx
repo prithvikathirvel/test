@@ -32,7 +32,6 @@ import { getParameterComponent } from './InputParameterComponents';
 import DashedBox from '@/components/Common/DashedBox';
 import CustomAccordion from '@/components/Common/CustomAccordion';
 import OutputParameterComponents from './OutputParameterComponents';
-import { deleteNode } from '@/redux/slices/flowSlice';
 
 const InfoItem = ({ label, value, icon }) => (
   <Box key={label} className="flex justify-between">
@@ -79,7 +78,7 @@ const TagsSection = ({ tags, color }) => (
 const ModalHeader = ({ title, type, color, onClose, onDelete }) => (
   <Box className="p-3 text-black flex items-center justify-between">
     <BotIcon color={color} size={25} />
-    <Box className="flex gap-4 justify-between min-w-80 items-center">
+    <Box className="flex gap-4 justify-between min-w-70 items-center">
       <Typography className="font-bold">{title || 'Undefined Node'}</Typography>
       <Chip 
         label={convertToTitleCase(type)} 
@@ -88,10 +87,9 @@ const ModalHeader = ({ title, type, color, onClose, onDelete }) => (
         sx={{ color: '#f5f5f7', ml: 2 ,backgroundColor: color}} 
       />
     </Box>
-    <Box className="flex items-center">
+    <Box className="flex items-center gap-1">
       <Tooltip title="Edit Node">
         <IconButton 
-          sx={{ mr: 1 }}
           aria-label="Edit Node"
         >
           <EditIcon size={18} />
@@ -101,27 +99,25 @@ const ModalHeader = ({ title, type, color, onClose, onDelete }) => (
         <IconButton 
           onClick={onDelete} 
           color="error"
-          sx={{ mr: 1 }}
           aria-label="Delete Node"
         >
           <DeleteIcon size={18} />
         </IconButton>
       </Tooltip>
-      <IconButton 
-        onClick={onClose} 
-        sx={{ 
-          color: 'black', 
-          '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.2)' } 
-        }}
-        aria-label="Close"
-      >
-        <CloseIcon />
-      </IconButton>
+      <Tooltip title="Close">
+        <IconButton 
+          onClick={onClose} 
+          aria-label="Close"
+          sx={{ color: 'black' }}
+        >
+          <CloseIcon size={18} />
+        </IconButton>
+      </Tooltip>
     </Box>
   </Box>
 );
 
-const InputParameterRenderer = ({ parameters, title, icon, color, loading, disabled }) => (
+const InputParameterRenderer = ({ parameters, title, icon, color, loading, disabled, onUpdate }) => (
   <CustomAccordion 
     title={title} 
     icon={icon}
@@ -152,7 +148,7 @@ const InputParameterRenderer = ({ parameters, title, icon, color, loading, disab
       <Stack spacing={2}>
         {parameters.map((param, index) => (
           <Box key={index}>
-            {getParameterComponent(param, color)}
+            {getParameterComponent(param, color, onUpdate)}
           </Box>
         ))}
       </Stack>
@@ -225,8 +221,27 @@ const BasicInformationSection = ({ description, items, tags, loading, disabled, 
   </CustomAccordion>
 );
 
-const NodeDetailsModal = ({ node, open, onClose, loading, disabled, onDeleteNode }) => {
+const NodeDetailsModal = ({ 
+  open, 
+  onClose, 
+  node,
+  onDelete,
+  onUpdateParameters,
+  disabled,
+  loading,
+  sections = {
+    displayBasicInformation: true,
+    displayInputParameters: true,
+    displayOutputParameters: true
+  }
+}) => {
   const dispatch = useDispatch();
+
+  const { 
+    displayBasicInformation,
+    displayInputParameters,
+    displayOutputParameters, 
+  } = sections;
   
   if (!node) return null;
 
@@ -244,30 +259,13 @@ const NodeDetailsModal = ({ node, open, onClose, loading, disabled, onDeleteNode
   } = data;
 
   const nodeColor = getNodeColor(type);
-
+  
   const basicInfo = [
     { label: 'Created By', value: createdBy, icon: <PersonIcon size={20} /> },
     { label: 'Version', value: version, icon: <SettingsIcon size={20} /> },
     { label: 'Public', value: isPublic ? 'Yes' : 'No', icon: <PublicIcon size={20} /> },
     { label: 'Status', value: status ? 'Active' : 'Inactive', icon: <CodeIcon size={20} /> },
   ];
-
-  // Function to handle delete node
-  const handleDeleteNode = () => {
-    // Delete the node from reactflow
-    if (node && node.id) {
-      console.log(node.id,'node id')
-      // Dispatch action to remove the node from the flow
-      dispatch(deleteNode(node.id));
-      
-      // Also notify parent component to update ReactFlow state
-      if (onDeleteNode) {
-        onDeleteNode(node.id);
-      }
-      
-      onClose(); // Close the modal after deleting
-    }
-  };
 
   return (
     <Drawer
@@ -285,45 +283,47 @@ const NodeDetailsModal = ({ node, open, onClose, loading, disabled, onDeleteNode
         type={type}
         color={nodeColor}
         onClose={onClose}
-        onDelete={handleDeleteNode}
+        onDelete={() => onDelete(node)}
       />
 
       <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
-        <BasicInformationSection 
-          description={description}
-          items={basicInfo}
-          tags={tags}
-          loading={loading}
-          disabled={disabled}
-          color={nodeColor}
-        />
-        <Divider sx={{ my: 2 }} />
-        <InputParameterRenderer 
-          parameters={inputParameters} 
-          title="Input Parameters" 
-          icon={<InputIcon size={20} />} 
+        {displayBasicInformation && (
+         <>
+          <BasicInformationSection 
+            description={description}
+            items={basicInfo}
+            tags={tags}
+            loading={loading}
+            disabled={disabled}
+            color={nodeColor}
+          />
+          <Divider sx={{ my: 2 }} />
+          </>
+        )}
+        {displayInputParameters && (
+         <>
+          <InputParameterRenderer 
+            parameters={inputParameters} 
+            title="Input Parameters" 
+            icon={<InputIcon size={20} />} 
           color={nodeColor} 
           loading={loading}
           disabled={disabled}
+          onUpdate={(updatedParams) => onUpdateParameters(node.id, updatedParams)}
         />
         <Divider sx={{ my: 2 }} />
-        {/* <InputParameterRenderer 
+        </>
+        )}
+        {displayOutputParameters && (
+          <OutputParameterRenderer 
           parameters={outputParameters} 
           title="Output Parameters" 
           icon={<OutputIcon size={20} />} 
           color={nodeColor} 
           loading={loading}
           disabled={disabled}
-        /> */}
-
-        <OutputParameterRenderer 
-          parameters={outputParameters} 
-          title="Output Parameters" 
-          icon={<OutputIcon size={20} />} 
-          color={nodeColor} 
-          loading={loading}
-          disabled={disabled}
         />
+        )}
       </Box>
     </Drawer>
   );
