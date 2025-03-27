@@ -40,6 +40,17 @@ export const fetchDeployedNodes = createAsyncThunk('studio/agentFlows', async ()
   }
 });
 
+export const saveFlow = createAsyncThunk('studio/saveFlow', async (data) => {
+  try {
+    const response = await APIKit.post(`/agent-flow`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+});
+
+
+
 
 
 const studioSlice = createSlice({
@@ -122,6 +133,20 @@ const studioSlice = createSlice({
       .addCase(fetchDeployedNodes.rejected, (state, action) => {
         state.agentFlows.loading = false;
         state.agentFlows.error = action.error.message;
+      });
+
+    builder
+      .addCase(saveFlow.pending, (state) => {
+        state.saveFlow.loading = true;
+        state.saveFlow.error = null;
+      })
+      .addCase(saveFlow.fulfilled, (state, action) => {
+        state.saveFlow.loading = false;
+        state.saveFlow.error = null;
+      })
+      .addCase(saveFlow.rejected, (state, action) => {
+        state.saveFlow.loading = false;
+        state.saveFlow.error = action.error.message;
       });
  
   }

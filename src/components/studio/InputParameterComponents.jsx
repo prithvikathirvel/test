@@ -133,11 +133,15 @@ const KeyValueInput = ({
   </Box>
 );
 
-const StringParameter = ({ param = {}, color, onUpdate }) => {
+const StringParameter = ({ param = {}, color, onUpdate, parameters }) => {
 
   const handleChange = (value) => {
     if (onUpdate) {
-      onUpdate({ ...param, value });
+      // Create a new set of parameters with the updated value
+      const updatedParams = parameters.map(p => 
+        p.key === param.key ? { ...p, value } : p
+      );
+      onUpdate(updatedParams);
     }
   };
 
@@ -152,16 +156,20 @@ const StringParameter = ({ param = {}, color, onUpdate }) => {
         value={param.value}
         label={param.key}
         isShowLabel={true}
-        onChange={() => handleChange}
+        onChange={handleChange}
       />
     </Box>
   );
 };
 
-const NumberParameter = ({ param = {}, color, onUpdate }) => {
+const NumberParameter = ({ param = {}, color, onUpdate, parameters }) => {
   const handleChange = (value) => {
     if (onUpdate) {
-      onUpdate({ ...param, value: Number(value) });
+      // Create a new set of parameters with the updated value
+      const updatedParams = parameters.map(p => 
+        p.key === param.key ? { ...p, value } : p
+      );
+      onUpdate(updatedParams);
     }
   };
 
@@ -190,10 +198,14 @@ const NumberParameter = ({ param = {}, color, onUpdate }) => {
   );
 };
 
-const BooleanParameter = ({ param = {}, color, onUpdate }) => {
+const BooleanParameter = ({ param = {}, color, onUpdate, parameters }) => {
   const handleChange = (event) => {
     if (onUpdate) {
-      onUpdate({ ...param, value: event.target.checked });
+      // Create a new set of parameters with the updated value
+      const updatedParams = parameters.map(p => 
+        p.key === param.key ? { ...p, value: event.target.checked } : p
+      );
+      onUpdate(updatedParams);
     }
   };
 
@@ -223,13 +235,16 @@ const BooleanParameter = ({ param = {}, color, onUpdate }) => {
   );
 };
 
-const ObjectParameter = ({ param = {}, color, onUpdate }) => {
+const ObjectParameter = ({ param = {}, onUpdate, parameters }) => {
   const [objectValue, setObjectValue] = useState(param.value || {});
 
   const handleChange = (newValue) => {
     setObjectValue(newValue);
     if (onUpdate) {
-      onUpdate({ ...param, value: newValue });
+      const updatedParams = parameters.map(p => 
+        p.key === param.key ? { ...p, value: newValue } : p
+      );
+      onUpdate(updatedParams);
     }
   };
 
@@ -248,7 +263,7 @@ const ObjectParameter = ({ param = {}, color, onUpdate }) => {
   );
 };
 
-const FileParameter = ({ param = {}, onUpdate }) => {
+const FileParameter = ({ param = {}, onUpdate, parameters }) => {
   const [file, setFile] = useState(null);
   const [fileId, setFileId] = useState(param.value || '');
 
@@ -271,15 +286,7 @@ const FileParameter = ({ param = {}, onUpdate }) => {
         if (onUpdate) {
           console.log('File parameter updated:', param);  
           onUpdate({
-            ...param,
-            value: {
-              name: selectedFile.name,
-              type: selectedFile.type,
-              size: selectedFile.size,
-              content: fileContent,
-              id: newFileId
-            }
-          });
+        });
         }
       };
     }
@@ -316,8 +323,8 @@ const FileParameter = ({ param = {}, onUpdate }) => {
   );
 };
 
-export const getParameterComponent = (param, color, onUpdate) => {
-  const props = { param, color, onUpdate };
+export const getParameterComponent = (param, color, onUpdate, parameters) => {
+  const props = { param, color, onUpdate, parameters };
 
   if (!param) {
     console.warn('Undefined parameter passed to getParameterComponent');

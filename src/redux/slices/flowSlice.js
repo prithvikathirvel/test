@@ -21,6 +21,15 @@ export const getFlowById = createAsyncThunk('flow/getFlowById', async (data) => 
   }
 });
 
+export const updateFlow = createAsyncThunk('studio/updateFlow', async (data) => {
+  try {
+    const response = await APIKit.put(`/agent-flow/${data.id}`, data);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+});
+
 
 export const flowSlice = createSlice({
   name: 'flow',
@@ -34,7 +43,12 @@ export const flowSlice = createSlice({
           next: existingNode?.next || newNode.next || []
         };
       });
-      state.specification = generateSpecification(state.nodes, state.edges);
+      if (Array.isArray(state.nodes) && Array.isArray(state.edges)) {
+        state.specification = generateSpecification(state.nodes, state.edges);
+      } else {
+        console.error("Nodes or edges are not properly initialized.");
+        state.specification = {};
+      }
     },
     setEdges: (state, action) => {
       state.edges = action.payload;
@@ -106,11 +120,30 @@ export const flowSlice = createSlice({
       state.loading = false;
       // state.error = action.error;
     });
+
+    builder.addCase(updateFlow.fulfilled, (state, action) => {
+      state.data = action.payload;
+      state.loading = false;
+      state.error = null;
+    });
+    builder.addCase(updateFlow.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(updateFlow.rejected, (state, action) => {
+      state.loading = false;
+      // state.error = action.error;
+    });
   }
 });
 
 const generateSpecification = (nodes, edges) => {
   if (!nodes.length) return null;
+
+  if (!Array.isArray(nodes) || !Array.isArray(edges)) {
+    console.error("Nodes or edges are not properly initialized.");
+    return {};
+  }
 
   const specification = {
     id: `flow-${Date.now()}`,

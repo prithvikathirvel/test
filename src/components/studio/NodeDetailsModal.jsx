@@ -10,6 +10,7 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  Button 
 } from '@mui/material';
 import {
   X as CloseIcon,
@@ -148,7 +149,7 @@ const InputParameterRenderer = ({ parameters, title, icon, color, loading, disab
       <Stack spacing={2}>
         {parameters.map((param, index) => (
           <Box key={index}>
-            {getParameterComponent(param, color, onUpdate)}
+            {getParameterComponent(param, color, onUpdate,parameters)}
           </Box>
         ))}
       </Stack>
@@ -236,6 +237,14 @@ const NodeDetailsModal = ({
   }
 }) => {
   const dispatch = useDispatch();
+
+  const handleSave = () => {
+    if (node) {
+      // Call the onUpdateParameters function to save changes
+      console.log('Saving parameters:',node.id, node.data.inputParameters);
+      onUpdateParameters(node.id, node.data.inputParameters);
+    }
+  };
 
   const { 
     displayBasicInformation,
@@ -334,6 +343,15 @@ const NodeDetailsModal = ({
       onUpdate={(updatedParams) => onUpdateParameters(node.id, updatedParams)}
     />
         )}
+
+      <Button 
+          variant="contained" 
+          color="primary" 
+          onClick={handleSave}
+          disabled={disabled}
+        >
+          Save
+        </Button>
       </Box>
     </Drawer>
   );

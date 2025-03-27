@@ -40,6 +40,10 @@ const initialRootState = {
       data: {},
       loading: false,
       error: null
+    },
+    saveFlow: {
+      loading: false,
+      error: null
     }
   }
 }

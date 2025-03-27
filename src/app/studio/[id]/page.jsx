@@ -32,15 +32,18 @@ function Studio() {
     const deployedFlows = useSelector(state => state.studio.agentFlows.data || []);
     const [outputModalOpen, setOutputModalOpen] = useState(false);
     const [isFlowRunning, setIsFlowRunning] = useState(false);
+    const [saveFlow, setSaveFlow] = useState(false);
     const params = useParams();
     const flowId = params.id;
     const flow = useSelector(state => state.flow.data);
     const loading = useSelector(state => state.flow.loading);
+    const spec = useSelector(state => state.flow.specification);
 
     console.log(flowId, 'id')
 
     // const flow = getFlowById(deployedFlows, flowId);
     console.log(flow, 'flow')
+    console.log(spec, 'specaaa')
 
     useEffect(() => {
         if (!loading && flow?.graphSpec?.nodes?.length > 0 && flow.graphSpec?.edges?.length > 0) {
@@ -251,9 +254,9 @@ function Studio() {
 
     const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters) => {
         console.log('Updating node parameters:', { nodeId, updatedParameters });
-        setNodesState((nodes) =>
-            nodes.map((node) => {
-                if (node.id === nodeId) {
+        setNodesState((nodes) => {
+            const updatedNodes = nodes.map((node) => {
+                if (node.node_id === nodeId || node.id === nodeId) {
                     return {
                         ...node,
                         data: {
@@ -263,9 +266,12 @@ function Studio() {
                     };
                 }
                 return node;
-            })
-        );
-
+            });
+            
+            console.log('Updated nodes:', updatedNodes); // Log the updated nodes here
+            return updatedNodes;
+        });
+    
         dispatch(updateSpecification());
     }, [setNodesState, dispatch]);
 
@@ -304,11 +310,10 @@ function Studio() {
                                 )}
 
 
-
                                 <Button
                                     variant="contained"
-                                    startIcon={isFlowRunning ? <CircularProgress size={16} /> : <Play size={16} />}
-                                    onClick={() => handleRunFlow(flowId)}
+                                    startIcon={isFlowRunning ? <CircularProgress size={16} /> : <Save size={16} />}
+                                    onClick={() => {setSaveFlow(true)}}
                                     disabled={isFlowRunning}
                                     sx={{
                                         backgroundColor: '#6c5ce7',
@@ -320,8 +325,29 @@ function Studio() {
                                         py: 0.75
                                     }}
                                 >
-                                    {isFlowRunning ? 'Running...' : 'Run Flow'}
+                                    {saveFlow ? 'Saving Flow...' : 'Save Flow'}
                                 </Button>
+
+
+                    { saveFlow &&
+                                <Button
+                                variant="contained"
+                                startIcon={isFlowRunning ? <CircularProgress size={16} /> : <Play size={16} />}
+                                onClick={() => handleRunFlow(flowId)}
+                                disabled={isFlowRunning}
+                                sx={{
+                                    backgroundColor: '#6c5ce7',
+                                    '&:hover': {
+                                        backgroundColor: '#5f50e3'
+                                    },
+                                    textTransform: 'none',
+                                    fontSize: '14px',
+                                    py: 0.75
+                                }}
+                            >
+                                {isFlowRunning ? 'Running...' : 'Run Flow'}
+                            </Button>
+}
 
                                 <Button
                                     variant="contained"
