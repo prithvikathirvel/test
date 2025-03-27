@@ -13,7 +13,7 @@ import { setNodes, setEdges, toggleViewMode, updateSpecification, deleteNode, up
 import SideDrawer from "@/components/Common/SideDrawer";
 import { fetchTools, fetchAgents, fetchModels, fetchDeployedNodes } from "@/redux/slices/studioSlice";
 import NodeDetailsModal from "@/components/studio/NodeDetailsModal";
-import { getFlowById } from "@/utils/commonFunction";
+import { getFlowById } from "@/redux/slices/flowSlice";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useParams } from 'next/navigation';
@@ -34,14 +34,16 @@ function Studio() {
     const [isFlowRunning, setIsFlowRunning] = useState(false);
     const params = useParams();
     const flowId = params.id;
+    const flow = useSelector(state => state.flow.data);
+    const loading = useSelector(state => state.flow.loading);
 
     console.log(flowId, 'id')
 
-    const flow = getFlowById(deployedFlows, flowId);
+    // const flow = getFlowById(deployedFlows, flowId);
     console.log(flow, 'flow')
 
     useEffect(() => {
-        if (flow) {
+        if (!loading && flow?.graphSpec?.nodes?.length > 0 && flow.graphSpec?.edges?.length > 0) {
             const nodeSpacing = { x: 300, y: 250 };
             const maxColumns = 4;
 
@@ -58,8 +60,8 @@ function Studio() {
                         name: node.name || "Unnamed Node",
                         type: node.type || "default",
                         description: node.description || "",
-                        input: node.input || {},
-                        output: node.output || [],
+                        inputParameters: node.inputParameters || [],
+                        outputParameters: node.outputParameters || [],
                         next: node.next || [],
                     },
                     position: {
@@ -88,6 +90,8 @@ function Studio() {
                 .filter(Boolean);
 
             setEdgesState(uniqueEdges);
+
+            console.log(nodesWithPositions, uniqueEdges, 'nodes and edges')
         }
     }, [flow]);
 
@@ -100,6 +104,7 @@ function Studio() {
         dispatch(fetchModels());
         dispatch(fetchAgents());
         dispatch(fetchDeployedNodes());
+        dispatch(getFlowById({ id: flowId }));
     }, [dispatch]);
 
     useEffect(() => {
@@ -219,16 +224,8 @@ function Studio() {
 
     const onNodeClick = (event, node) => {
 
-        const updatedNode = {
-            ...node,
-            data: {
-                ...node.data,
-                inputParameters: node.input || {},
-                outputParameters: node.output || {}
-            }
-        };
-        console.log('Node clicked:', updatedNode);
-        setSelectedNode(updatedNode);
+        console.log('Node clicked:', node);
+        setSelectedNode(node);
         setModalOpen(true);
     };
 

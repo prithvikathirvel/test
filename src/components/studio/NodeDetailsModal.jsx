@@ -315,14 +315,24 @@ const NodeDetailsModal = ({
         </>
         )}
         {displayOutputParameters && (
-          <OutputParameterRenderer 
-          parameters={outputParameters} 
-          title="Output Parameters" 
-          icon={<OutputIcon size={20} />} 
-          color={nodeColor} 
-          loading={loading}
-          disabled={disabled}
-        />
+        //   <OutputParameterRenderer 
+        //   parameters={outputParameters} 
+        //   title="Output Parameters" 
+        //   icon={<OutputIcon size={20} />} 
+        //   color={nodeColor} 
+        //   loading={loading}
+        //   disabled={disabled}
+        // />
+
+        <InputParameterRenderer 
+        parameters={outputParameters} 
+        title="Output Parameters" 
+        icon={<OutputIcon size={20} />} 
+      color={nodeColor} 
+      loading={loading}
+      disabled={disabled}
+      onUpdate={(updatedParams) => onUpdateParameters(node.id, updatedParams)}
+    />
         )}
       </Box>
     </Drawer>

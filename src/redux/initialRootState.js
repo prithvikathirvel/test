@@ -37,10 +37,7 @@ const initialRootState = {
       error: null
     },
     flow: {
-      nodes: [],
-      edges: [],
-      viewMode: 'graph',  
-      specification: null,
+      data: {},
       loading: false,
       error: null
     }

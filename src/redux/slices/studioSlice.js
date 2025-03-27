@@ -71,7 +71,7 @@ const studioSlice = createSlice({
       })
       .addCase(fetchTools.fulfilled, (state, action) => {
         state.tools.loading = false;
-        state.tools.data = [{...action.payload[0],id:action.payload[0]._id}];
+        state.tools.data = action.payload;
         state.tools.error = null;
       })
       .addCase(fetchTools.rejected, (state, action) => {
@@ -86,7 +86,7 @@ const studioSlice = createSlice({
       })
       .addCase(fetchAgents.fulfilled, (state, action) => {
         state.agents.loading = false;
-        state.agents.data = [{...action.payload[0],id:action.payload[0]._id}];
+        state.agents.data = action.payload;
         state.agents.error = null;
       })
       .addCase(fetchAgents.rejected, (state, action) => {
@@ -101,7 +101,7 @@ const studioSlice = createSlice({
       })
       .addCase(fetchModels.fulfilled, (state, action) => {
         state.models.loading = false;
-        state.models.data = [{...action.payload[0],id:action.payload[0]._id}];
+        state.models.data = action.payload;
         state.models.error = null;
       })
       .addCase(fetchModels.rejected, (state, action) => {
@@ -116,7 +116,7 @@ const studioSlice = createSlice({
       })
       .addCase(fetchDeployedNodes.fulfilled, (state, action) => {
         state.agentFlows.loading = false;
-        state.agentFlows.data = [{...action.payload[0],type:"agentFlow",id:action.payload[0]._id}];
+        state.agentFlows.data = action.payload;
         state.agentFlows.error = null;
       })
       .addCase(fetchDeployedNodes.rejected, (state, action) => {

@@ -93,9 +93,7 @@ const FileTypeIcon = ({ fileName }) => {
   return <File className="text-gray-500" />;
 };
 
-const getFlowById = (flows,flowId)=>{
-  return flows.find(flow=>flow.id===flowId)
-}
+
 
 export {
   showToaster,
@@ -104,6 +102,5 @@ export {
   convertToTitleCase, 
   getChipStyles,
   getNodeColor, 
-  FileTypeIcon,
-  getFlowById
+  FileTypeIcon
 }
