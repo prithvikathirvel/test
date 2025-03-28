@@ -38,6 +38,7 @@ function Studio() {
     const flow = useSelector(state => state.flow.data);
     const loading = useSelector(state => state.flow.loading);
     const spec = useSelector(state => state.flow.specification);
+    const columns = 4;
 
     console.log(flowId, 'id')
 
@@ -45,56 +46,60 @@ function Studio() {
     console.log(flow, 'flow')
     console.log(spec, 'specaaa')
 
-    useEffect(() => {
+        useEffect(() => {
         if (!loading && flow?.graphSpec?.nodes?.length > 0 && flow.graphSpec?.edges?.length > 0) {
-            const nodeSpacing = { x: 300, y: 250 };
-            const maxColumns = 4;
+            if (Array.isArray(flow.graphSpec.nodes) && Array.isArray(flow.graphSpec.edges)) {
+                const nodeSpacing = { x: 300, y: 250 };
+                const maxColumns = 4;
 
-            const nodesWithPositions = flow.graphSpec.nodes.map((node, index) => {
-                const column = index % maxColumns;
-                const row = Math.floor(index / maxColumns);
+                const nodesWithPositions = flow.graphSpec.nodes.map((node, index) => {
+                    const column = index % maxColumns;
+                    const row = Math.floor(index / maxColumns);
 
-                return {
-                    ...node,
-                    id: node.node_id,
-                    key: node.node_id,
-                    data: {
-                        label: node.name || "Unnamed Node",
-                        name: node.name || "Unnamed Node",
-                        type: node.type || "default",
-                        description: node.description || "",
-                        inputParameters: node.inputParameters || [],
-                        outputParameters: node.outputParameters || [],
-                        next: node.next || [],
-                    },
-                    position: {
-                        x: node.position?.x ?? column * nodeSpacing.x,
-                        y: node.position?.y ?? row * nodeSpacing.y,
-                    },
-                };
-            });
-
-            setNodesState(nodesWithPositions);
-
-            const edgeSet = new Set();
-            const uniqueEdges = flow.graphSpec.edges
-                .filter(edge => edge.from && edge.to)
-                .map((edge) => {
-                    const edgeId = `${edge.from}-${edge.to}`;
-                    if (edgeSet.has(edgeId)) return null;
-                    edgeSet.add(edgeId);
                     return {
-                        id: edgeId,
-                        source: edge.from,
-                        target: edge.to,
-                        animated: true,
+                        ...node,
+                        id: node.node_id,
+                        key: node.node_id,
+                        data: {
+                            label: node.name || "Unnamed Node",
+                            name: node.name || "Unnamed Node",
+                            type: node.type || "default",
+                            description: node.description || "",
+                            inputParameters: node.inputParameters || [],
+                            outputParameters: node.outputParameters || [],
+                            next: node.next || [],
+                        },
+                        position: {
+                            x: node.position?.x ?? column * nodeSpacing.x,
+                            y: node.position?.y ?? row * nodeSpacing.y,
+                        },
                     };
-                })
-                .filter(Boolean);
+                });
 
-            setEdgesState(uniqueEdges);
+                setNodesState(nodesWithPositions);
 
-            console.log(nodesWithPositions, uniqueEdges, 'nodes and edges')
+                const edgeSet = new Set();
+                const uniqueEdges = flow.graphSpec.edges
+                    .filter(edge => edge.from && edge.to)
+                    .map((edge) => {
+                        const edgeId = `${edge.from}-${edge.to}`;
+                        if (edgeSet.has(edgeId)) return null;
+                        edgeSet.add(edgeId);
+                        return {
+                            id: edgeId,
+                            source: edge.from,
+                            target: edge.to,
+                            animated: true,
+                        };
+                    })
+                    .filter(Boolean);
+
+                setEdgesState(uniqueEdges);
+
+                console.log(nodesWithPositions, uniqueEdges, 'nodes and edges')
+            } else {
+                console.error('Invalid graphSpec:', flow.graphSpec);
+            }
         }
     }, [flow]);
 
@@ -252,6 +257,11 @@ function Studio() {
         }
     };
 
+    const handleSaveFlow = () => {
+        setSaveFlow(false);
+        dispatch(saveFlow());
+    };
+
     const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters) => {
         console.log('Updating node parameters:', { nodeId, updatedParameters });
         setNodesState((nodes) => {
@@ -313,7 +323,7 @@ function Studio() {
                                 <Button
                                     variant="contained"
                                     startIcon={isFlowRunning ? <CircularProgress size={16} /> : <Save size={16} />}
-                                    onClick={() => {setSaveFlow(true)}}
+                                    onClick={() => handleSaveFlow()}
                                     disabled={isFlowRunning}
                                     sx={{
                                         backgroundColor: '#6c5ce7',

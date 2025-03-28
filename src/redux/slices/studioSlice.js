@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import initialRootState from "../initialRootState";
 import APIKit from "@/utils/APIKit";
+import { toast } from "react-toastify";
 
 const initialState = initialRootState.studio;
 
@@ -42,12 +43,18 @@ export const fetchDeployedNodes = createAsyncThunk('studio/agentFlows', async ()
 
 export const saveFlow = createAsyncThunk('studio/saveFlow', async (data) => {
   try {
+    console.log(data,'hey222');
     const response = await APIKit.post(`/agent-flow`, data);
+    console.log(response.data,'hey 334');
+    toast.success('Flow saved successfully');
     return response.data;
   } catch (error) {
+    toast.error('Failed to save flow');
     throw error;
   }
 });
+
+
 
 
 
@@ -142,12 +149,16 @@ const studioSlice = createSlice({
       })
       .addCase(saveFlow.fulfilled, (state, action) => {
         state.saveFlow.loading = false;
+        state.flow.data = action.payload;
+        state.flow.specification = action.payload;
         state.saveFlow.error = null;
       })
       .addCase(saveFlow.rejected, (state, action) => {
         state.saveFlow.loading = false;
         state.saveFlow.error = action.error.message;
       });
+
+   
  
   }
 });

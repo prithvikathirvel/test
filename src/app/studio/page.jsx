@@ -1,42 +1,50 @@
 "use client";
 
-import { useEffect } from "react";
-import { v4 as uuidv4 } from 'uuid';
+import { useEffect, useState } from "react";
 import {
   Box,
   Typography,
+  Button,
   Card,
   CardContent,
   CardActions,
-  Button,
-  Chip,
-  Grid,
   IconButton,
+  Grid,
 } from "@mui/material";
 import {
   Network,
-  Play,
   Plus,
-  Settings,
-  BarChart4,
-  Clock,
-  ChevronRight,
+  Play,
+  Edit,
+  Trash2,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 
 import { fetchDeployedNodes } from "@/redux/slices/studioSlice";
+import { saveFlow } from "@/redux/slices/studioSlice";
+import FlowDetailsModal from "@/components/studio/FlowDetailsModal";
+import { generateUUID } from '@/utils/commonFunction';
 
 const StudioListing = () => {
   const dispatch = useDispatch();
   const router = useRouter();
   const deployedFlows = useSelector((state) => state.studio.agentFlows.data || []);
+  const [flowDetailsModalOpen, setFlowDetailsModalOpen] = useState(false);
+  const flowId = useSelector((state) => state.studio.saveFlow.data?.data?.id);
 
   useEffect(() => {
     dispatch(fetchDeployedNodes());
   }, [dispatch]);
 
-  const handleOpenStudio = (flowId) =>{
+  useEffect(() => {
+    if (flowId) {
+      router.push(`/studio/${flowId}`);
+      setFlowDetailsModalOpen(false);
+    }
+  }, [flowId, router]);
+
+  const handleOpenStudio = (flowId) => {
     router.push(`/studio/${flowId}`);
   };
 
@@ -45,8 +53,25 @@ const StudioListing = () => {
   };
 
   const handleCreateStudio = () => {
-    const newFlowId = uuidv4();
-    router.push(`/studio/${newFlowId}`);
+    setFlowDetailsModalOpen(true);
+  };
+
+  const handleFlowDetailsSubmit = (details) => {
+    const initialSpec = {
+      name: details.name,
+      description: details.description,
+      type: 'flow',
+      graphSpec: {
+        nodes: [],
+        edges: [],
+      },
+      status: 'active',
+      version: '1.0.0',
+      isPublic: true, 
+      createdBy: "user"
+    };
+
+    dispatch(saveFlow(initialSpec));
   };
 
   return (
@@ -68,9 +93,9 @@ const StudioListing = () => {
 
       <Grid container spacing={4} className="mb-10">
         {[
-          { label: "Total Flows", value: deployedFlows.length, icon: <BarChart4 /> },
-          { label: "Active Runs", value: 0, icon: <Play /> },
-          { label: "Last Updated", value: "Just Now", icon: <Clock /> },
+          { label: "Total Flows", value: deployedFlows.length, icon: <Network size={20} /> },
+          { label: "Active Runs", value: 0, icon: <Play size={20} /> },
+          { label: "Last Updated", value: "Just Now", icon: <Edit size={20} /> },
         ].map((stat, index) => (
           <Grid item xs={12} sm={4} key={index}>
             <Card className="bg-white shadow-md hover:shadow-xl transition-all duration-300">
@@ -90,7 +115,6 @@ const StudioListing = () => {
         ))}
       </Grid>
 
-      {/* Flow Listing */}
       <Typography variant="h5" className="font-semibold mb-6 text-gray-700">
         Your Flows
       </Typography>
@@ -100,7 +124,6 @@ const StudioListing = () => {
           {deployedFlows.map((flow) => (
             <Grid item xs={12} sm={6} md={4} key={flow.id || flow.agent_id}>
               <Card className="h-full flex flex-col transition-transform duration-300 hover:scale-[1.03] border border-gray-200">
-                {/* <div className="h-2 bg-gradient-to-r from-blue-500 to-indigo-600"></div> */}
 
                 <CardContent className="flex-grow p-6">
                   <Typography variant="h6" className="mb-3 font-bold text-gray-800">
@@ -120,23 +143,29 @@ const StudioListing = () => {
                   /> */}
 
                   <div className="flex items-center text-gray-500 text-sm">
-                    <Clock size={14} className="mr-1" /> Updated 2 days ago
+                    <Edit size={14} className="mr-1" /> Updated 2 days ago
                   </div>
                 </CardContent>
 
-                <CardActions className="p-4 bg-gray-50 border-t border-gray-200 flex justify-between">
+                <CardActions className="flex justify-between">
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<Play size={16} />}
+                    onClick={() => handleRunFlow(flow)}
+                  >
+                    Run
+                  </Button>
                   <Button
                     variant="contained"
-                    className="bg-blue-600 hover:bg-blue-700"
-                    startIcon={<Network size={16} />}
-                    onClick={() => handleOpenStudio(flow.id || flow.agent_id)}
+                    size="small"
+                    onClick={() => handleOpenStudio(flow.id)}
                   >
                     Open Studio
                   </Button>
-
-                  {/* <IconButton onClick={() => handleRunFlow(flow)}>
-                    <Play size={24} className="text-emerald-600" />
-                  </IconButton> */}
+                  <IconButton size="small">
+                    <Trash2 size={16} />
+                  </IconButton>
                 </CardActions>
               </Card>
             </Grid>
@@ -160,6 +189,11 @@ const StudioListing = () => {
           </Button>
         </Box>
       )}
+      <FlowDetailsModal
+        open={flowDetailsModalOpen}
+        onClose={() => setFlowDetailsModalOpen(false)}
+        onSubmit={handleFlowDetailsSubmit}
+      />
     </Box>
   );
 };

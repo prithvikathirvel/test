@@ -1,6 +1,7 @@
 import { toast } from "react-toastify";
 import { lighten, darken } from '@mui/material/styles';
 import { File, Image, Video, AudioLines, FileText } from 'lucide-react';
+import { v4 as uuidv4 } from 'uuid';
 
 const showToaster = (type, message) => {
   switch (type) {
@@ -93,7 +94,10 @@ const FileTypeIcon = ({ fileName }) => {
   return <File className="text-gray-500" />;
 };
 
+const generateUUID = () => {
+  return uuidv4().replace(/-/g, '');
 
+}
 
 export {
   showToaster,
@@ -102,5 +106,6 @@ export {
   convertToTitleCase, 
   getChipStyles,
   getNodeColor, 
-  FileTypeIcon
+  FileTypeIcon, 
+  generateUUID
 }

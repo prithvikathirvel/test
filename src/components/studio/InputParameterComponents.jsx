@@ -147,16 +147,15 @@ const StringParameter = ({ param = {}, color, onUpdate, parameters }) => {
 
   return (
     <Box className="w-full">
-
       <InputBox
         placeholder={`Enter ${param.key}`}
         className="mb-4"
         icon={""}
         color={color}
-        value={param.value}
+        value={param.value || ''}
         label={param.key}
         isShowLabel={true}
-        onChange={handleChange}
+        onChange={()=> handleChange(param.value)}
       />
     </Box>
   );
@@ -167,7 +166,7 @@ const NumberParameter = ({ param = {}, color, onUpdate, parameters }) => {
     if (onUpdate) {
       // Create a new set of parameters with the updated value
       const updatedParams = parameters.map(p => 
-        p.key === param.key ? { ...p, value } : p
+        p.key === param.key ? { ...p, value: Number(value) } : p
       );
       onUpdate(updatedParams);
     }
@@ -181,17 +180,16 @@ const NumberParameter = ({ param = {}, color, onUpdate, parameters }) => {
         icon={<Code size={16} />}
       />
       <Box className="w-full">
-
         <InputBox
           type="number"
           placeholder={`Enter ${param.key}`}
           className="mb-4"
           icon={""}
           color={color}
-          value={param.value}
+          value={param.value || ''}
           label={param.key}
           isShowLabel={true}
-          onChange={() => handleChange}
+          onChange={handleChange}
         />
       </Box>
     </Box>

@@ -46,14 +46,15 @@ export const flowSlice = createSlice({
       if (Array.isArray(state.nodes) && Array.isArray(state.edges)) {
         state.specification = generateSpecification(state.nodes, state.edges);
       } else {
-        console.error("Nodes or edges are not properly initialized.");
+       // console.error("Nodes or edges are not properly initialized.");
         state.specification = {};
       }
     },
     setEdges: (state, action) => {
       state.edges = action.payload;
       state.specification = generateSpecification(state.nodes, action.payload);
-    },
+    }
+    ,
     toggleViewMode: (state) => {
       state.viewMode = state.viewMode === 'graph' ? 'json' : 'graph';
     },
@@ -141,7 +142,7 @@ const generateSpecification = (nodes, edges) => {
   if (!nodes.length) return null;
 
   if (!Array.isArray(nodes) || !Array.isArray(edges)) {
-    console.error("Nodes or edges are not properly initialized.");
+    //console.error("Nodes or edges are not properly initialized.");
     return {};
   }
 
@@ -168,8 +169,7 @@ const generateSpecification = (nodes, edges) => {
     status: 'active',
     version: '1.0.0',
     isPublic: true,
-    updatedAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
+    createdBy: "user"
   };
 
   return specification;

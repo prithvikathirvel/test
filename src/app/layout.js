@@ -29,7 +29,7 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="en" className="h-full">
-      <body className={`${workSans.className} h-full`}>
+      <body className={`${workSans.className} h-full overflow-hidden`}>
         <ReduxProvider>
           <Box className="flex h-full !bg-dark-purple">
           <ToastContainer 
@@ -45,9 +45,9 @@ export default function RootLayout({ children }) {
           theme="light"
         />
             {!isLoginPage && <Sidenav open={false} />}
-            <Box className="flex-1 flex flex-col min-h-0">
+            <Box className="flex-1 flex flex-col h-full">
               {!isLoginPage && <Header title="Sify Aurora" />}
-              <Box className="flex-1 overflow-hidden">
+              <Box className="flex-1 overflow-y-auto">
                 {children}
               </Box>
             </Box>
