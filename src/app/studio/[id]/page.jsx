@@ -1,7 +1,7 @@
 "use client";
 import { Box, Typography, Button, ButtonGroup, Tooltip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions,CircularProgress } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect ,useMemo} from "react";
 import ReactFlow, { Background, Controls, useNodesState, useEdgesState, addEdge } from "reactflow";
 import "reactflow/dist/style.css";
 import { useNodeTypes } from "@/components/FlowNodes";
@@ -11,130 +11,115 @@ import { Save, Rocket, Code, List, Eye, Play } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { setNodes, setEdges, toggleViewMode, updateSpecification, deleteNode, updateNodeConnections } from "@/redux/slices/flowSlice";
 import SideDrawer from "@/components/Common/SideDrawer";
-import { fetchTools, fetchAgents, fetchModels, fetchDeployedNodes } from "@/redux/slices/studioSlice";
+import { fetchTools, fetchAgents, fetchModels ,getFlowById, getAllFlows} from "@/redux/slices/studioSlice";
 import NodeDetailsModal from "@/components/studio/NodeDetailsModal";
-import { getFlowById } from "@/redux/slices/flowSlice";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useParams } from 'next/navigation';
 
 const drawerWidth = 280;
 
-function Studio() {
+
+const Studio = () => {
     const dispatch = useDispatch();
-    const viewMode = useSelector((state) => state.flow.viewMode);
     const [nodes, setNodesState, onNodesChange] = useNodesState([]);
     const [edges, setEdgesState, onEdgesChange] = useEdgesState([]);
-    const nodeTypes = useNodeTypes();
     const [selectedNode, setSelectedNode] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [flowOutput, setFlowOutput] = useState(null);
-    const deployedFlows = useSelector(state => state.studio.agentFlows.data || []);
     const [outputModalOpen, setOutputModalOpen] = useState(false);
     const [isFlowRunning, setIsFlowRunning] = useState(false);
     const [saveFlow, setSaveFlow] = useState(false);
+    const [toggleViewMode, setToggleViewMode] = useState(false);
+    
     const params = useParams();
     const flowId = params.id;
-    const flow = useSelector(state => state.flow.data);
-    const loading = useSelector(state => state.flow.loading);
-    const spec = useSelector(state => state.flow.specification);
-    const columns = 4;
+    
+    // Selectors
+    const flow = useSelector(state => state.studio.flow);
+    const loading = useSelector(state => state.studio.studioLoader);
+    const spec = useSelector(state => state.studio.specification);
+    
+    // Node types should be memoized to prevent recreation on render
+   const nodeTypes = useNodeTypes();
 
-    console.log(flowId, 'id')
-
-    // const flow = getFlowById(deployedFlows, flowId);
-    console.log(flow, 'flow')
-    console.log(spec, 'specaaa')
-
-        useEffect(() => {
-        if (!loading && flow?.graphSpec?.nodes?.length > 0 && flow.graphSpec?.edges?.length > 0) {
-            if (Array.isArray(flow.graphSpec.nodes) && Array.isArray(flow.graphSpec.edges)) {
-                const nodeSpacing = { x: 300, y: 250 };
-                const maxColumns = 4;
-
-                const nodesWithPositions = flow.graphSpec.nodes.map((node, index) => {
-                    const column = index % maxColumns;
-                    const row = Math.floor(index / maxColumns);
-
-                    return {
-                        ...node,
-                        id: node.node_id,
-                        key: node.node_id,
-                        data: {
-                            label: node.name || "Unnamed Node",
-                            name: node.name || "Unnamed Node",
-                            type: node.type || "default",
-                            description: node.description || "",
-                            inputParameters: node.inputParameters || [],
-                            outputParameters: node.outputParameters || [],
-                            next: node.next || [],
-                        },
-                        position: {
-                            x: node.position?.x ?? column * nodeSpacing.x,
-                            y: node.position?.y ?? row * nodeSpacing.y,
-                        },
-                    };
-                });
-
-                setNodesState(nodesWithPositions);
-
-                const edgeSet = new Set();
-                const uniqueEdges = flow.graphSpec.edges
-                    .filter(edge => edge.from && edge.to)
-                    .map((edge) => {
-                        const edgeId = `${edge.from}-${edge.to}`;
-                        if (edgeSet.has(edgeId)) return null;
-                        edgeSet.add(edgeId);
-                        return {
-                            id: edgeId,
-                            source: edge.from,
-                            target: edge.to,
-                            animated: true,
-                        };
-                    })
-                    .filter(Boolean);
-
-                setEdgesState(uniqueEdges);
-
-                console.log(nodesWithPositions, uniqueEdges, 'nodes and edges')
-            } else {
-                console.error('Invalid graphSpec:', flow.graphSpec);
-            }
-        }
-    }, [flow]);
-
-
-    //console.log(nodes, edges, 'nodes and edges')
-
-
+    // Fetch flow data only once on mount
     useEffect(() => {
+        dispatch(getFlowById({ id: flowId }));
         dispatch(fetchTools());
         dispatch(fetchModels());
         dispatch(fetchAgents());
-        dispatch(fetchDeployedNodes());
-        dispatch(getFlowById({ id: flowId }));
-    }, [dispatch]);
+    }, [flowId, dispatch]);
+
+
 
     useEffect(() => {
-        dispatch(setNodes(nodes));
-    }, [nodes, dispatch]);
+        if (!flow?.graphSpec?.nodes || !flow?.graphSpec?.edges) return;
+        
+        if (Array.isArray(flow.graphSpec.nodes) && Array.isArray(flow.graphSpec.edges)) {
+            const nodeSpacing = { x: 300, y: 250 };
+            const maxColumns = 4;
 
-    useEffect(() => {
-        dispatch(setEdges(edges));
-    }, [edges, dispatch]);
+            const nodesWithPositions = flow.graphSpec.nodes.map((node, index) => {
+                const column = index % maxColumns;
+                const row = Math.floor(index / maxColumns);
 
+                return {
+                    ...node,
+                    id: node.node_id,
+                    key: node.node_id,
+                    data: {
+                        label: node.name || "Unnamed Node",
+                        name: node.name || "Unnamed Node",
+                        type: node.type || "default",
+                        description: node.description || "",
+                        inputParameters: node.inputParameters || [],
+                        outputParameters: node.outputParameters || [],
+                        next: node.next || [],
+                    },
+                    position: {
+                        x: node.position?.x ?? column * nodeSpacing.x,
+                        y: node.position?.y ?? row * nodeSpacing.y,
+                    },
+                };
+            });
 
+            setNodesState(nodesWithPositions);
+
+            const edgeSet = new Set();
+            const uniqueEdges = flow.graphSpec.edges
+                .filter(edge => edge.from && edge.to)
+                .map((edge) => {
+                    const edgeId = `${edge.from}-${edge.to}`;
+                    if (edgeSet.has(edgeId)) return null;
+                    edgeSet.add(edgeId);
+                    return {
+                        id: edgeId,
+                        source: edge.from,
+                        target: edge.to,
+                        animated: true,
+                    };
+                })
+                .filter(Boolean);
+
+            setEdgesState(uniqueEdges);
+            console.log("nodes", nodesWithPositions);
+            console.log("uniqueEdges", uniqueEdges);
+        } else {
+            console.error('Invalid graphSpec:', flow.graphSpec);
+        }
+    }, [flow?.graphSpec, setNodesState, setEdgesState]);
+
+    
     const onConnect = useCallback(
         (params) => {
-            const newEdges = addEdge(params, edges);
-            setEdgesState(newEdges);
-
+            setEdgesState((eds) => addEdge(params, eds));
             dispatch(updateNodeConnections({
                 source: params.source,
                 target: params.target
             }));
         },
-        [edges, setEdgesState]
+        [dispatch, setEdgesState]
     );
 
     const onDrop = useCallback(
@@ -147,6 +132,7 @@ function Studio() {
                 spec = JSON.parse(event.dataTransfer.getData("application/node-spec"));
             } catch (error) {
                 console.error("Error parsing node spec:", error);
+                return;
             }
 
             const position = {
@@ -166,20 +152,132 @@ function Studio() {
             };
 
             setNodesState((nds) => nds.concat(newNode));
-            dispatch(updateSpecification());
+            // dispatch(updateSpecification());
         },
-        [setNodesState, dispatch]
+        [setNodesState]
     );
+
+    useEffect(() => {
+        console.log("calling dispatch setNodes");
+        dispatch(setNodes({nodes: nodes,flow: flow}));
+    }, [nodes]);
+
+    useEffect(() => {
+        console.log("calling dispatch setEdges");
+        dispatch(setEdges({edges: edges,flow: flow}));
+    }, [edges]);
+
 
     const onDragOver = useCallback((event) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = "move";
     }, []);
 
-    const handleToggleViewMode = () => {
-        dispatch(toggleViewMode());
-    };
+    const handleToggleViewMode = useCallback(() => {
+        setToggleViewMode(prev => !prev);
+    }, []);
 
+    const handleRunFlow = useCallback(async (flowId) => {
+        setIsFlowRunning(true);
+        try {
+            const response = await axios.post('http://127.0.0.1:5000/execute-graph', {
+                agent_id: flowId
+            });
+
+            if (response.status === 200) {
+                setFlowOutput(response.data);
+                toast.success('Flow executed successfully');
+                setOutputModalOpen(true);
+            }
+        } catch (error) {
+            console.error('Error executing flow:', error);
+            toast.error(`Failed to execute flow: ${error.message}`);
+            setFlowOutput(null);
+        } finally {
+            setIsFlowRunning(false);
+        }
+    }, []);
+
+    const handleDeployFlow = useCallback(() => {
+        dispatch(updateSpecification());
+    }, [dispatch]);
+
+    const onNodeClick = useCallback((event, node) => {
+        setSelectedNode(node);
+        setModalOpen(true);
+    }, []);
+
+    const handleNodeDelete = useCallback((nodeId) => {
+        setNodesState((nodes) => nodes.filter(node => node.id !== nodeId));
+        setEdgesState((edges) => edges.filter(edge =>
+            edge.source !== nodeId && edge.target !== nodeId
+        ));
+    }, [setNodesState, setEdgesState]);
+
+    const handleDeleteNode = useCallback((node) => {
+        if (node && node.id) {
+            dispatch(deleteNode({flow: flow, nodeId: node.id}));
+            handleNodeDelete(node.id);
+            setModalOpen(false);
+            setSelectedNode(null);
+        }
+    }, [dispatch, handleNodeDelete]);
+
+    const handleSaveFlow = useCallback(() => {
+        setSaveFlow(false);
+        dispatch(saveFlowAction());
+    }, [dispatch]);
+
+    const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters) => {
+        setNodesState((nodes) => {
+            return nodes.map((node) => {
+                if (node.node_id === nodeId || node.id === nodeId) {
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            inputParameters: updatedParameters
+                        }
+                    };
+                }
+                return node;
+            });
+        });
+    
+        dispatch(updateSpecification());
+    }, [dispatch, setNodesState]);
+
+    // Memoize the ReactFlow component props to prevent recreation
+
+    const reactFlowProps = useMemo(() => ({
+        nodes,
+        edges,
+        onNodesChange,
+        onEdgesChange,
+        onConnect,
+        nodeTypes,
+        onDrop,
+        onDragOver,
+        onNodeClick,
+        fitView: true,
+        style: { backgroundColor: "#F7F9FB" },
+        defaultEdgeOptions: {
+            animated: true,
+            style: { stroke: '#6c5ce7' }
+        }
+    }), [
+        nodes, 
+        edges, 
+        onNodesChange, 
+        onEdgesChange, 
+        onConnect, 
+        nodeTypes, 
+        onDrop, 
+        onDragOver, 
+        onNodeClick
+    ]);
+
+    // FlowOutputModal component
     const FlowOutputModal = ({ open, onClose, output }) => {
         if (!output) return null;
 
@@ -202,89 +300,6 @@ function Studio() {
         );
     };
 
-
-
-    const handleRunFlow = async (flowId) => {
-        setIsFlowRunning(true);
-        try {
-            const response = await axios.post('http://127.0.0.1:5000/execute-graph', {
-                agent_id: flowId
-            });
-
-            if (response.status === 200) {
-                setFlowOutput(response.data);
-                toast.success('Flow executed successfully');
-                setOutputModalOpen(true);
-            }
-        } catch (error) {
-            console.error('Error executing flow:', error);
-            toast.error(`Failed to execute flow: ${error.message}`);
-            setFlowOutput(null);
-        } finally {
-            setIsFlowRunning(false);
-        }
-    };
-
-    const handleDeployFlow = () => {
-        console.log('Deploying flow with:', { nodes, edges });
-        dispatch(updateSpecification());
-    };
-
-    const onNodeClick = (event, node) => {
-
-        console.log('Node clicked:', node);
-        setSelectedNode(node);
-        setModalOpen(true);
-    };
-
-    const handleNodeDelete = useCallback((nodeId) => {
-        setNodesState((nodes) => nodes.filter(node => node.id !== nodeId));
-        setEdgesState((edges) => edges.filter(edge =>
-            edge.source !== nodeId && edge.target !== nodeId
-        ));
-    }, [setNodesState, setEdgesState]);
-
-
-    const handleDeleteNode = (node) => {
-        if (node && node.id) {
-            console.log(node.id, 'node id');
-            dispatch(deleteNode(node.id));
-            if (handleNodeDelete) {
-                handleNodeDelete(node.id);
-            }
-            setModalOpen(false);
-            setSelectedNode(null);
-        }
-    };
-
-    const handleSaveFlow = () => {
-        setSaveFlow(false);
-        dispatch(saveFlow());
-    };
-
-    const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters) => {
-        console.log('Updating node parameters:', { nodeId, updatedParameters });
-        setNodesState((nodes) => {
-            const updatedNodes = nodes.map((node) => {
-                if (node.node_id === nodeId || node.id === nodeId) {
-                    return {
-                        ...node,
-                        data: {
-                            ...node.data,
-                            inputParameters: updatedParameters
-                        }
-                    };
-                }
-                return node;
-            });
-            
-            console.log('Updated nodes:', updatedNodes); // Log the updated nodes here
-            return updatedNodes;
-        });
-    
-        dispatch(updateSpecification());
-    }, [setNodesState, dispatch]);
-
     return (
         <div className="h-full w-full overflow-hidden">
             <Box className="h-full w-full">
@@ -298,13 +313,12 @@ function Studio() {
                         <ComponentsSidebar />
                     </Grid>
                     <Grid size={9.5} className="h-full relative overflow-hidden">
-
                         <Box className="p-2 absolute top-0 right-0 flex !justify-end z-10">
                             <Box className="!flex gap-2">
                                 <ButtonGroup variant="outlined" size="small" sx={{ mr: 2 }}>
                                     <Tooltip title="Toggle View Mode">
                                         <Button onClick={handleToggleViewMode}>
-                                            {viewMode === 'graph' ? <Code size={18} /> : <List size={18} />}
+                                            {toggleViewMode ? <Code size={18} /> : <List size={18} />}
                                         </Button>
                                     </Tooltip>
                                 </ButtonGroup>
@@ -319,11 +333,10 @@ function Studio() {
                                     </IconButton>
                                 )}
 
-
                                 <Button
                                     variant="contained"
                                     startIcon={isFlowRunning ? <CircularProgress size={16} /> : <Save size={16} />}
-                                    onClick={() => handleSaveFlow()}
+                                    onClick={handleSaveFlow}
                                     disabled={isFlowRunning}
                                     sx={{
                                         backgroundColor: '#6c5ce7',
@@ -338,26 +351,25 @@ function Studio() {
                                     {saveFlow ? 'Saving Flow...' : 'Save Flow'}
                                 </Button>
 
-
-                    { saveFlow &&
-                                <Button
-                                variant="contained"
-                                startIcon={isFlowRunning ? <CircularProgress size={16} /> : <Play size={16} />}
-                                onClick={() => handleRunFlow(flowId)}
-                                disabled={isFlowRunning}
-                                sx={{
-                                    backgroundColor: '#6c5ce7',
-                                    '&:hover': {
-                                        backgroundColor: '#5f50e3'
-                                    },
-                                    textTransform: 'none',
-                                    fontSize: '14px',
-                                    py: 0.75
-                                }}
-                            >
-                                {isFlowRunning ? 'Running...' : 'Run Flow'}
-                            </Button>
-}
+                                {saveFlow && (
+                                    <Button
+                                        variant="contained"
+                                        startIcon={isFlowRunning ? <CircularProgress size={16} /> : <Play size={16} />}
+                                        onClick={() => handleRunFlow(flowId)}
+                                        disabled={isFlowRunning}
+                                        sx={{
+                                            backgroundColor: '#6c5ce7',
+                                            '&:hover': {
+                                                backgroundColor: '#5f50e3'
+                                            },
+                                            textTransform: 'none',
+                                            fontSize: '14px',
+                                            py: 0.75
+                                        }}
+                                    >
+                                        {isFlowRunning ? 'Running...' : 'Run Flow'}
+                                    </Button>
+                                )}
 
                                 <Button
                                     variant="contained"
@@ -378,27 +390,9 @@ function Studio() {
                             </Box>
                         </Box>
 
-
-
-                        {viewMode === 'graph' ? (
+                        {!toggleViewMode ? (
                             <div className="h-full w-full">
-                                <ReactFlow
-                                    nodes={nodes}
-                                    edges={edges}
-                                    onNodesChange={onNodesChange}
-                                    onEdgesChange={onEdgesChange}
-                                    onConnect={onConnect}
-                                    nodeTypes={nodeTypes}
-                                    onDrop={onDrop}
-                                    onDragOver={onDragOver}
-                                    onNodeClick={onNodeClick}
-                                    fitView
-                                    style={{ backgroundColor: "#F7F9FB" }}
-                                    defaultEdgeOptions={{
-                                        animated: true,
-                                        style: { stroke: '#6c5ce7' }
-                                    }}
-                                >
+                                <ReactFlow {...reactFlowProps}>
                                     <Background />
                                     <Controls />
                                 </ReactFlow>
@@ -421,8 +415,8 @@ function Studio() {
                             onUpdateParameters={handleUpdateNodeParameters}
                             sections={{
                                 displayBasicInformation: true,
-                                displayInputParameters: selectedNode?.data?.inputParameters ? true : false,
-                                displayOutputParameters: selectedNode?.data?.outputParameters ? true : false
+                                displayInputParameters: !!selectedNode?.data?.inputParameters,
+                                displayOutputParameters: !!selectedNode?.data?.outputParameters
                             }}
                         />
                     </Grid>
@@ -430,7 +424,7 @@ function Studio() {
             </Box>
         </div>
     );
-}
+};
 
 export default function StudioPage() {
     return (

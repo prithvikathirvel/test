@@ -2,32 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
 
 
-const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
+const FlowDetailsModal = ({ open, onClose, onSubmit }) => {
     const [flowDetails, setFlowDetails] = useState({
-        name: initialData?.name || '',
-        description: initialData?.graphSpec?.description || ''
+        name: '',
+        description: ''
     });
-
-    useEffect(() => {
-        // Update the form when initialData changes
-        if (initialData) {
-            setFlowDetails({
-                name: initialData?.name || '',
-                description: initialData?.graphSpec?.description || ''
-            });
-        }
-    }, [initialData]);
 
     const handleSubmit = () => {
         onSubmit({
-            ...initialData,
             name: flowDetails?.name,
-            description: flowDetails?.description,
-            graphSpec: {
-                ...(initialData?.graphSpec || {}),
-                description: flowDetails?.description
-            }
+            description: flowDetails?.description
         });
+        // setFlowDetails({
+        //     name: '',
+        //     description: ''
+        // });
         onClose();
     };
 

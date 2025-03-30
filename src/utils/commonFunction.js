@@ -56,6 +56,7 @@ function stringAvatar(name) {
   };
 }
 
+
 function convertToTitleCase(str) {
   if (!str) {
       return "Undefined Title"
@@ -99,6 +100,35 @@ const generateUUID = () => {
 
 }
 
+
+const generateSpecification = (flow, nodes, edges) => {
+  if (!nodes.length) return null;
+
+  if (!Array.isArray(nodes) || !Array.isArray(edges)) {
+    return {};
+  }
+  const specification = {
+  ...flow, 
+  graphSpec: {
+    nodes: nodes.map(node => ({
+      node_id: node.id,  
+      name: node.data?.name || node.name,
+      type: node.data?.type || node.type,
+      description: node.data?.description || node.description,
+      next: node.data?.next || node.next || [],
+      inputParameters: node.data?.inputParameters || node.inputParameters || [],
+      outputParameters: node.data?.outputParameters || node.outputParameters || []
+    })),
+    edges: edges.map(edge => ({
+      from: edge.source,  
+      to: edge.target,    
+    })),
+  }
+  };
+
+  return specification;
+};
+
 export {
   showToaster,
   stringAvatar,
@@ -107,5 +137,6 @@ export {
   getChipStyles,
   getNodeColor, 
   FileTypeIcon, 
-  generateUUID
+  generateUUID,
+  generateSpecification
 }

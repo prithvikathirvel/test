@@ -10,39 +10,35 @@ import {
   CardActions,
   IconButton,
   Grid,
+  CircularProgress,
 } from "@mui/material";
-import {
-  Network,
-  Plus,
-  Play,
-  Edit,
-  Trash2,
-} from "lucide-react";
+import { Network, Plus, Play, Edit, Trash2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
-
-import { fetchDeployedNodes } from "@/redux/slices/studioSlice";
-import { saveFlow } from "@/redux/slices/studioSlice";
+import { getAllFlows, saveFlow, updateSpecification } from "@/redux/slices/studioSlice";
 import FlowDetailsModal from "@/components/studio/FlowDetailsModal";
-import { generateUUID } from '@/utils/commonFunction';
 
 const StudioListing = () => {
   const dispatch = useDispatch();
   const router = useRouter();
-  const deployedFlows = useSelector((state) => state.studio.agentFlows.data || []);
+  const flows = useSelector((state) => state.studio.flows || []);
   const [flowDetailsModalOpen, setFlowDetailsModalOpen] = useState(false);
-  const flowId = useSelector((state) => state.studio.saveFlow.data?.data?.id);
+  const newFlowId = useSelector((state) => state.studio.newFlowId);
+  const studioSaveFlowLoader = useSelector((state) => state.studio.studioSaveFlowLoader);
+  const spec = useSelector((state) => state.studio.specification);
+
+
 
   useEffect(() => {
-    dispatch(fetchDeployedNodes());
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (flowId) {
-      router.push(`/studio/${flowId}`);
+      dispatch(getAllFlows());
       setFlowDetailsModalOpen(false);
-    }
-  }, [flowId, router]);
+      console.log("newFlowId", newFlowId);
+      console.log("spec", spec);
+      if (newFlowId) {
+        router.push(`/studio/${newFlowId}`);
+      }
+    
+  }, [newFlowId]);
 
   const handleOpenStudio = (flowId) => {
     router.push(`/studio/${flowId}`);
@@ -56,34 +52,44 @@ const StudioListing = () => {
     setFlowDetailsModalOpen(true);
   };
 
+  const updateSpecificationDispatch = (specification) => {
+    dispatch(updateSpecification(specification));
+  };
+
   const handleFlowDetailsSubmit = (details) => {
+    console.log("Flow details:", details);
     const initialSpec = {
       name: details.name,
       description: details.description,
-      type: 'flow',
+      type: "flow",
       graphSpec: {
         nodes: [],
         edges: [],
       },
-      status: 'active',
-      version: '1.0.0',
-      isPublic: true, 
-      createdBy: "user"
+      status: "active",
+      version: "1.0.0",
+      isPublic: true,
+      createdBy: "user",
     };
+    console.log("Initial spec:", initialSpec);
 
-    dispatch(saveFlow(initialSpec));
+    dispatch(saveFlow({data: initialSpec, onSuccess: () => updateSpecificationDispatch(initialSpec)}));
   };
 
   return (
-    <Box className="flex-grow p-8 bg-gradient-to-b from-gray-100 to-white min-h-screen">
-      <div className="flex justify-between items-center mb-10">
-        <Typography variant="h3" className="font-extrabold text-primary flex items-center">
-          <Network className="mr-3 text-blue-600" size={40} /> AI Studio
+    <Box className="flex-grow p-8 min-h-screen bg-gradient-to-b from-gray-200 to-white">
+      {studioSaveFlowLoader && (
+        <Box className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+          <CircularProgress size={40} />
+        </Box>
+      )}
+      <div className="flex justify-between items-center mb-8">
+        <Typography variant="h3" className="font-extrabold text-blue-700 flex items-center">
+          <Network className="mr-3" size={40} /> AI Studio
         </Typography>
-
         <Button
           variant="contained"
-          className="bg-blue-600 hover:bg-blue-700 shadow-lg"
+          className="bg-blue-600 hover:bg-blue-700 shadow-md px-6 py-2 rounded-lg"
           startIcon={<Plus size={20} />}
           onClick={handleCreateStudio}
         >
@@ -92,24 +98,16 @@ const StudioListing = () => {
       </div>
 
       <Grid container spacing={4} className="mb-10">
-        {[
-          { label: "Total Flows", value: deployedFlows.length, icon: <Network size={20} /> },
+        {[{ label: "Total Flows", value: flows.length, icon: <Network size={20} /> },
           { label: "Active Runs", value: 0, icon: <Play size={20} /> },
-          { label: "Last Updated", value: "Just Now", icon: <Edit size={20} /> },
-        ].map((stat, index) => (
+          { label: "Last Updated", value: "Just Now", icon: <Edit size={20} /> }].map((stat, index) => (
           <Grid item xs={12} sm={4} key={index}>
-            <Card className="bg-white shadow-md hover:shadow-xl transition-all duration-300">
-              <CardContent className="flex items-center p-6">
-                {stat.icon}
-                <Box className="ml-4">
-                  <Typography variant="body2" className="text-gray-600">
-                    {stat.label}
-                  </Typography>
-                  <Typography variant="h5" className="font-bold">
-                    {stat.value}
-                  </Typography>
-                </Box>
-              </CardContent>
+            <Card className="bg-white shadow-lg hover:shadow-xl transition-all rounded-xl p-6 flex items-center">
+              {stat.icon}
+              <Box className="ml-4">
+                <Typography variant="body2" className="text-gray-500">{stat.label}</Typography>
+                <Typography variant="h5" className="font-bold">{stat.value}</Typography>
+              </Box>
             </Card>
           </Grid>
         ))}
@@ -119,40 +117,29 @@ const StudioListing = () => {
         Your Flows
       </Typography>
 
-      {deployedFlows.length > 0 ? (
+      {flows.length > 0 ? (
         <Grid container spacing={4}>
-          {deployedFlows.map((flow) => (
+          {flows.map((flow) => (
             <Grid item xs={12} sm={6} md={4} key={flow.id || flow.agent_id}>
-              <Card className="h-full flex flex-col transition-transform duration-300 hover:scale-[1.03] border border-gray-200">
-
+              <Card className="h-full flex flex-col shadow-md hover:shadow-lg transition-transform transform hover:scale-105 rounded-xl overflow-hidden">
                 <CardContent className="flex-grow p-6">
                   <Typography variant="h6" className="mb-3 font-bold text-gray-800">
                     {flow.name || flow.agent_name || "Unnamed Flow"}
                   </Typography>
-
                   <Typography variant="body2" className="mb-4 text-gray-600">
                     {flow.description || flow.agent_description || "No description available"}
                   </Typography>
-
-                  {/* <Chip
-                    label={flow.type || flow.agent_type || "Undefined"}
-                    size="small"
-                    color="secondary"
-                    variant="outlined"
-                    className="mb-4"
-                  /> */}
-
                   <div className="flex items-center text-gray-500 text-sm">
                     <Edit size={14} className="mr-1" /> Updated 2 days ago
                   </div>
                 </CardContent>
-
-                <CardActions className="flex justify-between">
+                <CardActions className="flex justify-between p-4 bg-gray-100 border-t">
                   <Button
                     variant="outlined"
                     size="small"
                     startIcon={<Play size={16} />}
                     onClick={() => handleRunFlow(flow)}
+                    className="text-blue-600 border-blue-600 hover:bg-blue-100"
                   >
                     Run
                   </Button>
@@ -160,10 +147,11 @@ const StudioListing = () => {
                     variant="contained"
                     size="small"
                     onClick={() => handleOpenStudio(flow.id)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     Open Studio
                   </Button>
-                  <IconButton size="small">
+                  <IconButton size="small" className="text-red-600 hover:text-red-800">
                     <Trash2 size={16} />
                   </IconButton>
                 </CardActions>
@@ -184,6 +172,7 @@ const StudioListing = () => {
             variant="contained"
             className="bg-blue-600 hover:bg-blue-700"
             startIcon={<Plus size={20} />}
+            onClick={handleCreateStudio}
           >
             Create New Flow
           </Button>

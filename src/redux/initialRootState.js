@@ -6,45 +6,23 @@ const initialRootState = {
     user: null,
   },
   studio: {
-    tools: {
-      data: [],
-      loading: false,
-      error: null
-    },
-    agents: {
-      data: [],
-      loading: false,
-      error: null
-    },
-    models: {
-      data: [],
-      loading: false,
-      error: null
-    },
-    inputs: {
-      data: inputNodes,
-      loading: false,
-      error: null
-    },
-    outputs: {
-      data: outputNodes,
-      loading: false,
-      error: null
-    },
-    agentFlows: {
-      data: [],
-      loading: false,
-      error: null
-    },
-    flow: {
-      data: {},
-      loading: false,
-      error: null
-    },
-    saveFlow: {
-      loading: false,
-      error: null
-    }
+    tools: [],
+    agents: [],
+    models: [],
+    inputs: inputNodes,
+    outputs: outputNodes,
+    agentFlows: [],
+    flow:{}, 
+    flowListLoader: false, 
+    studioLoader: false,
+    newFlowId: null,
+    studioComponentLoader: false, 
+    studioError: null,
+    flows: [],
+    studioSaveFlowLoader: false, 
+    studioUpdateFlowLoader: false,
+    getAllFlowsLoader: false,
+    specification:{},
   }
 }
 

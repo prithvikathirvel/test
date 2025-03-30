@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import initialRootState from "../initialRootState";
 import APIKit from "@/utils/APIKit";
-import { toast } from "react-toastify";
+import { showToaster } from "@/utils/commonFunction";
 
 const initialState = initialRootState.studio;
 
@@ -10,6 +10,7 @@ export const fetchTools = createAsyncThunk('studio/fetchTools', async () => {
     const response = await APIKit.get(`/tools`);
     return response.data;
   } catch (error) {
+    showToaster('error', error);
     throw error;
   }
 });
@@ -19,6 +20,7 @@ export const fetchAgents = createAsyncThunk('studio/fetchAgents', async () => {
     const response = await APIKit.get(`/agents`);
     return response.data;
   } catch (error) {
+    showToaster('error', error);
     throw error;
   }
 });
@@ -28,140 +30,161 @@ export const fetchModels = createAsyncThunk('studio/fetchModels', async () => {
     const response = await APIKit.get(`/models`);
     return response.data;
   } catch (error) {
+    showToaster('error', error);
     throw error;
   }
 });
 
-export const fetchDeployedNodes = createAsyncThunk('studio/agentFlows', async () => {
+export const getFlowById = createAsyncThunk('flow/getFlowById', async (data) => {
+  console.log('Fetching flow data...');
+  try {
+    const response = await APIKit.get(`/agent-flow/${data.id}`);
+    console.log('API Response:', response.data);
+    console.log('graphSpec structure:', response.data.graphSpec);
+    return response.data;
+  } catch (error) {
+    showToaster('error', error);
+    if (error.response && error.response.status === 500) {
+      return {};
+    }
+    //throw error;
+  }
+});
+
+export const updateFlow = createAsyncThunk('flow/updateFlow', async (data) => {
+  try {
+    const response = await APIKit.put(`/agent-flow/${data.id}`, data);
+    showToaster('success', 'Flow updated successfully');
+    return response.data;
+  } catch (error) {
+    showToaster('error', error);
+    throw error;
+  }
+});
+
+
+export const getAllFlows = createAsyncThunk('flow/getAllFlows', async () => {
   try {
     const response = await APIKit.get(`/agent-flows`);
     return response.data;
   } catch (error) {
+    showToaster('error', error);
     throw error;
   }
 });
 
-export const saveFlow = createAsyncThunk('studio/saveFlow', async (data) => {
+
+export const saveFlow = createAsyncThunk('studio/saveFlow', async ({data, onSuccess}) => {
   try {
     console.log(data,'hey222');
     const response = await APIKit.post(`/agent-flow`, data);
-    console.log(response.data,'hey 334');
-    toast.success('Flow saved successfully');
+    showToaster('success', 'Flow saved successfully');
+    onSuccess();
     return response.data;
   } catch (error) {
-    toast.error('Failed to save flow');
+    showToaster('error', error);
     throw error;
   }
 });
-
-
-
-
-
 
 
 const studioSlice = createSlice({
   name: "studio",
   initialState,
   reducers: {
-    setTools: (state, action) => {
-      state.tools = action.payload;
-    },
-    addTool: (state, action) => {
-      state.tools.data.push(action.payload);
-    },
-    removeTool: (state, action) => {
-      state.tools.data = state.tools.data.filter(tool => tool._id !== action.payload);
-    },
-    updateToolState: (state, action) => {
-      const index = state.tools.data.findIndex(tool => tool._id === action.payload._id);
-      if (index !== -1) {
-        state.tools.data[index] = action.payload;
-      }
-    }
+    updateSpecification: (state, action) => {
+      state.specification = action.payload;
+    }, 
+    
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchTools.pending, (state) => {
-        state.tools.loading = true;
-        state.tools.error = null;
-
+        state.studioComponentLoader = true;
       })
       .addCase(fetchTools.fulfilled, (state, action) => {
-        state.tools.loading = false;
-        state.tools.data = action.payload;
-        state.tools.error = null;
+        state.studioComponentLoader = false;
+        state.tools = action.payload;
       })
-      .addCase(fetchTools.rejected, (state, action) => {
-        state.tools.loading = false;
-        state.tools.error = action.error.message;
+      .addCase(fetchTools.rejected, (state) => {
+        state.studioComponentLoader = false;
       });
 
     builder
       .addCase(fetchAgents.pending, (state) => {
-        state.agents.loading = true;
-        state.agents.error = null;
+        state.studioComponentLoader = true;
       })
       .addCase(fetchAgents.fulfilled, (state, action) => {
-        state.agents.loading = false;
-        state.agents.data = action.payload;
-        state.agents.error = null;
+        state.studioComponentLoader = false;
+        state.agents = action.payload;
       })
-      .addCase(fetchAgents.rejected, (state, action) => {
-        state.agents.loading = false;
-        state.agents.error = action.error.message;
+      .addCase(fetchAgents.rejected, (state) => {
+        state.studioComponentLoader = false;
       }); 
+
 
     builder
       .addCase(fetchModels.pending, (state) => {
-        state.models.loading = true;
-        state.models.error = null;
+        state.studioComponentLoader = true;
       })
       .addCase(fetchModels.fulfilled, (state, action) => {
-        state.models.loading = false;
-        state.models.data = action.payload;
-        state.models.error = null;
+        state.studioComponentLoader = false;
+        state.models = action.payload;
       })
-      .addCase(fetchModels.rejected, (state, action) => {
-        state.models.loading = false;
-        state.models.error = action.error.message;
+      .addCase(fetchModels.rejected, (state) => {
+        state.studioComponentLoader = false;
       });
 
-    builder
-      .addCase(fetchDeployedNodes.pending, (state) => {
-        state.agentFlows.loading = true;
-        state.agentFlows.error = null;
-      })
-      .addCase(fetchDeployedNodes.fulfilled, (state, action) => {
-        state.agentFlows.loading = false;
-        state.agentFlows.data = action.payload;
-        state.agentFlows.error = null;
-      })
-      .addCase(fetchDeployedNodes.rejected, (state, action) => {
-        state.agentFlows.loading = false;
-        state.agentFlows.error = action.error.message;
-      });
 
     builder
       .addCase(saveFlow.pending, (state) => {
-        state.saveFlow.loading = true;
-        state.saveFlow.error = null;
+        state.studioSaveFlowLoader = true;
       })
       .addCase(saveFlow.fulfilled, (state, action) => {
-        state.saveFlow.loading = false;
-        state.flow.data = action.payload;
-        state.flow.specification = action.payload;
-        state.saveFlow.error = null;
+        state.studioSaveFlowLoader = false;
+        state.newFlowId = action.payload.data.id; 
       })
-      .addCase(saveFlow.rejected, (state, action) => {
-        state.saveFlow.loading = false;
-        state.saveFlow.error = action.error.message;
+      .addCase(saveFlow.rejected, (state) => {
+        state.studioSaveFlowLoader = false;
       });
 
-   
- 
+
+      builder.addCase(getFlowById.fulfilled, (state, action) => {
+        state.flow = action.payload;
+        state.studioLoader = false;
+      });
+      builder.addCase(getFlowById.pending, (state) => {
+        state.studioLoader = true;
+      });
+      builder.addCase(getFlowById.rejected, (state) => {
+        state.studioLoader = false;
+      });
+
+      builder.addCase(updateFlow.pending, (state) => {
+        state.studioUpdateFlowLoader = true;
+      });
+      builder.addCase(updateFlow.fulfilled, (state, action) => {
+        state.flow = action.payload;
+        state.studioUpdateFlowLoader = false;
+        state.specification = action.payload;
+      });
+      builder.addCase(updateFlow.rejected, (state) => {
+        state.studioUpdateFlowLoader = false;
+      });
+  
+      
+      builder.addCase(getAllFlows.pending, (state) => {
+        state.getAllFlowsLoader = true;
+      });
+      builder.addCase(getAllFlows.fulfilled, (state, action) => {
+        state.flows = action.payload;
+        state.getAllFlowsLoader = false;
+      });
+      builder.addCase(getAllFlows.rejected, (state) => {
+        state.getAllFlowsLoader = false;
+      });
   }
 });
 
-export const { setTools, addTool, removeTool, updateToolState } = studioSlice.actions;
+export const { updateSpecification } = studioSlice.actions;
 export default studioSlice.reducer;

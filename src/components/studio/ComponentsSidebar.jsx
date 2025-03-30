@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { Box, Typography, Accordion, AccordionSummary, AccordionDetails } from "@mui/material";
 import { Search, ChevronDown, Database, Workflow, Bot, ChevronLeft, ChevronRight,  } from "lucide-react";
 import { useSelector } from "react-redux";
@@ -8,11 +8,11 @@ import InputBox from '@/components/Common/InputBox';
 import { FileInput,CloudUpload } from "lucide-react";
 
 export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideBar }) {
-  const tools = useSelector((state) => state.studio.tools.data);
-  const agents = useSelector((state) => state.studio.agents.data);
-  const models = useSelector((state) => state.studio.models.data);
-  const inputNodes = useSelector((state) => state.studio.inputs.data);
-  const outputNodes = useSelector((state) => state.studio.outputs.data);  
+  const tools = useSelector((state) => state.studio.tools);
+  const agents = useSelector((state) => state.studio.agents);
+  const models = useSelector((state) => state.studio.models);
+  const inputNodes = useSelector((state) => state.studio.inputs);
+  const outputNodes = useSelector((state) => state.studio.outputs);  
   
   const nodeTypes = [
     {
@@ -51,11 +51,11 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
     }));
   }
   
-  const onDragStart = (event, nodeType, node) => {
+  const onDragStart = useCallback((event, nodeType, node) => {
     event.dataTransfer.setData("application/node-spec", JSON.stringify(node));
     event.dataTransfer.setData("application/reactflow", nodeType);
     event.dataTransfer.effectAllowed = "move";
-  };
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
 
