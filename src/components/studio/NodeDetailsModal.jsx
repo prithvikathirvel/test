@@ -238,11 +238,11 @@ const NodeDetailsModal = ({
 }) => {
   const dispatch = useDispatch();
 
-  const handleSave = () => {
+  const handleSaveNodeDetails = (updateParams) => {
     if (node) {
       // Call the onUpdateParameters function to save changes
-      console.log('Saving parameters:',node.id, node.data.inputParameters);
-      onUpdateParameters(node.id, node.data.inputParameters);
+      console.log('Saving parameters:',node.id, updateParams);
+      onUpdateParameters(node.id, updateParams);
     }
   };
 
@@ -318,7 +318,7 @@ const NodeDetailsModal = ({
           color={nodeColor} 
           loading={loading}
           disabled={disabled}
-          onUpdate={(updatedParams) => onUpdateParameters(node.id, updatedParams)}
+          onUpdate={handleSaveNodeDetails}
         />
         <Divider sx={{ my: 2 }} />
         </>
@@ -334,20 +334,20 @@ const NodeDetailsModal = ({
         // />
 
         <InputParameterRenderer 
-        parameters={outputParameters} 
-        title="Output Parameters" 
-        icon={<OutputIcon size={20} />} 
+      parameters={outputParameters} 
+      title="Output Parameters" 
+      icon={<OutputIcon size={20} />} 
       color={nodeColor} 
       loading={loading}
       disabled={disabled}
-      onUpdate={(updatedParams) => onUpdateParameters(node.id, updatedParams)}
+      onUpdate={onUpdateParameters}
     />
         )}
 
       <Button 
           variant="contained" 
           color="primary" 
-          onClick={handleSave}
+          onClick={handleSaveNodeDetails}
           disabled={disabled}
         >
           Save

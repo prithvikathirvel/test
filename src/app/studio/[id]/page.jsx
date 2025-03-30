@@ -9,9 +9,9 @@ import ComponentsSidebar from "@/components/studio/ComponentsSidebar";
 import JsonSpecView from "@/components/studio/JsonSpecView";
 import { Save, Rocket, Code, List, Eye, Play } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { setNodes, setEdges, toggleViewMode, updateSpecification, deleteNode, updateNodeConnections } from "@/redux/slices/flowSlice";
+import { toggleViewMode, updateSpecification } from "@/redux/slices/flowSlice";
 import SideDrawer from "@/components/Common/SideDrawer";
-import { fetchTools, fetchAgents, fetchModels ,getFlowById, getAllFlows} from "@/redux/slices/studioSlice";
+import { fetchTools, fetchAgents, fetchModels ,getFlowById, updateFlow, setNodes, setEdges ,deleteNode, updateNodeConnections,updateNode} from "@/redux/slices/studioSlice";
 import NodeDetailsModal from "@/components/studio/NodeDetailsModal";
 import { toast } from "react-toastify";
 import axios from "axios";
@@ -34,17 +34,14 @@ const Studio = () => {
     
     const params = useParams();
     const flowId = params.id;
-    
-    // Selectors
     const flow = useSelector(state => state.studio.flow);
     const loading = useSelector(state => state.studio.studioLoader);
-    const spec = useSelector(state => state.studio.specification);
-    
-    // Node types should be memoized to prevent recreation on render
-   const nodeTypes = useNodeTypes();
+    const specification = useSelector(state => state.studio.specification); 
+    const studioUpdateFlowLoader = useSelector(state => state.studio.studioUpdateFlowLoader);   
+    const nodeTypes = useNodeTypes();
 
-    // Fetch flow data only once on mount
-    useEffect(() => {
+
+   useEffect(() => {
         dispatch(getFlowById({ id: flowId }));
         dispatch(fetchTools());
         dispatch(fetchModels());
@@ -225,29 +222,37 @@ const Studio = () => {
 
     const handleSaveFlow = useCallback(() => {
         setSaveFlow(false);
-        dispatch(saveFlowAction());
-    }, [dispatch]);
+        console.log('save flow');
+        console.log('Flow ID:', flowId);
+        console.log('specification',specification);
+        console.log('flow before saving',flow);
+        dispatch(updateFlow({id: flowId, updatedData: specification}));
+    }, [dispatch, flowId, specification, flow]);
 
     const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters) => {
-        setNodesState((nodes) => {
-            return nodes.map((node) => {
-                if (node.node_id === nodeId || node.id === nodeId) {
-                    return {
-                        ...node,
-                        data: {
-                            ...node.data,
-                            inputParameters: updatedParameters
-                        }
-                    };
-                }
-                return node;
-            });
-        });
+        // // Update local state
+        // setNodesState((nodes) => {
+        //     return nodes.map((node) => {
+        //         if (node.id === nodeId) {
+        //             return {
+        //                 ...node,
+        //                 data: {
+        //                     ...node.data,
+        //                     inputParameters: updatedParameters
+        //                 }
+        //             };
+        //         }
+        //         return node;
+        //     });
+        // });
     
-        dispatch(updateSpecification());
-    }, [dispatch, setNodesState]);
-
-    // Memoize the ReactFlow component props to prevent recreation
+        // Update Redux flow
+        console.log(nodeId,'NodeIdddd')
+        console.log(updatedParameters,'updateddd')
+        dispatch(updateNode({flow:flow,nodeId:nodeId,updatedNode:updatedParameters}));
+    
+        // The specification will be automatically updated by the updateNode action
+    }, [dispatch]);
 
     const reactFlowProps = useMemo(() => ({
         nodes,
@@ -335,9 +340,9 @@ const Studio = () => {
 
                                 <Button
                                     variant="contained"
-                                    startIcon={isFlowRunning ? <CircularProgress size={16} /> : <Save size={16} />}
-                                    onClick={handleSaveFlow}
-                                    disabled={isFlowRunning}
+                                    startIcon={studioUpdateFlowLoader ? <CircularProgress size={16} /> : <Save size={16} />}
+                                    onClick={() => handleSaveFlow()}
+                                    // disabled={isFlowRunning}
                                     sx={{
                                         backgroundColor: '#6c5ce7',
                                         '&:hover': {
@@ -351,7 +356,7 @@ const Studio = () => {
                                     {saveFlow ? 'Saving Flow...' : 'Save Flow'}
                                 </Button>
 
-                                {saveFlow && (
+                                {/* {saveFlow && ( */}
                                     <Button
                                         variant="contained"
                                         startIcon={isFlowRunning ? <CircularProgress size={16} /> : <Play size={16} />}
@@ -369,7 +374,7 @@ const Studio = () => {
                                     >
                                         {isFlowRunning ? 'Running...' : 'Run Flow'}
                                     </Button>
-                                )}
+                                {/* )} */}
 
                                 <Button
                                     variant="contained"

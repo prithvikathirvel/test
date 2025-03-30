@@ -52,8 +52,12 @@ export const getFlowById = createAsyncThunk('flow/getFlowById', async (data) => 
 });
 
 export const updateFlow = createAsyncThunk('flow/updateFlow', async (data) => {
+  console.log('Updating flow data...');
   try {
-    const response = await APIKit.put(`/agent-flow/${data.id}`, data);
+    const {id,updatedData}=data
+    console.log('Flow ID:', id);
+    console.log('Updated Data:', updatedData);
+    const response = await APIKit.put(`/agent-flow/${id}`, updatedData);
     showToaster('success', 'Flow updated successfully');
     return response.data;
   } catch (error) {
@@ -92,8 +96,85 @@ const studioSlice = createSlice({
   name: "studio",
   initialState,
   reducers: {
+
+    setNodes: (state, action) => {
+      const { nodes, flow } = action.payload;
+      state.nodes = nodes?.map(newNode => {
+        const existingNode = state.nodes ? state.nodes.find(node => node.id === newNode.id) : null;
+        return {
+          ...newNode,
+          next: existingNode?.next || newNode.next || []
+        };
+      });
+      if (Array.isArray(state.nodes) && Array.isArray(state.edges)) {
+        state.specification = generateSpecification(flow, state.nodes, state.edges);
+        console.log("specification inside slice",state.specification);
+      } else {
+        state.specification = {};
+      }
+    },
+    setEdges: (state, action) => {
+      const { edges, flow } = action.payload;
+      state.edges = edges;
+      if (Array.isArray(state.nodes) && Array.isArray(state.edges)) {
+        state.specification = generateSpecification(flow,state.nodes, state.edges);
+      } else {
+        state.specification = {};
+      }
+    },
+    deleteNode: (state, action) => {
+      const { flow, nodeId } = action.payload;
+    
+      state.nodes = state.nodes.filter(node => node.id !== nodeId);
+      
+      state.edges = state.edges.filter(
+        edge => edge.source !== nodeId && edge.target !== nodeId
+      );
+      state.nodes = state.nodes.map(node => ({
+        ...node,
+        next: node.next.filter(nextId => nextId !== nodeId)
+      }));
+      state.specification = generateSpecification(flow, state.nodes, state.edges);
+    },
+    updateNodeConnections: (state, action) => {
+      const { source, target } = action.payload;
+
+      state.nodes = state.nodes.map(node => {
+        if (node.id === source) {
+          const nextArray = node.next || [];
+
+          if (!nextArray.includes(target)) {
+            return {
+              ...node,
+              next: [...nextArray, target]
+            };
+          }
+        }
+        return node;
+      });
+      //state.specification = generateSpecification(state.nodes, state.edges);
+    },
+    updateNode: (state, action) => {
+      const { flow, nodeId, updatedNode } = action.payload;
+    
+      state.nodes = state.nodes.map(node => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              inputParameters: updatedNode
+            },
+            next: node.next || []
+          };
+        }
+        return node;
+      });
+    
+      state.specification = generateSpecification(flow, state.nodes, state.edges);
+    },
     updateSpecification: (state, action) => {
-      state.specification = action.payload;
+      //state.specification = action.payload;
     }, 
     
   },
@@ -151,6 +232,7 @@ const studioSlice = createSlice({
 
       builder.addCase(getFlowById.fulfilled, (state, action) => {
         state.flow = action.payload;
+        state.specification = action.payload;
         state.studioLoader = false;
       });
       builder.addCase(getFlowById.pending, (state) => {
@@ -167,6 +249,7 @@ const studioSlice = createSlice({
         state.flow = action.payload;
         state.studioUpdateFlowLoader = false;
         state.specification = action.payload;
+        console.log("flow after saving", state.flow);
       });
       builder.addCase(updateFlow.rejected, (state) => {
         state.studioUpdateFlowLoader = false;
@@ -186,5 +269,34 @@ const studioSlice = createSlice({
   }
 });
 
-export const { updateSpecification } = studioSlice.actions;
+
+const generateSpecification = (flow, nodes, edges) => {
+  if (!nodes.length) return null;
+
+  if (!Array.isArray(nodes) || !Array.isArray(edges)) {
+    return {};
+  }
+  const specification = {
+  ...flow, 
+  graphSpec: {
+    nodes: nodes.map(node => ({
+      node_id: node.id,  
+      name: node.data?.name || node.name,
+      type: node.data?.type || node.type,
+      description: node.data?.description || node.description,
+      next: node.data?.next || node.next || [],
+      inputParameters: node.data?.inputParameters || node.inputParameters || [],
+      outputParameters: node.data?.outputParameters || node.outputParameters || []
+    })),
+    edges: edges.map(edge => ({
+      from: edge.source,  
+      to: edge.target,    
+    })),
+  }
+  };
+
+  return specification;
+};
+
+export const {updateSpecification, setNodes, setEdges ,deleteNode, updateNodeConnections,updateNode} = studioSlice.actions;
 export default studioSlice.reducer;

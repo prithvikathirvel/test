@@ -1,6 +1,5 @@
-
 "use client"
-import React, { useState } from 'react';
+import React,{useState} from 'react';
 import { Box, InputBase, Typography } from '@mui/material';
 import { Search } from 'lucide-react';
 import { convertToTitleCase } from '@/utils/commonFunction';
@@ -21,18 +20,15 @@ const InputBox = ({
   type = 'text',
   ...props
 }) => {
+
   const [inputValue, setInputValue] = useState(value);
 
-  const handleChange = (value) => {
-    setInputValue(value);
-    if (onChange) {
-      onChange(value);
-    }
-  };
+  const handleChange = (event) => {
+    setInputValue(event.target.value);
+    onChange(inputValue)
+};
 
   return (
-
-
     <Box>
       {isShowLabel && <Typography className='!mb-2 !font-bold  !text-[13px]'>{convertToTitleCase(label)}</Typography>}
 
@@ -49,11 +45,11 @@ const InputBox = ({
       >
         {icon}
         <InputBase
-          disabled={disabled}
           placeholder={placeholder}
           value={inputValue}
-          onChange={()=>handleChange(inputValue)}
-          className="flex-1"
+          onChange={(e)=>handleChange(e)}
+          className="flex-1 outline-none"
+          disabled={disabled}
           type={type}
           sx={{
             fontSize: '14px',

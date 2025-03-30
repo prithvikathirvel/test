@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Box, Typography, Paper, Button, Chip, IconButton, Switch, Divider, Tooltip } from '@mui/material';
 import { Upload, X, Check, FileText, Code, Plus, Trash2 } from 'lucide-react';
 import InputBox from '@/components/Common/InputBox';
@@ -134,16 +134,17 @@ const KeyValueInput = ({
 );
 
 const StringParameter = ({ param = {}, color, onUpdate, parameters }) => {
+  const handleChange = (value)=>{
+    console.log("calling handleChnage", value);
+    console.log("parameters", parameters);
 
-  const handleChange = (value) => {
-    if (onUpdate) {
-      // Create a new set of parameters with the updated value
-      const updatedParams = parameters.map(p => 
-        p.key === param.key ? { ...p, value } : p
-      );
+    const updatedParams = parameters.map(p => 
+      p.key === param.key ? { ...p, value } : p
+    );
+      console.log("updatedParams", updatedParams)
       onUpdate(updatedParams);
-    }
-  };
+
+  }
 
   return (
     <Box className="w-full">
@@ -155,7 +156,7 @@ const StringParameter = ({ param = {}, color, onUpdate, parameters }) => {
         value={param.value || ''}
         label={param.key}
         isShowLabel={true}
-        onChange={()=> handleChange(param.value)}
+        onChange={handleChange}
       />
     </Box>
   );
@@ -199,7 +200,6 @@ const NumberParameter = ({ param = {}, color, onUpdate, parameters }) => {
 const BooleanParameter = ({ param = {}, color, onUpdate, parameters }) => {
   const handleChange = (event) => {
     if (onUpdate) {
-      // Create a new set of parameters with the updated value
       const updatedParams = parameters.map(p => 
         p.key === param.key ? { ...p, value: event.target.checked } : p
       );

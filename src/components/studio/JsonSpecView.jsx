@@ -6,7 +6,7 @@ import { useSelector } from "react-redux";
 import OutputParameterComponents from "./OutputParameterComponents";
 
 export default function JsonSpecView() {
-  const specification = useSelector((state) => state.flow.specification);
+  const specification = useSelector((state) => state.studio.specification);
 
   return (
     <Box className="p-4 h-full overflow-auto">
