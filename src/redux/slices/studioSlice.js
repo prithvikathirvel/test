@@ -172,6 +172,7 @@ const studioSlice = createSlice({
       });
     
       state.specification = generateSpecification(flow, state.nodes, state.edges);
+      state.flow = generateSpecification(flow,state.nodes,state.edges)
     },
     updateSpecification: (state, action) => {
       //state.specification = action.payload;

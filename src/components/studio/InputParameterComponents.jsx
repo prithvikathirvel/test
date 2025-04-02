@@ -165,7 +165,6 @@ const StringParameter = ({ param = {}, color, onUpdate, parameters }) => {
 const NumberParameter = ({ param = {}, color, onUpdate, parameters }) => {
   const handleChange = (value) => {
     if (onUpdate) {
-      // Create a new set of parameters with the updated value
       const updatedParams = parameters.map(p => 
         p.key === param.key ? { ...p, value: Number(value) } : p
       );

@@ -25,7 +25,7 @@ const InputBox = ({
 
   const handleChange = (event) => {
     setInputValue(event.target.value);
-    onChange(inputValue)
+    onChange(event.target.value)
 };
 
   return (

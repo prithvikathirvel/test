@@ -340,7 +340,7 @@ const NodeDetailsModal = ({
       color={nodeColor} 
       loading={loading}
       disabled={disabled}
-      onUpdate={onUpdateParameters}
+      onUpdate={handleSaveNodeDetails}
     />
         )}
 
