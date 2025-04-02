@@ -16,6 +16,7 @@ import NodeDetailsModal from "@/components/studio/NodeDetailsModal";
 import { toast } from "react-toastify";
 import axios from "axios";
 import { useParams } from 'next/navigation';
+import StudioChatBot from "@/components/studio/StudioChatBot";
 
 const drawerWidth = 280;
 
@@ -307,6 +308,7 @@ const Studio = () => {
 
     return (
         <div className="h-full w-full overflow-hidden">
+         <StudioChatBot className='z-40' opened={true} flow= {flow} handleRunFlow={handleRunFlow} />
             <Box className="h-full w-full">
                 <FlowOutputModal
                     open={outputModalOpen}
