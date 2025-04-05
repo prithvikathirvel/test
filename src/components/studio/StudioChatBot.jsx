@@ -3,7 +3,8 @@ import ChatBot from 'react-simple-chatbot';
 import { ThemeProvider } from 'styled-components';
 import React, { useState, useCallback } from 'react';
 import { Bot } from 'lucide-react';
-
+import { useSelector, useDispatch } from 'react-redux';
+import {runFlow} from '@/redux/slices/studioSlice';
 const theme = {
   background: '#f5f8fb',
   fontFamily: 'Work Sans, sans-serif',
@@ -16,10 +17,11 @@ const theme = {
   userFontColor: '#4a4a4a',
 };
 
-const StudioChatBot = ({ flow, handleRunFlow }) => {
+const StudioChatBot = ({ flow }) => {
   const [opened, setOpened] = useState(false);
   const [key, setKey] = useState('chatbot-1');
-
+  
+  const dispatch = useDispatch();
   const toggleChatbot = useCallback(() => {
     setOpened((prev) => {
       if (!prev) {
@@ -33,23 +35,39 @@ const StudioChatBot = ({ flow, handleRunFlow }) => {
     console.log("User selected option:", value);
   };
 
+  const RunFlowComponent = ({ flow }) => {
+    const [output, setOutput] = React.useState("Processing...");
+    const flowOutput = useSelector(state => state.studio.flowOutput);
+    const isFlowRunning = useSelector(state => state.studio.isFlowRunning);
+  
+    // Watch for flow output changes
+    React.useEffect(() => {
+      if (flowOutput && !isFlowRunning) {
+        setOutput(flowOutput?.retrieved_summary || "No summary available");
+      }
+    }, [flowOutput, isFlowRunning]);
+  
+    // Execute flow
+    React.useEffect(() => {
+      const executeFlow = async () => {
+         dispatch(runFlow({data: flow?.id, onSuccess: () => {console.log('executtt')}}));
+      };
+      executeFlow();
+    }, [flow?.id, dispatch]);
+  
+    return !isFlowRunning ? (
+      <div className="flow-output-html" dangerouslySetInnerHTML={{ __html: output }}></div>
+    ) : (
+      <div>Flow is currently running, please wait...</div>
+    );
+  };
+
   const steps = [
     {
       id: 'greeting',
       message: 'Welcome to Sify Aurora!',
-      trigger: 'flowDetails',
-      delay: 1000,
-    },
-    {
-      id: 'flowDetails',
-      message: `Flow Name: ${flow.name}`,
-      trigger: 'options',
-      delay: 500,
-    },
-    {
-      id: 'options',
-      message: 'Please choose an option to proceed:',
       trigger: 'chooseOption',
+      delay: 1000,
     },
     {
       id: 'chooseOption',
@@ -57,20 +75,21 @@ const StudioChatBot = ({ flow, handleRunFlow }) => {
         {
           value: 'run',
           label: 'Run Flow',
-          trigger: () => {
-            handleRunFlow(flow?.id);
-            return 'runningResponse';
-          },
+          trigger: 'runningResponse',
         },
       ],
     },
     {
       id: 'runningResponse',
       message: 'Your flow is running!',
-      end: true, // Ends the conversation after displaying the message
+      trigger: 'executeFlow',
+    },
+    {
+      id: 'executeFlow',
+      component: <RunFlowComponent flow={flow}  />,
+      end: true,
     },
   ];
-
   return (
     <ThemeProvider theme={theme}>
       <ChatBot
@@ -97,7 +116,26 @@ const StudioChatBot = ({ flow, handleRunFlow }) => {
         enableSmoothScroll={true}
         recognitionEnable={false}
         style={{ maxWidth: '350px' }}
-        userDelay={0}
+        // userDelay={0}
+        bubbleOptionStyle={{
+          backgroundColor: "transparent",
+          border: "2px solid #6e48aa",
+          color: "#6e48aa",
+          padding: "8px 15px",
+          borderRadius: "20px",
+          margin: "5px 0px 0px 45px",
+          fontSize: "14px",
+          cursor: "pointer",
+          transition: "all 0.3s ease",
+        }}
+        submitButtonStyle={{
+          backgroundColor: "#6e48aa",
+          color: "#fff",
+          borderRadius: "50%",
+          width: "40px",
+          height: "40px",
+        }}
+        userDelay={500}
       />
     </ThemeProvider>
   );

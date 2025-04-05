@@ -11,7 +11,7 @@ import { Save, Rocket, Code, List, Eye, Play } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleViewMode, updateSpecification } from "@/redux/slices/flowSlice";
 import SideDrawer from "@/components/Common/SideDrawer";
-import { fetchTools, fetchAgents, fetchModels ,getFlowById, updateFlow, setNodes, setEdges ,deleteNode, updateNodeConnections,updateNode} from "@/redux/slices/studioSlice";
+import { fetchTools, fetchAgents, fetchModels ,getFlowById, updateFlow, setNodes, setEdges ,deleteNode, updateNodeConnections,updateNode,runFlow} from "@/redux/slices/studioSlice";
 import NodeDetailsModal from "@/components/studio/NodeDetailsModal";
 import { toast } from "react-toastify";
 import axios from "axios";
@@ -27,7 +27,6 @@ const Studio = () => {
     const [edges, setEdgesState, onEdgesChange] = useEdgesState([]);
     const [selectedNode, setSelectedNode] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
-    const [flowOutput, setFlowOutput] = useState(null);
     const [outputModalOpen, setOutputModalOpen] = useState(false);
     const [isFlowRunning, setIsFlowRunning] = useState(false);
     const [saveFlow, setSaveFlow] = useState(false);
@@ -39,10 +38,10 @@ const Studio = () => {
     const loading = useSelector(state => state.studio.studioLoader);
     const specification = useSelector(state => state.studio.specification); 
     const studioUpdateFlowLoader = useSelector(state => state.studio.studioUpdateFlowLoader);   
+    const flowOutput = useSelector(state => state.studio.flowOutput);
     const nodeTypes = useNodeTypes();
 
-
-   useEffect(() => {
+    useEffect(() => {
         dispatch(getFlowById({ id: flowId }));
         dispatch(fetchTools());
         dispatch(fetchModels());
@@ -50,18 +49,166 @@ const Studio = () => {
     }, [flowId, dispatch]);
 
 
+    // useEffect(() => {
+    //     if (!flow?.graphSpec?.nodes || !flow?.graphSpec?.edges) return;
+
+    //     if (Array.isArray(flow.graphSpec.nodes) && Array.isArray(flow.graphSpec.edges)) {
+    //         const nodeSpacing = { x: 300, y: 250 };
+    //         const maxColumns = 4;
+
+    //         const nodesWithPositions = flow.graphSpec.nodes.map((node, index) => {
+    //             const column = index % maxColumns;
+    //             const row = Math.floor(index / maxColumns);
+
+    //             return {
+    //                 ...node,
+    //                 id: node.node_id,
+    //                 key: node.node_id,
+    //                 data: {
+    //                     label: node.name || "Unnamed Node",
+    //                     name: node.name || "Unnamed Node",
+    //                     type: node.type || "default",
+    //                     description: node.description || "",
+    //                     inputParameters: node.inputParameters || [],
+    //                     outputParameters: node.outputParameters || [],
+    //                     next: node.next || [],
+    //                 },
+    //                 position: {
+    //                     x: node.position?.x ?? column * nodeSpacing.x,
+    //                     y: node.position?.y ?? row * nodeSpacing.y,
+    //                 },
+    //             };
+    //         });
+
+    //         setNodesState(nodesWithPositions);
+
+    //         const edgeSet = new Set();
+    //         const uniqueEdges = flow.graphSpec.edges
+    //             .filter(edge => edge.from && edge.to)
+    //             .map((edge) => {
+    //                 const edgeId = ${edge.from}-${edge.to};
+    //                 if (edgeSet.has(edgeId)) return null;
+    //                 edgeSet.add(edgeId);
+    //                 return {
+    //                     id: edgeId,
+    //                     source: edge.from,
+    //                     target: edge.to,
+    //                     animated: true,
+    //                 };
+    //             })
+    //             .filter(Boolean);
+
+    //         setEdgesState(uniqueEdges);
+    //         console.log("nodes", nodesWithPositions);
+    //         console.log("uniqueEdges", uniqueEdges);
+    //     } else {
+    //         console.error('Invalid graphSpec:', flow.graphSpec);
+    //     }
+    // }, [flow?.graphSpec, setNodesState, setEdgesState]);
+
 
     useEffect(() => {
         if (!flow?.graphSpec?.nodes || !flow?.graphSpec?.edges) return;
         
         if (Array.isArray(flow.graphSpec.nodes) && Array.isArray(flow.graphSpec.edges)) {
-            const nodeSpacing = { x: 300, y: 250 };
-            const maxColumns = 4;
+            const adjacencyList = {};
+            flow.graphSpec.edges.forEach(edge => {
+                if (!adjacencyList[edge.from]) adjacencyList[edge.from] = [];
+                adjacencyList[edge.from].push(edge.to);
+            });
+            
+            const nodeMap = {};
+            flow.graphSpec.nodes.forEach(node => {
+                nodeMap[node.node_id] = node;
+            });
+            
+            const incomingEdges = {};
+            flow.graphSpec.edges.forEach(edge => {
+                incomingEdges[edge.to] = (incomingEdges[edge.to] || 0) + 1;
+            });
+            
+            const rootNodes = flow.graphSpec.nodes
+                .filter(node => !incomingEdges[node.node_id])
+                .map(node => node.node_id);
+            
+            const horizontalSpacing = 400;
+            const verticalSpacing = 150;   
+            const nodeHeight = 75;        
+            
 
-            const nodesWithPositions = flow.graphSpec.nodes.map((node, index) => {
-                const column = index % maxColumns;
-                const row = Math.floor(index / maxColumns);
+            const calculatePositions = () => {
+                const positions = {};
+                const processedNodes = new Set();
+                const levelSpaceUsed = {}; 
+                
+                const processNode = (nodeId, level = 0, verticalPosition = 0) => {
+                    if (processedNodes.has(nodeId)) return;
+                    processedNodes.add(nodeId);
+                    
+                 
+                    if (!levelSpaceUsed[level]) levelSpaceUsed[level] = 0;
+                    
+                
+                    const children = adjacencyList[nodeId] || [];
+                    
+                    positions[nodeId] = {
+                        x: level * horizontalSpacing,
+                        y: verticalPosition
+                    };
+                    
+                    if (children.length > 0) {
+                        const nextLevel = level + 1;
+                        if (!levelSpaceUsed[nextLevel]) levelSpaceUsed[nextLevel] = 0;
+                        
+                        const totalStackHeight = (children.length - 1) * verticalSpacing;
+                        const startY = verticalPosition - totalStackHeight / 2;
+                        
+                        children.forEach((childId, index) => {
+                            const childY = startY + index * verticalSpacing;
+                            processNode(childId, nextLevel, childY);
+                        });
+                    }
+                };
+                
+                rootNodes.forEach((rootId, index) => {
+                    const rootY = index * (verticalSpacing * 2); 
+                    processNode(rootId, 0, rootY);
+                    levelSpaceUsed[0] = rootY + verticalSpacing;
+                });
+                
 
+                flow.graphSpec.nodes.forEach(node => {
+                    if (!processedNodes.has(node.node_id)) {
+                        const disconnectedLevel = Object.keys(levelSpaceUsed).length;
+                        if (!levelSpaceUsed[disconnectedLevel]) levelSpaceUsed[disconnectedLevel] = 0;
+                        
+                        const verticalPos = levelSpaceUsed[disconnectedLevel];
+                        positions[node.node_id] = {
+                            x: disconnectedLevel * horizontalSpacing,
+                            y: verticalPos
+                        };
+                        
+                        levelSpaceUsed[disconnectedLevel] += verticalSpacing;
+                        processedNodes.add(node.node_id);
+                        
+                        const children = adjacencyList[node.node_id] || [];
+                        if (children.length > 0) {
+                            children.forEach((childId, index) => {
+                                const childY = verticalPos - (children.length - 1) * verticalSpacing / 2 + index * verticalSpacing;
+                                processNode(childId, disconnectedLevel + 1, childY);
+                            });
+                        }
+                    }
+                });
+                
+                return positions;
+            };
+            
+            const positions = calculatePositions();
+            
+            const nodesWithPositions = flow.graphSpec.nodes.map(node => {
+                const calculatedPosition = positions[node.node_id] || { x: 0, y: 0 };
+                
                 return {
                     ...node,
                     id: node.node_id,
@@ -76,14 +223,14 @@ const Studio = () => {
                         next: node.next || [],
                     },
                     position: {
-                        x: node.position?.x ?? column * nodeSpacing.x,
-                        y: node.position?.y ?? row * nodeSpacing.y,
+                        x: node.position?.x ?? calculatedPosition.x,
+                        y: node.position?.y ?? calculatedPosition.y,
                     },
                 };
             });
-
+            
             setNodesState(nodesWithPositions);
-
+            
             const edgeSet = new Set();
             const uniqueEdges = flow.graphSpec.edges
                 .filter(edge => edge.from && edge.to)
@@ -99,7 +246,7 @@ const Studio = () => {
                     };
                 })
                 .filter(Boolean);
-
+            
             setEdgesState(uniqueEdges);
             console.log("nodes", nodesWithPositions);
             console.log("uniqueEdges", uniqueEdges);
@@ -107,7 +254,6 @@ const Studio = () => {
             console.error('Invalid graphSpec:', flow.graphSpec);
         }
     }, [flow?.graphSpec, setNodesState, setEdgesState]);
-
     
     const onConnect = useCallback(
         (params) => {
@@ -175,29 +321,17 @@ const Studio = () => {
         setToggleViewMode(prev => !prev);
     }, []);
 
-    const handleRunFlow = useCallback(async (flowId) => {
-        setIsFlowRunning(true);
-        try {
-            const response = await axios.post('http://127.0.0.1:5000/execute-graph', {
-                agent_id: flowId
-            });
+    const handleOpenOutputModal = () => {
+        setOutputModalOpen(true);
+        console.log('After execu',flowOutput);
+    };
 
-            if (response.status === 200) {
-                setFlowOutput(response.data);
-                toast.success('Flow executed successfully');
-                setOutputModalOpen(true);
-            }
-        } catch (error) {
-            console.error('Error executing flow:', error);
-            toast.error(`Failed to execute flow: ${error.message}`);
-            setFlowOutput(null);
-        } finally {
-            setIsFlowRunning(false);
-        }
+    const handleRunFlow = useCallback((flowId) => {
+      dispatch(runFlow({data:flowId, onSuccess: () => handleOpenOutputModal()}))
     }, []);
-
+    
     const handleDeployFlow = useCallback(() => {
-        dispatch(updateSpecification());
+      dispatch(updateSpecification());
     }, [dispatch]);
 
     const onNodeClick = useCallback((event, node) => {
@@ -230,7 +364,7 @@ const Studio = () => {
         dispatch(updateFlow({id: flowId, updatedData: specification}));
     }, [dispatch, flowId, specification, flow]);
 
-    const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters) => {
+    const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters,parameter) => {
         // // Update local state
         // setNodesState((nodes) => {
         //     return nodes.map((node) => {
@@ -250,7 +384,8 @@ const Studio = () => {
         // Update Redux flow
         console.log(nodeId,'NodeIdddd')
         console.log(updatedParameters,'updateddd')
-        dispatch(updateNode({flow:flow,nodeId:nodeId,updatedNode:updatedParameters}));
+        console.log(parameter,'parameterrr')
+        dispatch(updateNode({flow:flow,nodeId:nodeId,updatedNode:updatedParameters,parameter:parameter}));
     
         // The specification will be automatically updated by the updateNode action
     }, [dispatch]);
@@ -268,8 +403,9 @@ const Studio = () => {
         fitView: true,
         style: { backgroundColor: "#F7F9FB" },
         defaultEdgeOptions: {
+            type: "be", // Change edge type to bezier for smooth curves
             animated: true,
-            style: { stroke: '#6c5ce7' }
+            style: { stroke: 'var(--primary-color)', strokeWidth: 2 }
         }
     }), [
         nodes, 
@@ -308,7 +444,7 @@ const Studio = () => {
 
     return (
         <div className="h-full w-full overflow-hidden">
-         <StudioChatBot className='z-40' opened={true} flow= {flow} handleRunFlow={handleRunFlow} />
+         <StudioChatBot className='!z-100' opened={true} flow= {flow} handleRunFlow={handleRunFlow} flowOutput={flowOutput}/>
             <Box className="h-full w-full">
                 <FlowOutputModal
                     open={outputModalOpen}
@@ -346,7 +482,7 @@ const Studio = () => {
                                     onClick={() => handleSaveFlow()}
                                     // disabled={isFlowRunning}
                                     sx={{
-                                        backgroundColor: '#6c5ce7',
+                                        backgroundColor: 'var(--primary-color)',
                                         '&:hover': {
                                             backgroundColor: '#5f50e3'
                                         },
@@ -365,7 +501,7 @@ const Studio = () => {
                                         onClick={() => handleRunFlow(flowId)}
                                         disabled={isFlowRunning}
                                         sx={{
-                                            backgroundColor: '#6c5ce7',
+                                            backgroundColor: 'var(--primary-color)',
                                             '&:hover': {
                                                 backgroundColor: '#5f50e3'
                                             },
@@ -383,7 +519,7 @@ const Studio = () => {
                                     startIcon={<Rocket size={16} />}
                                     onClick={handleDeployFlow}
                                     sx={{
-                                        backgroundColor: '#6c5ce7',
+                                        backgroundColor: 'var(--primary-color)',
                                         '&:hover': {
                                             backgroundColor: '#5f50e3'
                                         },

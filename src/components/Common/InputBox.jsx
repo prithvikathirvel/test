@@ -12,7 +12,7 @@ const InputBox = ({
   onChange,
   className = "",
   icon = <Search size={18} className="text-gray-400" />,
-  color = '#6c5ce7',
+  color = 'var(--primary-color)',
   value = '',
   disabled = false,
   width = '100%',

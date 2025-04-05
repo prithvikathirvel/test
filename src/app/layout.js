@@ -46,7 +46,7 @@ export default function RootLayout({ children }) {
         />
             {!isLoginPage && <Sidenav open={false} />}
             <Box className="flex-1 flex flex-col h-full">
-              {!isLoginPage && <Header title="Sify Aurora" />}
+              {/* {!isLoginPage && <Header title="Sify Aurora" />} */}
               <Box className="flex-1 overflow-y-auto">
                 {children}
               </Box>

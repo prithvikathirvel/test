@@ -23,6 +23,8 @@ const initialRootState = {
     studioUpdateFlowLoader: false,
     getAllFlowsLoader: false,
     specification:{},
+    flowOutput: null,
+    isFlowRunning:false
   }
 }
 

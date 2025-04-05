@@ -2,6 +2,7 @@ import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import initialRootState from "../initialRootState";
 import APIKit from "@/utils/APIKit";
 import { showToaster } from "@/utils/commonFunction";
+import axios from "axios";
 
 const initialState = initialRootState.studio;
 
@@ -91,6 +92,33 @@ export const saveFlow = createAsyncThunk('studio/saveFlow', async ({data, onSucc
   }
 });
 
+export const runFlow = createAsyncThunk('studio/runFlow', async ({data,onSuccess}) => {
+    try {
+      const response = await axios.post('http://127.0.0.1:5000/execute-graph', {
+        agent_id: data
+      });
+      showToaster('success', 'Flow Executed successfully');
+      onSuccess();
+      return response.data;
+    } catch (error) {
+      showToaster('error', error);
+      throw error;
+    }
+  }
+);
+
+export const deleteFlow = createAsyncThunk('studio/deleteFlow', async ({data, onSuccess}) => {
+  try {
+    console.log(data,'hey222');
+    const response = await APIKit.delete(`/agent-flow/${data}`);
+    showToaster('success', 'Flow Deleted successfully');
+    onSuccess();
+    return response.data;
+  } catch (error) {
+    showToaster('error', error);
+    throw error;
+  }
+}); 
 
 const studioSlice = createSlice({
   name: "studio",
@@ -155,7 +183,7 @@ const studioSlice = createSlice({
       //state.specification = generateSpecification(state.nodes, state.edges);
     },
     updateNode: (state, action) => {
-      const { flow, nodeId, updatedNode } = action.payload;
+      const { flow, nodeId, updatedNode,parameter } = action.payload;
     
       state.nodes = state.nodes.map(node => {
         if (node.id === nodeId) {
@@ -163,7 +191,7 @@ const studioSlice = createSlice({
             ...node,
             data: {
               ...node.data,
-              inputParameters: updatedNode
+              [parameter]: updatedNode
             },
             next: node.next || []
           };
@@ -267,6 +295,20 @@ const studioSlice = createSlice({
       builder.addCase(getAllFlows.rejected, (state) => {
         state.getAllFlowsLoader = false;
       });
+
+      builder.addCase(runFlow.pending, (state) => {
+        state.isFlowRunning = true;
+      });
+      builder.addCase(runFlow.fulfilled, (state, action) => {
+        state.isFlowRunning = false;
+        state.flowOutput = action.payload;
+        console.log("flow output", state.flowOutput)
+      });
+      builder.addCase(runFlow.rejected, (state, action) => {
+        state.isFlowRunning = false;
+      });
+
+  
   }
 });
 

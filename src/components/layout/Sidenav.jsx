@@ -1,21 +1,15 @@
 "use client";
 
-import { Box, IconButton, List, ListItem, ListItemIcon, ListItemText } from "@mui/material"
+import { List, ListItem, ListItemIcon, ListItemText, Box, Drawer } from "@mui/material"
 import {
   LayoutDashboard,
-  Inbox,
-  User,
-  Calendar,
-  Search,
-  BarChart,
-  FolderOpen,
   Settings,
-  ChevronLeft,
-  ChevronRight,
   MessageSquare,
   Package,
   Rocket
 } from "lucide-react"
+
+import colors from "@/utils/colors";
 
 const Menus = [
   { title: "Dashboard", icon: <LayoutDashboard size={18} /> },
@@ -27,8 +21,19 @@ const Menus = [
 
 export default function Sidenav({ open, setOpen }) {
   return (
-    <div className={`${open ? "w-64" : "w-16"} bg-[#6c5ce7] h-dvh flex flex-col transition-all duration-300`}>
-      <div className="flex-1 py-8">
+    <Drawer
+      variant="permanent"
+      sx={{
+        width: open ? 256 : 64,
+        "& .MuiDrawer-paper": {
+          width: open ? 256 : 64,
+          backgroundColor: 'var(--primary-color)',
+          color: "white",
+          transition: "width 0.3s ease-in-out",
+        },
+      }}
+    >
+      <Box sx={{ flex: 1, py: 2 }}>
         <List>
           {Menus.map((menu) => (
             <ListItem
@@ -50,7 +55,7 @@ export default function Sidenav({ open, setOpen }) {
             </ListItem>
           ))}
         </List>
-      </div>
-    </div>
+      </Box>
+    </Drawer>
   )
 }

@@ -100,6 +100,29 @@ const generateUUID = () => {
 
 }
 
+function timeAgo(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now - date) / 1000);
+
+  const units = [
+    { label: "year", value: 31536000 },
+    { label: "month", value: 2592000 },
+    { label: "week", value: 604800 },
+    { label: "day", value: 86400 },
+    { label: "hour", value: 3600 },
+    { label: "minute", value: 60 },
+  ];
+
+  for (let unit of units) {
+    const count = Math.floor(seconds / unit.value);
+    if (count >= 1) return `Updated ${count} ${unit.label}${count > 1 ? "s" : ""} ago`;
+  }
+
+  return "Updated just now";
+}
+
+
 
 const generateSpecification = (flow, nodes, edges) => {
   if (!nodes.length) return null;
@@ -129,6 +152,31 @@ const generateSpecification = (flow, nodes, edges) => {
   return specification;
 };
 
+function sortByField(arr, field, order = "asc") {
+  try {
+    if (!Array.isArray(arr) || arr.length === 0) return []; // Return empty if input is not a valid array
+
+    return [...arr].sort((a, b) => {
+      const valA = a[field];
+      const valB = b[field];
+
+      if (valA === undefined || valB === undefined) return 0; // Ignore undefined values
+
+      if (typeof valA === "string" && typeof valB === "string") {
+        return order === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      } else if (typeof valA === "number" && typeof valB === "number") {
+        return order === "asc" ? valA - valB : valB - valA;
+      }
+
+      return 0; // If types are different, keep original order
+    });
+  } catch (error) {
+    console.error("Sorting error:", error);
+    return [];
+  }
+}
+
+
 export {
   showToaster,
   stringAvatar,
@@ -138,5 +186,7 @@ export {
   getNodeColor, 
   FileTypeIcon, 
   generateUUID,
-  generateSpecification
+  generateSpecification,
+  timeAgo,
+  sortByField
 }

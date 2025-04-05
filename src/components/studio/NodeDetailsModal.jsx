@@ -118,7 +118,7 @@ const ModalHeader = ({ title, type, color, onClose, onDelete }) => (
   </Box>
 );
 
-const InputParameterRenderer = ({ parameters, title, icon, color, loading, disabled, onUpdate }) => (
+const InputParameterRenderer = ({ parameters, title, icon, color, loading, disabled, onUpdate,parameter }) => (
   <CustomAccordion 
     title={title} 
     icon={icon}
@@ -149,7 +149,7 @@ const InputParameterRenderer = ({ parameters, title, icon, color, loading, disab
       <Stack spacing={2}>
         {parameters.map((param, index) => (
           <Box key={index}>
-            {getParameterComponent(param, color, onUpdate,parameters)}
+            {getParameterComponent(param, color, onUpdate,parameters,parameter)}
           </Box>
         ))}
       </Stack>
@@ -238,11 +238,11 @@ const NodeDetailsModal = ({
 }) => {
   const dispatch = useDispatch();
 
-  const handleSaveNodeDetails = (updateParams) => {
+  const handleSaveNodeDetails = (updateParams,parameter) => {
     if (node) {
       // Call the onUpdateParameters function to save changes
-      console.log('Saving parameters:',node.id, updateParams);
-      onUpdateParameters(node.id, updateParams);
+      console.log('Saving parameters:',node.id, updateParams,parameter);
+      onUpdateParameters(node.id, updateParams,parameter);
     }
   };
 
@@ -296,7 +296,37 @@ const NodeDetailsModal = ({
       />
 
       <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
-        {displayBasicInformation && (
+        {displayInputParameters && (
+         <>
+          <InputParameterRenderer 
+            parameters={inputParameters} 
+            title="Input Parameters" 
+            icon={<InputIcon size={20} />} 
+          color={nodeColor} 
+          loading={loading}
+          disabled={disabled}
+          onUpdate={handleSaveNodeDetails}
+          parameter={'inputParameters'}
+        />
+        <Divider sx={{ my: 2 }} />
+        </>
+        )}
+        {displayOutputParameters && (
+        <InputParameterRenderer 
+        parameters={outputParameters} 
+        title="Output Parameters" 
+        icon={<OutputIcon size={20} />} 
+        color={nodeColor} 
+        loading={loading}
+        disabled={disabled}
+        onUpdate={handleSaveNodeDetails}
+        parameter={'outputParameters'}
+     />
+        )}
+
+    <Divider sx={{ my: 2 }} />
+
+      {displayBasicInformation && (
          <>
           <BasicInformationSection 
             description={description}
@@ -308,40 +338,6 @@ const NodeDetailsModal = ({
           />
           <Divider sx={{ my: 2 }} />
           </>
-        )}
-        {displayInputParameters && (
-         <>
-          <InputParameterRenderer 
-            parameters={inputParameters} 
-            title="Input Parameters" 
-            icon={<InputIcon size={20} />} 
-          color={nodeColor} 
-          loading={loading}
-          disabled={disabled}
-          onUpdate={handleSaveNodeDetails}
-        />
-        <Divider sx={{ my: 2 }} />
-        </>
-        )}
-        {displayOutputParameters && (
-        //   <OutputParameterRenderer 
-        //   parameters={outputParameters} 
-        //   title="Output Parameters" 
-        //   icon={<OutputIcon size={20} />} 
-        //   color={nodeColor} 
-        //   loading={loading}
-        //   disabled={disabled}
-        // />
-
-        <InputParameterRenderer 
-      parameters={outputParameters} 
-      title="Output Parameters" 
-      icon={<OutputIcon size={20} />} 
-      color={nodeColor} 
-      loading={loading}
-      disabled={disabled}
-      onUpdate={handleSaveNodeDetails}
-    />
         )}
 
       <Button 

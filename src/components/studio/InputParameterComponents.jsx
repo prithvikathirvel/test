@@ -133,16 +133,17 @@ const KeyValueInput = ({
   </Box>
 );
 
-const StringParameter = ({ param = {}, color, onUpdate, parameters }) => {
+const StringParameter = ({ param = {}, color, onUpdate, parameters,parameter }) => {
   const handleChange = (value)=>{
     console.log("calling handleChnage", value);
     console.log("parameters", parameters);
+    console.log("parameter", parameter);
 
     const updatedParams = parameters.map(p => 
       p.key === param.key ? { ...p, value } : p
     );
       console.log("updatedParams", updatedParams)
-      onUpdate(updatedParams);
+      onUpdate(updatedParams,parameter);
 
   }
 
@@ -162,13 +163,13 @@ const StringParameter = ({ param = {}, color, onUpdate, parameters }) => {
   );
 };
 
-const NumberParameter = ({ param = {}, color, onUpdate, parameters }) => {
+const NumberParameter = ({ param = {}, color, onUpdate, parameters,parameter }) => {
   const handleChange = (value) => {
     if (onUpdate) {
       const updatedParams = parameters.map(p => 
         p.key === param.key ? { ...p, value: Number(value) } : p
       );
-      onUpdate(updatedParams);
+      onUpdate(updatedParams,parameter);
     }
   };
 
@@ -196,13 +197,13 @@ const NumberParameter = ({ param = {}, color, onUpdate, parameters }) => {
   );
 };
 
-const BooleanParameter = ({ param = {}, color, onUpdate, parameters }) => {
+const BooleanParameter = ({ param = {}, color, onUpdate, parameters,parameter }) => {
   const handleChange = (event) => {
     if (onUpdate) {
       const updatedParams = parameters.map(p => 
         p.key === param.key ? { ...p, value: event.target.checked } : p
       );
-      onUpdate(updatedParams);
+      onUpdate(updatedParams,parameter);
     }
   };
 
@@ -232,7 +233,7 @@ const BooleanParameter = ({ param = {}, color, onUpdate, parameters }) => {
   );
 };
 
-const ObjectParameter = ({ param = {}, onUpdate, parameters }) => {
+const ObjectParameter = ({ param = {}, onUpdate, parameters,parameter }) => {
   const [objectValue, setObjectValue] = useState(param.value || {});
 
   const handleChange = (newValue) => {
@@ -241,7 +242,7 @@ const ObjectParameter = ({ param = {}, onUpdate, parameters }) => {
       const updatedParams = parameters.map(p => 
         p.key === param.key ? { ...p, value: newValue } : p
       );
-      onUpdate(updatedParams);
+      onUpdate(updatedParams,parameter);
     }
   };
 
@@ -260,7 +261,7 @@ const ObjectParameter = ({ param = {}, onUpdate, parameters }) => {
   );
 };
 
-const FileParameter = ({ param = {}, onUpdate, parameters }) => {
+const FileParameter = ({ param = {}, onUpdate, parameters,parameter }) => {
   const [file, setFile] = useState(null);
   const [fileId, setFileId] = useState(param.value || '');
 
@@ -282,8 +283,7 @@ const FileParameter = ({ param = {}, onUpdate, parameters }) => {
 
         if (onUpdate) {
           console.log('File parameter updated:', param);  
-          onUpdate({
-        });
+          onUpdate({ ...param, value: fileContent },parameter);
         }
       };
     }
@@ -311,7 +311,7 @@ const FileParameter = ({ param = {}, onUpdate, parameters }) => {
             setFile(null);
             setFileId('');
             if (onUpdate) {
-              onUpdate({ ...param, value: null });
+              onUpdate({ ...param, value: null },parameter);
             }
           }}
         />
@@ -320,13 +320,14 @@ const FileParameter = ({ param = {}, onUpdate, parameters }) => {
   );
 };
 
-export const getParameterComponent = (param, color, onUpdate, parameters) => {
-  const props = { param, color, onUpdate, parameters };
+export const getParameterComponent = (param, color, onUpdate, parameters,parameter) => {
+  const props = { param, color, onUpdate, parameters,parameter };
 
   if (!param) {
     console.warn('Undefined parameter passed to getParameterComponent');
     return null;
   }
+  console.log("parameter inside getParameterComponent", parameter);
 
   switch (param.type?.toLowerCase()) {
     case 'string':
@@ -335,7 +336,7 @@ export const getParameterComponent = (param, color, onUpdate, parameters) => {
       return <NumberParameter {...props} />;
     case 'boolean':
       return <BooleanParameter {...props} />;
-    case 'object':
+    case 'object':  
       return <ObjectParameter {...props} />;
     case 'file':
       return <FileParameter {...props} />;
