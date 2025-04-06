@@ -59,6 +59,30 @@ const outputNodes = [
     updatedAt: '',
     createdBy: "System",
     updatedBy: "System"
+  },
+
+  {
+    id: "output_1",
+    key: "response_formatter",
+    name: "response_formatter",
+    type: "outputs",
+    status: "active",
+    description: "Format the Output Based on User needs",
+    tags: ["text", "output","formatter"],
+    inputParameters: [{
+      key: "template",
+      value: "",
+      type: "text"
+    }],
+    outputParameters: [{
+      key: "formatted_output",
+      value: "",
+      type: "text"
+    }],
+    createdAt: '',
+    updatedAt: '',
+    createdBy: "System",
+    updatedBy: "System"
   }
 ]
 

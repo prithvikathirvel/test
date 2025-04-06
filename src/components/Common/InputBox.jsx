@@ -29,8 +29,8 @@ const InputBox = ({
 };
 
   return (
-    <Box>
-      {isShowLabel && <Typography className='!mb-2 !font-bold  !text-[13px]'>{convertToTitleCase(label)}</Typography>}
+    <Box className={className}>
+      {isShowLabel && <Typography className='!mb-2 !font-bold  !text-[13px] '>{convertToTitleCase(label)}</Typography>}
 
       <Box
         className={`flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-md ${className} m-0`}

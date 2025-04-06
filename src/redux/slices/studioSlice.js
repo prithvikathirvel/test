@@ -3,6 +3,7 @@ import initialRootState from "../initialRootState";
 import APIKit from "@/utils/APIKit";
 import { showToaster } from "@/utils/commonFunction";
 import axios from "axios";
+import { sanitizeOutput } from "@/utils/commonFunction";
 
 const initialState = initialRootState.studio;
 
@@ -252,6 +253,7 @@ const studioSlice = createSlice({
       })
       .addCase(saveFlow.fulfilled, (state, action) => {
         state.studioSaveFlowLoader = false;
+        // state.flow = action.payload.data;
         state.newFlowId = action.payload.data.id; 
       })
       .addCase(saveFlow.rejected, (state) => {
@@ -275,9 +277,10 @@ const studioSlice = createSlice({
         state.studioUpdateFlowLoader = true;
       });
       builder.addCase(updateFlow.fulfilled, (state, action) => {
-        state.flow = action.payload;
+        // state.flow = action.payload;
         state.studioUpdateFlowLoader = false;
-        state.specification = action.payload;
+        // state.specification = action.payload;
+        // state.flow = state.specification;
         console.log("flow after saving", state.flow);
       });
       builder.addCase(updateFlow.rejected, (state) => {
@@ -301,7 +304,7 @@ const studioSlice = createSlice({
       });
       builder.addCase(runFlow.fulfilled, (state, action) => {
         state.isFlowRunning = false;
-        state.flowOutput = action.payload;
+        state.flowOutput = sanitizeOutput(action.payload);
         console.log("flow output", state.flowOutput)
       });
       builder.addCase(runFlow.rejected, (state, action) => {

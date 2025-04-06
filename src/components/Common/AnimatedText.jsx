@@ -7,9 +7,9 @@ const AnimatedText = ({ texts }) => {
     useEffect(() => {
       const typed = new Typed(el.current, {
         strings: texts,
-        typeSpeed: 25,
+        typeSpeed: 30,
         backSpeed: 5,
-        loop: false,
+        loop: true,
         showCursor: false,
       });
  
@@ -18,7 +18,7 @@ const AnimatedText = ({ texts }) => {
  
     return (
       <span
-        className="text-lg text-gray-300 max-w-lg inline-block"
+        className="text-lg text-slate-700 max-w-lg inline-block mb-5"
         ref={el}
       />
     );

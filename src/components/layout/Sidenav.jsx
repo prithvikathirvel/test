@@ -1,25 +1,25 @@
 "use client";
 
-import { List, ListItem, ListItemIcon, ListItemText, Box, Drawer } from "@mui/material"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { List, ListItem, ListItemIcon, ListItemText, Box, Drawer } from "@mui/material";
 import {
   LayoutDashboard,
   Settings,
-  MessageSquare,
   Package,
-  Rocket
-} from "lucide-react"
-
-import colors from "@/utils/colors";
+  AlignJustify
+} from "lucide-react";
 
 const Menus = [
-  { title: "Dashboard", icon: <LayoutDashboard size={18} /> },
-  { title: "Chat", icon: <MessageSquare size={18} /> },
-  { title: "Models", icon: <Package size={18} /> },
-  { title: "Rocket", icon: <Rocket size={18}/> },
-  { title: "Settings", icon: <Settings size={18} /> },
-]
+  // { title: "Home", icon: <LayoutDashboard size={18} />, path: "/dashboard" },
+  { title: "Flow Listing", icon: <LayoutDashboard size={18} />, path: "/studio" },
+  { title: "LLM", icon: <Package size={18} />, path: "/llm" },
+  { title: "Settings", icon: <Settings size={18} />, path: "/settings" },
+];
 
 export default function Sidenav({ open, setOpen }) {
+  const pathname = usePathname();
+
   return (
     <Drawer
       variant="permanent"
@@ -35,27 +35,35 @@ export default function Sidenav({ open, setOpen }) {
     >
       <Box sx={{ flex: 1, py: 2 }}>
         <List>
-          {Menus.map((menu) => (
-            <ListItem
-              key={menu.title}
-              className="mb-2 px-3"
-            >
-              <div className="flex items-center w-full rounded-lg p-2 text-white hover:bg-white/10 transition-colors cursor-pointer">
-                <ListItemIcon className="min-w-10 !text-white">
-                  {menu.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={menu.title}
-                  className={`${!open && "hidden"} transition-opacity`}
-                  primaryTypographyProps={{
-                    className: "text-sm font-medium text-white"
-                  }}
-                />
-              </div>
-            </ListItem>
-          ))}
+          {Menus.map((menu) => {
+            const isActive = pathname === menu.path;
+
+            return (
+              <Link href={menu.path} key={menu.title} className="no-underline">
+                <ListItem className="mb-2 px-3">
+                  <div
+                    className={`flex items-center w-full rounded-lg p-2 text-white transition-colors cursor-pointer ${
+                      isActive ? "bg-white/20" : "hover:bg-white/10"
+                    }`}
+                  >
+                    <ListItemIcon className="min-w-10 !text-white">
+                      {menu.icon}
+                    </ListItemIcon>
+                    {open && (
+                      <ListItemText
+                        primary={menu.title}
+                        primaryTypographyProps={{
+                          className: "text-sm font-medium text-white",
+                        }}
+                      />
+                    )}
+                  </div>
+                </ListItem>
+              </Link>
+            );
+          })}
         </List>
       </Box>
     </Drawer>
-  )
+  );
 }

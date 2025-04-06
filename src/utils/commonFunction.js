@@ -176,6 +176,50 @@ function sortByField(arr, field, order = "asc") {
   }
 }
 
+function getLastOutputParameter(flowJson) {
+  console.log("getLastOutputParameter",flowJson);
+
+  if (!flowJson || !flowJson.graphSpec || !Array.isArray(flowJson.graphSpec.nodes)) {
+    throw new Error("Error in getLastOutputParameter function");
+  }
+  const nodes = flowJson.graphSpec.nodes;
+  for (let i = nodes.length - 1; i >= 0; i--) {
+    const node = nodes[i];
+    if (Array.isArray(node.outputParameters) && node.outputParameters.length > 0) {
+      const lastParam = node.outputParameters[node.outputParameters.length - 1];
+      console.log("getLastOutputParameter",lastParam);
+      
+      return {
+        key: lastParam?.key,
+        value: lastParam?.value
+      };
+    }
+  }
+  return null;
+}
+
+function sanitizeOutput (input) {
+  if (typeof input === 'string') {
+      return input
+          .replace(/\\n/g, ' ')  // Remove literal "\n"
+          .replace(/\n/g, ' ')   // Remove actual newline characters
+          .replace(/\\\\/g, '\\')
+          .replace(/\\(?![\\/"])/g, '')
+          .trim();
+  } else if (Array.isArray(input)) {
+      return input.map(sanitizeOutput );
+  } else if (typeof input === 'object' && input !== null) {
+      const sanitized = {};
+      for (const key in input) {
+          sanitized[key] = sanitizeOutput (input[key]);
+      }
+      return sanitized;
+  }
+  return input;
+}
+
+
+
 
 export {
   showToaster,
@@ -188,5 +232,7 @@ export {
   generateUUID,
   generateSpecification,
   timeAgo,
-  sortByField
+  sortByField,
+  getLastOutputParameter,
+  sanitizeOutput
 }

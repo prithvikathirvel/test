@@ -1,10 +1,11 @@
 "use client";
 import ChatBot from 'react-simple-chatbot';
 import { ThemeProvider } from 'styled-components';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Bot } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import {runFlow} from '@/redux/slices/studioSlice';
+import { getLastOutputParameter } from '@/utils/commonFunction';
 const theme = {
   background: '#f5f8fb',
   fontFamily: 'Work Sans, sans-serif',
@@ -20,7 +21,6 @@ const theme = {
 const StudioChatBot = ({ flow }) => {
   const [opened, setOpened] = useState(false);
   const [key, setKey] = useState('chatbot-1');
-  
   const dispatch = useDispatch();
   const toggleChatbot = useCallback(() => {
     setOpened((prev) => {
@@ -36,31 +36,49 @@ const StudioChatBot = ({ flow }) => {
   };
 
   const RunFlowComponent = ({ flow }) => {
-    const [output, setOutput] = React.useState("Processing...");
+    const dispatch = useDispatch();
     const flowOutput = useSelector(state => state.studio.flowOutput);
     const isFlowRunning = useSelector(state => state.studio.isFlowRunning);
+    const [output, setOutput] = useState("Processing...");
+    const [lastParam, setLastParam] = useState('');
   
-    // Watch for flow output changes
-    React.useEffect(() => {
-      if (flowOutput && !isFlowRunning) {
-        setOutput(flowOutput?.retrieved_summary || "No summary available");
+    // Run the flow when the component mounts
+    useEffect(() => {
+      const outputParam = getLastOutputParameter(flow);
+      if (outputParam?.value) {
+        setLastParam(outputParam.value);
+  
+        dispatch(runFlow({
+          data: flow?.id,
+          onSuccess: () => {
+            // Output will be handled in the next useEffect
+            console.log("Flow successfully executed");
+          }
+        }));
       }
-    }, [flowOutput, isFlowRunning]);
-  
-    // Execute flow
-    React.useEffect(() => {
-      const executeFlow = async () => {
-         dispatch(runFlow({data: flow?.id, onSuccess: () => {console.log('executtt')}}));
-      };
-      executeFlow();
     }, [flow?.id, dispatch]);
   
-    return !isFlowRunning ? (
-      <div className="flow-output-html" dangerouslySetInnerHTML={{ __html: output }}></div>
-    ) : (
-      <div>Flow is currently running, please wait...</div>
+    // Watch for flowOutput updates after flow execution
+    useEffect(() => {
+      if (!isFlowRunning && lastParam) {
+        const updatedOutput = flowOutput?.[lastParam];
+        if (updatedOutput) {
+          setOutput(updatedOutput);
+        } else {
+          setOutput("No Output available.");
+        }
+      }
+    }, [flowOutput, isFlowRunning, lastParam]);
+  
+    return (
+      !isFlowRunning ? (
+        <div className="flow-output-html" dangerouslySetInnerHTML={{ __html: JSON.stringify(output, null, 2) }}></div>
+      ) : (
+        <div>Flow is currently running, please wait...</div>
+      )
     );
   };
+  
 
   const steps = [
     {
@@ -86,7 +104,7 @@ const StudioChatBot = ({ flow }) => {
     },
     {
       id: 'executeFlow',
-      component: <RunFlowComponent flow={flow}  />,
+      component: <RunFlowComponent flow={flow} />,
       end: true,
     },
   ];

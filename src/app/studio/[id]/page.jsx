@@ -17,9 +17,10 @@ import { toast } from "react-toastify";
 import axios from "axios";
 import { useParams } from 'next/navigation';
 import StudioChatBot from "@/components/studio/StudioChatBot";
+import { getLastOutputParameter } from "@/utils/commonFunction";
+import FlowOutputModal from "@/components/studio/FlowOutputModal";
 
 const drawerWidth = 280;
-
 
 const Studio = () => {
     const dispatch = useDispatch();
@@ -28,8 +29,9 @@ const Studio = () => {
     const [selectedNode, setSelectedNode] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [outputModalOpen, setOutputModalOpen] = useState(false);
-    const [isFlowRunning, setIsFlowRunning] = useState(false);
+    // const [isFlowRunning, setIsFlowRunning] = useState(false);
     const [saveFlow, setSaveFlow] = useState(false);
+    const [formattedOututParam, setFormattedOututParam] = useState('Empty');
     const [toggleViewMode, setToggleViewMode] = useState(false);
     
     const params = useParams();
@@ -39,6 +41,7 @@ const Studio = () => {
     const specification = useSelector(state => state.studio.specification); 
     const studioUpdateFlowLoader = useSelector(state => state.studio.studioUpdateFlowLoader);   
     const flowOutput = useSelector(state => state.studio.flowOutput);
+    const isFlowRunning = useSelector(state => state.studio.isFlowRunning);
     const nodeTypes = useNodeTypes();
 
     useEffect(() => {
@@ -321,14 +324,16 @@ const Studio = () => {
         setToggleViewMode(prev => !prev);
     }, []);
 
-    const handleOpenOutputModal = () => {
+    const handleOpenOutputModal = (flow) => {
         setOutputModalOpen(true);
-        console.log('After execu',flowOutput);
+         const lastParam = getLastOutputParameter(flow);
+         console.log(lastParam,'lastparamss')
+         setFormattedOututParam(lastParam?.value);
     };
 
-    const handleRunFlow = useCallback((flowId) => {
-      dispatch(runFlow({data:flowId, onSuccess: () => handleOpenOutputModal()}))
-    }, []);
+    const handleRunFlow = useCallback(() => {
+      dispatch(runFlow({data:flow?.id, onSuccess: () => handleOpenOutputModal(flow)}))
+    }, [flow, dispatch]);
     
     const handleDeployFlow = useCallback(() => {
       dispatch(updateSpecification());
@@ -365,23 +370,6 @@ const Studio = () => {
     }, [dispatch, flowId, specification, flow]);
 
     const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters,parameter) => {
-        // // Update local state
-        // setNodesState((nodes) => {
-        //     return nodes.map((node) => {
-        //         if (node.id === nodeId) {
-        //             return {
-        //                 ...node,
-        //                 data: {
-        //                     ...node.data,
-        //                     inputParameters: updatedParameters
-        //                 }
-        //             };
-        //         }
-        //         return node;
-        //     });
-        // });
-    
-        // Update Redux flow
         console.log(nodeId,'NodeIdddd')
         console.log(updatedParameters,'updateddd')
         console.log(parameter,'parameterrr')
@@ -419,37 +407,16 @@ const Studio = () => {
         onNodeClick
     ]);
 
-    // FlowOutputModal component
-    const FlowOutputModal = ({ open, onClose, output }) => {
-        if (!output) return null;
-
-        return (
-            <Dialog
-                open={open}
-                onClose={onClose}
-                maxWidth="md"
-                fullWidth
-            >
-                <DialogTitle>Flow Execution Output</DialogTitle>
-                <DialogContent>
-                    <Typography variant="h6">Flow Results:</Typography>
-                    <pre>{JSON.stringify(output, null, 2)}</pre>
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={onClose}>Close</Button>
-                </DialogActions>
-            </Dialog>
-        );
-    };
 
     return (
         <div className="h-full w-full overflow-hidden">
-         <StudioChatBot className='!z-100' opened={true} flow= {flow} handleRunFlow={handleRunFlow} flowOutput={flowOutput}/>
+                    <StudioChatBot className='!z-100' opened={true} flow= {flow} handleRunFlow={handleRunFlow} flowOutput={flowOutput} lastParam={formattedOututParam}/>
             <Box className="h-full w-full">
                 <FlowOutputModal
                     open={outputModalOpen}
                     onClose={() => setOutputModalOpen(false)}
                     output={flowOutput}
+                    lastParam={formattedOututParam}
                 />
                 <Grid container spacing={0} className="h-full">
                     <Grid size={2.5} className="h-full overflow-auto">
@@ -491,14 +458,14 @@ const Studio = () => {
                                         py: 0.75
                                     }}
                                 >
-                                    {saveFlow ? 'Saving Flow...' : 'Save Flow'}
+                                    {saveFlow ? 'Saving Flow...' : 'Save'}
                                 </Button>
 
                                 {/* {saveFlow && ( */}
                                     <Button
                                         variant="contained"
                                         startIcon={isFlowRunning ? <CircularProgress size={16} /> : <Play size={16} />}
-                                        onClick={() => handleRunFlow(flowId)}
+                                        onClick={handleRunFlow}
                                         disabled={isFlowRunning}
                                         sx={{
                                             backgroundColor: 'var(--primary-color)',
@@ -510,7 +477,7 @@ const Studio = () => {
                                             py: 0.75
                                         }}
                                     >
-                                        {isFlowRunning ? 'Running...' : 'Run Flow'}
+                                        {isFlowRunning ? 'Running...' : 'Run'}
                                     </Button>
                                 {/* )} */}
 
@@ -528,7 +495,7 @@ const Studio = () => {
                                         py: 0.75
                                     }}
                                 >
-                                    Deploy Flow
+                                    Deploy
                                 </Button>
                             </Box>
                         </Box>

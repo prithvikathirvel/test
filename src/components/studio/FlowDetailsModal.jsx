@@ -1,30 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from '@mui/material';
+import InputBox from '@/components/Common/InputBox';
 
-
-const FlowDetailsModal = ({ open, onClose, onSubmit }) => {
+const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
     const [flowDetails, setFlowDetails] = useState({
-        name: '',
-        description: ''
+        name: initialData?.name || '',
+        description: initialData?.graphSpec?.description || ''
     });
+
+    useEffect(() => {
+        // Update the form when initialData changes
+        if (initialData) {
+            setFlowDetails({
+                name: initialData?.name || '',
+                description: initialData?.graphSpec?.description || ''
+            });
+        }
+    }, [initialData]);
 
     const handleSubmit = () => {
         onSubmit({
+            ...initialData,
             name: flowDetails?.name,
-            description: flowDetails?.description
+            description: flowDetails?.description,
+            graphSpec: {
+                ...(initialData?.graphSpec || {}),
+                description: flowDetails?.description
+            }
         });
-        // setFlowDetails({
-        //     name: '',
-        //     description: ''
-        // });
         onClose();
     };
 
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>Flow Details</DialogTitle>
+            <DialogTitle className='!text-[16px] !font-bold '>Flow Details</DialogTitle>
             <DialogContent>
-                <TextField
+                {/* <TextField
                     autoFocus
                     margin="dense"
                     label="Flow Name"
@@ -32,8 +43,31 @@ const FlowDetailsModal = ({ open, onClose, onSubmit }) => {
                     value={flowDetails.name}
                     onChange={(e) => setFlowDetails(prev => ({ ...prev, name: e.target.value }))}
                     required
+                /> */}
+                <InputBox
+                    className="!mt-2"
+                    id="name"
+                    label='Flow Name'
+                    icon={''}
+                    autoFocus={true}
+                    value={flowDetails.name}
+                    onChange={(value) => setFlowDetails(prev => ({ ...prev, name: value }))}
+                    placeholder="Enter flow name"
+                    type="text"
                 />
-                <TextField
+
+                <InputBox
+                    className="!mt-2"
+                    id="description"
+                    label='Flow Description'
+                    icon={''}
+                    autoFocus={true}
+                    value={flowDetails.description}
+                    onChange={(value) => setFlowDetails(prev => ({ ...prev, description: value }))}
+                    placeholder="Enter flow description"
+                    type="text"
+                />
+                {/* <TextField
                     margin="dense"
                     label="Flow Description"
                     fullWidth
@@ -42,14 +76,18 @@ const FlowDetailsModal = ({ open, onClose, onSubmit }) => {
                     value={flowDetails.description}
                     onChange={(e) => setFlowDetails(prev => ({ ...prev, description: e.target.value }))}
                     required
-                />
+                /> */}
             </DialogContent>
             <DialogActions>
-                <Button onClick={onClose}>Cancel</Button>
                 <Button 
+                    className={`px-5 py-2.5 !bg-[var(--primary-color)] !hover:cursor-pointer !text-white rounded-lg flex items-center font-medium !text-[12px]`}
+                    onClick={onClose}
+                >
+                    Cancel
+                </Button>
+                <Button 
+                    className={`px-5 py-2.5 ${!flowDetails.name || !flowDetails.description ? '!bg-[var(--primary-color)]/20' : '!bg-[var(--primary-color)]'} !hover:cursor-pointer !text-white rounded-lg flex items-center font-medium !text-[12px]`}
                     onClick={handleSubmit} 
-                    variant="contained" 
-                    color="primary"
                     disabled={!flowDetails.name || !flowDetails.description}
                 >
                     Save
