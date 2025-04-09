@@ -2,17 +2,17 @@
 import ChatBot from 'react-simple-chatbot';
 import { ThemeProvider } from 'styled-components';
 import React, { useState, useCallback, useEffect } from 'react';
-import { Bot } from 'lucide-react';
+import { Bot, MessageCircle, MessageCircleDashed, MessageSquare } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import {runFlow} from '@/redux/slices/studioSlice';
 import { getLastOutputParameter } from '@/utils/commonFunction';
 const theme = {
   background: '#f5f8fb',
   fontFamily: 'Work Sans, sans-serif',
-  headerBgColor: '#6e48aa',
+  headerBgColor: 'var(--primary-color)',
   headerFontColor: '#fff',
   headerFontSize: '16px',
-  botBubbleColor: '#6e48aa',
+  botBubbleColor: 'var(--primary-color)',
   botFontColor: '#fff',
   userBubbleColor: '#fff',
   userFontColor: '#4a4a4a',
@@ -116,9 +116,9 @@ const StudioChatBot = ({ flow }) => {
         floating={true}
         opened={opened}
         toggleFloating={toggleChatbot}
-        floatingIcon={<Bot size={32} color="white" />}
+        floatingIcon={<MessageSquare size={30} color="white" />}
         floatingStyle={{
-          backgroundColor: '#6e48aa',
+          backgroundColor: 'var(--primary-color)',
           borderRadius: '50%',
           width: '60px',
           height: '60px',
@@ -137,8 +137,8 @@ const StudioChatBot = ({ flow }) => {
         // userDelay={0}
         bubbleOptionStyle={{
           backgroundColor: "transparent",
-          border: "2px solid #6e48aa",
-          color: "#6e48aa",
+          border: "2px solid var(--primary-color)",
+          color: "var(--primary-color)",
           padding: "8px 15px",
           borderRadius: "20px",
           margin: "5px 0px 0px 45px",

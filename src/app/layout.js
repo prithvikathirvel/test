@@ -1,5 +1,5 @@
 "use client"
-import { Work_Sans } from "next/font/google"
+import { Inter } from "next/font/google"
 import "@/app/globals.css"
 import ReduxProvider from "@/components/providers/ReduxProvider"
 import Header from "@/components/layout/Header"
@@ -12,7 +12,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 
-const workSans = Work_Sans({ 
+const workSans = Inter({ 
   subsets: ["latin"],
   weight: ['400', '500', '600', '700'],
   style: ['normal', 'italic']
@@ -23,30 +23,44 @@ const workSans = Work_Sans({
 //   description: "AI Agent Development Platform",
 // }
 
+// Define paths that should not show navigation components
+const pathsWithoutNav = [
+  '/login',
+  '/',
+];
+
+const pathsWitoutHeader =[
+  'login', 
+  '/studio/:id',
+
+]
+
 export default function RootLayout({ children }) {
-  const pathname = usePathname()
-  const isLoginPage = pathname === '/login'
+  const pathname = usePathname();
+  const shouldShowNav = !pathsWithoutNav.includes(pathname);
+  const shouldShowHeader = pathsWitoutHeader.includes(pathname);
 
   return (
     <html lang="en" className="h-full">
       <body className={`${workSans.className} h-full overflow-hidden`}>
         <ReduxProvider>
           <Box className="flex h-full !bg-dark-purple">
-          <ToastContainer 
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-        />
-            {!isLoginPage && <Sidenav open={false} />}
+            <ToastContainer 
+              position="top-right"
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="light"
+            />
+            
+            {shouldShowNav && <Sidenav open={false} />}
             <Box className="flex-1 flex flex-col h-full">
-              {/* {!isLoginPage && <Header title="Sify Aurora" />} */}
+              {shouldShowHeader && <Header title="Sify Aurora" />}
               <Box className="flex-1 overflow-y-auto">
                 {children}
               </Box>
@@ -55,5 +69,5 @@ export default function RootLayout({ children }) {
         </ReduxProvider>
       </body>
     </html>
-  )
+  );
 }

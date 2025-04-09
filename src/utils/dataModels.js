@@ -20,6 +20,7 @@ const inputNodes = [
     status: "active",
     description: "Get Text from user",
     tags: ["text", "input"],
+    inputParameters:[],
     createdAt: '',
     updatedAt: '',
     createdBy: "System",

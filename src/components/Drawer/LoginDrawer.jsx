@@ -33,14 +33,12 @@ export default function LoginDrawer({ open, setOpen, handleLogin }) {
  
       {/* Logo or Icon */}
       <div className="flex justify-center mb-6">
-        <div className="bg-gradient-to-br from-indigo-500 to-purple-600 w-16 h-16 rounded-full flex items-center justify-center shadow-lg">
-          <span className="text-white text-2xl font-bold">🚀</span>
-        </div>
+      {/* <span className="text-black text-2xl font-bold">Sify Aurora</span> */}
       </div>
  
       {/* Title */}
       <h2 className="text-3xl font-extrabold text-center text-gray-800">
-        Welcome Back
+        Welcome!!
       </h2>
       <p className="text-gray-500 text-sm text-center mb-8">
         Sign in to access your account
@@ -52,7 +50,7 @@ export default function LoginDrawer({ open, setOpen, handleLogin }) {
           <input
             type="text"
             placeholder="Username"
-            className="w-full p-4 pl-12 rounded-xl bg-white/70 shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+            className="w-full p-4 pl-12 rounded-xl bg-white/70 shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             required
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -64,7 +62,7 @@ export default function LoginDrawer({ open, setOpen, handleLogin }) {
           <input
             type="password"
             placeholder="Password"
-            className="w-full p-4 pl-12 rounded-xl bg-white/70 shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+            className="w-full p-4 pl-12 rounded-xl bg-white/70 shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -75,15 +73,15 @@ export default function LoginDrawer({ open, setOpen, handleLogin }) {
         {/* Login Button */}
         <button
           type="submit"
-          className="w-full py-4 mt-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+          className="w-full py-4 mt-4 bg-[var(--primary-color)] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all"
         >
           Login
         </button>
  
         {/* Forgot Password & Signup */}
         <div className="flex justify-between text-sm text-gray-500 mt-4">
-          <button className="hover:text-indigo-600 transition-all">Forgot Password?</button>
-          <button className="hover:text-indigo-600 transition-all">Create an Account</button>
+          <button className="hover:text-blue-600 transition-all">Forgot Password?</button>
+          <button className="hover:text-blue-600 transition-all">Create an Account</button>
         </div>
       </form>
     </Drawer>
