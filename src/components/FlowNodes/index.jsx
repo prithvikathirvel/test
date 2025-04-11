@@ -93,7 +93,9 @@ function CustomNode({ data, type }) {
       )}
       <Box className="flex items-center gap-2">
         <Box sx={{ color }}>{icon}</Box>
-        <Typography sx={{ fontSize: "14px", fontWeight: 500 }}>{data.name}</Typography>
+        <Typography sx={{ fontSize: "14px", fontWeight: 500 }}>
+          {data.displayName || 'Undefined Node'}
+        </Typography>
         <IconButton
           size="small"
           sx={{

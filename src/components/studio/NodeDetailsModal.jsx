@@ -1,5 +1,5 @@
-import React from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useState } from 'react';
+import { useDispatch ,useSelector} from 'react-redux';
 import {
   Typography,
   Box,
@@ -10,7 +10,8 @@ import {
   Chip,
   IconButton,
   Tooltip,
-  Button 
+  Button,
+  TextField 
 } from '@mui/material';
 import {
   X as CloseIcon,
@@ -33,6 +34,8 @@ import { getParameterComponent } from './InputParameterComponents';
 import DashedBox from '@/components/Common/DashedBox';
 import CustomAccordion from '@/components/Common/CustomAccordion';
 import OutputParameterComponents from './OutputParameterComponents';
+import { updateNode } from '@/redux/slices/studioSlice';
+
 
 const InfoItem = ({ label, value, icon }) => (
   <Box key={label} className="flex justify-between">
@@ -76,47 +79,82 @@ const TagsSection = ({ tags, color }) => (
   </Box>
 );
 
-const ModalHeader = ({ title, type, color, onClose, onDelete }) => (
-  <Box className="p-3 text-black flex items-center justify-between">
-    <BotIcon color={color} size={25} />
-    <Box className="flex gap-4 justify-between min-w-70 items-center">
-      <Typography className="font-bold">{title || 'Undefined Node'}</Typography>
-      <Chip 
-        label={convertToTitleCase(type)} 
-        size="medium" 
-        className="font-bold text-[0.7rem]" 
-        sx={{ color: '#f5f5f7', ml: 2 ,backgroundColor: color}} 
-      />
+const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedName, setEditedName] = useState(title || 'Undefined Node');
+
+  const handleEditClick = () => {
+    if (isEditing) {
+      onUpdateName(editedName);
+    }
+    setIsEditing(!isEditing);
+  };
+
+  const handleNameChange = (e) => {
+    setEditedName(e.target.value);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      onUpdateName(editedName);
+      setIsEditing(false);
+    }
+  };
+
+  return (
+    <Box className="flex justify-between items-center p-4">
+      <Box className="flex gap-4 justify-between min-w-70 items-center">
+        {isEditing ? (
+          <TextField
+            value={editedName}
+            onChange={handleNameChange}
+            onKeyPress={handleKeyPress}
+            size="small"
+            autoFocus
+            className="min-w-[200px]"
+          />
+        ) : (
+          <Typography className="font-bold">{editedName || 'Undefined Node'}</Typography>
+        )}
+        <Chip 
+          label={convertToTitleCase(type)} 
+          size="medium" 
+          className="font-bold text-[0.7rem]" 
+          sx={{ color: '#f5f5f7', ml: 2, backgroundColor: color}} 
+        />
+      </Box>
+      <Box className="flex items-center gap-1">
+        <Tooltip title={isEditing ? "Save" : "Edit Node"}>
+          <IconButton 
+            onClick={handleEditClick}
+            color={isEditing ? "primary" : "default"}
+            aria-label={isEditing ? "Save" : "Edit Node"}
+          >
+            <EditIcon size={18} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Delete Node">
+          <IconButton 
+            onClick={onDelete} 
+            color="error"
+            aria-label="Delete Node"
+          >
+            <DeleteIcon size={18} />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Close">
+          <IconButton 
+            onClick={onClose} 
+            aria-label="Close"
+            sx={{ color: 'black' }}
+          >
+            <CloseIcon size={18} />
+          </IconButton>
+        </Tooltip>
+      </Box>
     </Box>
-    <Box className="flex items-center gap-1">
-      <Tooltip title="Edit Node">
-        <IconButton 
-          aria-label="Edit Node"
-        >
-          <EditIcon size={18} />
-        </IconButton>
-      </Tooltip>
-      <Tooltip title="Delete Node">
-        <IconButton 
-          onClick={onDelete} 
-          color="error"
-          aria-label="Delete Node"
-        >
-          <DeleteIcon size={18} />
-        </IconButton>
-      </Tooltip>
-      <Tooltip title="Close">
-        <IconButton 
-          onClick={onClose} 
-          aria-label="Close"
-          sx={{ color: 'black' }}
-        >
-          <CloseIcon size={18} />
-        </IconButton>
-      </Tooltip>
-    </Box>
-  </Box>
-);
+  );
+};
 
 const InputParameterRenderer = ({ parameters, title, icon, color, loading, disabled, onUpdate,parameter }) => (
   <CustomAccordion 
@@ -234,15 +272,35 @@ const NodeDetailsModal = ({
     displayBasicInformation: true,
     displayInputParameters: true,
     displayOutputParameters: true
-  }
+  },
+  flow
 }) => {
   const dispatch = useDispatch();
-
+  
   const handleSaveNodeDetails = (updateParams,parameter) => {
     if (node) {
       // Call the onUpdateParameters function to save changes
       console.log('Saving parameters:',node.id, updateParams,parameter);
       onUpdateParameters(node.id, updateParams,parameter);
+    }
+  };
+
+  const handleUpdateName = (newName) => {
+    if (node && node.id) {
+      const updatedNode = {
+        ...node,
+        data: {
+          ...node.data,
+          name: newName
+        }
+      };
+      
+      dispatch(updateNode({
+        flow: flow,
+        nodeId: node.id,
+        updatedNode: newName,
+        parameter: 'displayName'
+      }));
     }
   };
 
@@ -281,18 +339,20 @@ const NodeDetailsModal = ({
       anchor="right"
       open={open}
       onClose={onClose}
-      variant="persistent"
       PaperProps={{
-        sx: { width: '450px', position: 'absolute' },
+        sx: {
+          width: 480,
+          maxWidth: '100%'
+        }
       }}
     >
       <ModalHeader 
-        title={name}
-        icon={<BotIcon />}
-        type={type}
-        color={nodeColor}
+        title={node?.data?.name || node?.name} 
+        type={node?.data?.type || node?.type} 
+        color={getNodeColor(node?.data?.type || node?.type)}
         onClose={onClose}
-        onDelete={() => onDelete(node)}
+        onDelete={onDelete}
+        onUpdateName={handleUpdateName}
       />
 
       <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
@@ -343,7 +403,7 @@ const NodeDetailsModal = ({
       <Button 
           variant="contained" 
           color="primary" 
-          onClick={handleSaveNodeDetails}
+          onClick={() => handleSaveNodeDetails({},'')}
           disabled={disabled}
         >
           Save

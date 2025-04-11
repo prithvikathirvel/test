@@ -328,6 +328,7 @@ const generateSpecification = (flow, nodes, edges) => {
     nodes: nodes.map(node => ({
       node_id: node.id,  
       name: node.data?.name || node.name,
+      displayName: node.data?.displayName || node.name,
       type: node.data?.type || node.type,
       description: node.data?.description || node.description,
       next: node.data?.next || node.next || [],

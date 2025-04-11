@@ -16,11 +16,20 @@ const inputNodes = [
     id: "input_1",
     key: "Text",
     name: "Text Node",
-    type: "input",
+    type: "node",
     status: "active",
     description: "Get Text from user",
     tags: ["text", "input"],
-    inputParameters:[],
+    inputParameters:[{
+      key: "input",
+      value: "",
+      type: "string"
+    }],
+    outputParameters:[{
+      key:"output",
+      value:"output",
+      type:"string"
+    }],
     createdAt: '',
     updatedAt: '',
     createdBy: "System",

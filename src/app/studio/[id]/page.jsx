@@ -220,6 +220,7 @@ const Studio = () => {
                         label: node.name || "Unnamed Node",
                         name: node.name || "Unnamed Node",
                         type: node.type || "default",
+                        displayName: node.displayName || "Unnamed Display Node",
                         description: node.description || "",
                         inputParameters: node.inputParameters || [],
                         outputParameters: node.outputParameters || [],
@@ -528,6 +529,7 @@ const Studio = () => {
                                 displayInputParameters: !!selectedNode?.data?.inputParameters,
                                 displayOutputParameters: !!selectedNode?.data?.outputParameters
                             }}
+                            flow={flow}
                         />
                     </Grid>
                 </Grid>
