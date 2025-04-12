@@ -283,20 +283,26 @@ const Studio = () => {
                 return;
             }
 
+            // Generate a unique ID for the new node
+            const newNodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
             const position = {
                 x: event.clientX - drawerWidth,
                 y: event.clientY - 100,
             };
 
             const newNode = {
-                id: spec.id,
+                id: newNodeId,  // Use unique ID instead of spec.id
                 name: spec.name,
-                key: spec.name,
+                key: newNodeId,  // Use unique ID as key too
                 type: spec.type,
                 description: spec.description,
                 next: [],
                 position,
-                data: spec,
+                data: {
+                    ...spec,
+                    node_id: newNodeId  // Update the node_id in data as well
+                },
             };
 
             setNodesState((nds) => nds.concat(newNode));

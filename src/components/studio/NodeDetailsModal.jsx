@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useDispatch ,useSelector} from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Typography,
   Box,
@@ -11,7 +11,7 @@ import {
   IconButton,
   Tooltip,
   Button,
-  TextField 
+  TextField,
 } from '@mui/material';
 import {
   X as CloseIcon,
@@ -35,7 +35,6 @@ import DashedBox from '@/components/Common/DashedBox';
 import CustomAccordion from '@/components/Common/CustomAccordion';
 import OutputParameterComponents from './OutputParameterComponents';
 import { updateNode } from '@/redux/slices/studioSlice';
-
 
 const InfoItem = ({ label, value, icon }) => (
   <Box key={label} className="flex justify-between">
@@ -72,7 +71,13 @@ const TagsSection = ({ tags, color }) => (
     <DashedBox sx={{ p: 2, borderRadius: 2 }}>
       {tags && tags.length > 0 && (
         tags.map((tag, index) => (
-          <Chip key={index} label={tag} size="medium" className="!font-semibold !text-[12px] !font-sans !mr-4" sx={{border: '1px solid ' + color, backgroundColor: 'transparent'}} />
+          <Chip
+            key={index}
+            label={tag}
+            size="medium"
+            className="!font-semibold !text-[12px] !font-sans !mr-4"
+            sx={{ border: '1px solid ' + color, backgroundColor: 'transparent' }}
+          />
         ))
       )}
     </DashedBox>
@@ -116,16 +121,16 @@ const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName }) =>
         ) : (
           <Typography className="font-bold">{editedName || 'Undefined Node'}</Typography>
         )}
-        <Chip 
-          label={convertToTitleCase(type)} 
-          size="medium" 
-          className="font-bold text-[0.7rem]" 
-          sx={{ color: '#f5f5f7', ml: 2, backgroundColor: color}} 
+        <Chip
+          label={convertToTitleCase(type)}
+          size="medium"
+          className="font-bold text-[0.7rem]"
+          sx={{ color: '#f5f5f7', ml: 2, backgroundColor: color }}
         />
       </Box>
       <Box className="flex items-center gap-1">
         <Tooltip title={isEditing ? "Save" : "Edit Node"}>
-          <IconButton 
+          <IconButton
             onClick={handleEditClick}
             color={isEditing ? "primary" : "default"}
             aria-label={isEditing ? "Save" : "Edit Node"}
@@ -134,8 +139,8 @@ const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName }) =>
           </IconButton>
         </Tooltip>
         <Tooltip title="Delete Node">
-          <IconButton 
-            onClick={onDelete} 
+          <IconButton
+            onClick={onDelete}
             color="error"
             aria-label="Delete Node"
           >
@@ -143,8 +148,8 @@ const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName }) =>
           </IconButton>
         </Tooltip>
         <Tooltip title="Close">
-          <IconButton 
-            onClick={onClose} 
+          <IconButton
+            onClick={onClose}
             aria-label="Close"
             sx={{ color: 'black' }}
           >
@@ -156,22 +161,22 @@ const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName }) =>
   );
 };
 
-const InputParameterRenderer = ({ parameters, title, icon, color, loading, disabled, onUpdate,parameter }) => (
-  <CustomAccordion 
-    title={title} 
+const InputParameterRenderer = ({ parameters, title, icon, color, loading, disabled, onUpdate, parameter }) => (
+  <CustomAccordion
+    title={title}
     icon={icon}
     emptyStateMessage={`No ${title.toLowerCase()} parameters available`}
-   // badgeCount={parameters?.length}
-   // badgeColor="primary"
-   // tooltip={disabled ? undefined : `${title} - ${parameters?.length || 0} parameters`}
+    // badgeCount={parameters?.length}
+    // badgeColor="primary"
+    // tooltip={disabled ? undefined : `${title} - ${parameters?.length || 0} parameters`}
     loading={loading}
     loadingText={`Loading...`}
     disabled={disabled}
     // headerActions={
     //   parameters?.length > 0 && (
     //     <Tooltip title={`Add new ${title.toLowerCase()}`} arrow>
-    //       <IconButton 
-    //         size="small" 
+    //       <IconButton
+    //         size="small"
     //         className="!w-6 !h-6 !bg-gray-50 hover:!bg-gray-100"
     //         onClick={() => {}}
     //         aria-label={`Add new ${title.toLowerCase()}`}
@@ -187,7 +192,7 @@ const InputParameterRenderer = ({ parameters, title, icon, color, loading, disab
       <Stack spacing={2}>
         {parameters.map((param, index) => (
           <Box key={index}>
-            {getParameterComponent(param, color, onUpdate,parameters,parameter)}
+            {getParameterComponent(param, color, onUpdate, parameters, parameter)}
           </Box>
         ))}
       </Stack>
@@ -196,12 +201,12 @@ const InputParameterRenderer = ({ parameters, title, icon, color, loading, disab
 );
 
 const OutputParameterRenderer = ({ parameters, title, icon, color, loading, disabled }) => (
-  <CustomAccordion 
-    title={title} 
+  <CustomAccordion
+    title={title}
     icon={icon}
     emptyStateMessage={`No ${title.toLowerCase()} parameters available`}
-   // badgeCount={parameters?.length}
-   // badgeColor="primary"
+    // badgeCount={parameters?.length}
+    // badgeColor="primary"
     tooltip={disabled ? undefined : `${title} - ${parameters?.length || 0} parameters`}
     loading={loading}
     loadingText={`Loading...`}
@@ -211,7 +216,7 @@ const OutputParameterRenderer = ({ parameters, title, icon, color, loading, disa
       <Stack spacing={2}>
         {parameters.map((param, index) => (
           <Box key={index}>
-           <OutputParameterComponents param={param} color={color} />
+            <OutputParameterComponents param={param} color={color} />
           </Box>
         ))}
       </Stack>
@@ -220,19 +225,18 @@ const OutputParameterRenderer = ({ parameters, title, icon, color, loading, disa
 );
 
 const BasicInformationSection = ({ description, items, tags, loading, disabled, color }) => (
-  <CustomAccordion 
-    title="Basic Information" 
-    icon={<InfoIcon size={20}/>}
+  <CustomAccordion
+    title="Basic Information"
+    icon={<InfoIcon size={20} />}
     emptyStateMessage="No basic information available"
     tooltip={disabled ? undefined : (tags?.length > 0 ? `${tags.length} tags` : undefined)}
     loading={loading}
     loadingText="Loading basic information..."
     disabled={disabled}
-    
     // headerActions={
     //   <Tooltip title="Edit basic information" arrow>
-    //     <IconButton 
-    //       size="small" 
+    //     <IconButton
+    //       size="small"
     //       className="!w-6 !h-6 !bg-gray-50 hover:!bg-gray-100"
     //       onClick={() => {}}
     //       aria-label="Edit basic information"
@@ -260,9 +264,9 @@ const BasicInformationSection = ({ description, items, tags, loading, disabled, 
   </CustomAccordion>
 );
 
-const NodeDetailsModal = ({ 
-  open, 
-  onClose, 
+const NodeDetailsModal = ({
+  open,
+  onClose,
   node,
   onDelete,
   onUpdateParameters,
@@ -271,17 +275,50 @@ const NodeDetailsModal = ({
   sections = {
     displayBasicInformation: true,
     displayInputParameters: true,
-    displayOutputParameters: true
+    displayOutputParameters: true,
   },
-  flow
+  flow,
 }) => {
   const dispatch = useDispatch();
-  
-  const handleSaveNodeDetails = (updateParams,parameter) => {
-    if (node) {
-      // Call the onUpdateParameters function to save changes
-      console.log('Saving parameters:',node.id, updateParams,parameter);
-      onUpdateParameters(node.id, updateParams,parameter);
+  const [localInputParams, setLocalInputParams] = useState([]);
+  const [localOutputParams, setLocalOutputParams] = useState([]);
+  const [isDirty, setIsDirty] = useState(false);
+
+  useEffect(() => {
+    if (node?.data) {
+      setLocalInputParams(node.data.inputParameters || []);
+      setLocalOutputParams(node.data.outputParameters || []);
+      setIsDirty(false);
+    }
+  }, [node]);
+
+  const handleParameterChange = (updatedParams, paramType, isLocalChange = false) => {
+    if (paramType === 'inputParameters') {
+      setLocalInputParams(updatedParams);
+    } else if (paramType === 'outputParameters') {
+      setLocalOutputParams(updatedParams);
+    }
+    setIsDirty(true);
+  };
+
+  const handleSaveChanges = () => {
+    if (node && isDirty) {
+      // Update both input and output parameters at once
+      dispatch(updateNode({
+        flow: flow,
+        nodeId: node.id,
+        updatedNode: localInputParams,
+        parameter: 'inputParameters',
+      }));
+
+      dispatch(updateNode({
+        flow: flow,
+        nodeId: node.id,
+        updatedNode: localOutputParams,
+        parameter: 'outputParameters',
+      }));
+
+      setIsDirty(false);
     }
   };
 
@@ -291,42 +328,38 @@ const NodeDetailsModal = ({
         ...node,
         data: {
           ...node.data,
-          name: newName
-        }
+          name: newName,
+        },
       };
-      
+
       dispatch(updateNode({
         flow: flow,
         nodeId: node.id,
         updatedNode: newName,
-        parameter: 'displayName'
+        parameter: 'displayName',
       }));
     }
   };
 
-  const { 
-    displayBasicInformation,
-    displayInputParameters,
-    displayOutputParameters, 
-  } = sections;
-  
+  const { displayBasicInformation, displayInputParameters, displayOutputParameters } = sections;
+
   if (!node) return null;
 
   const { type, data } = node;
-  const { 
-    name, 
-    description, 
-    version, 
-    isPublic, 
-    createdBy, 
-    status, 
-    inputParameters, 
+  const {
+    name,
+    description,
+    version,
+    isPublic,
+    createdBy,
+    status,
+    inputParameters,
     outputParameters,
-    tags
+    tags,
   } = data;
 
   const nodeColor = getNodeColor(type);
-  
+
   const basicInfo = [
     { label: 'Created By', value: createdBy, icon: <PersonIcon size={20} /> },
     { label: 'Version', value: version, icon: <SettingsIcon size={20} /> },
@@ -342,13 +375,13 @@ const NodeDetailsModal = ({
       PaperProps={{
         sx: {
           width: 480,
-          maxWidth: '100%'
-        }
+          maxWidth: '100%',
+        },
       }}
     >
-      <ModalHeader 
-        title={node?.data?.name || node?.name} 
-        type={node?.data?.type || node?.type} 
+      <ModalHeader
+        title={node?.data?.name || node?.name}
+        type={node?.data?.type || node?.type}
         color={getNodeColor(node?.data?.type || node?.type)}
         onClose={onClose}
         onDelete={onDelete}
@@ -357,38 +390,35 @@ const NodeDetailsModal = ({
 
       <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
         {displayInputParameters && (
-         <>
-          <InputParameterRenderer 
-            parameters={inputParameters} 
-            title="Input Parameters" 
-            icon={<InputIcon size={20} />} 
-          color={nodeColor} 
-          loading={loading}
-          disabled={disabled}
-          onUpdate={handleSaveNodeDetails}
-          parameter={'inputParameters'}
-        />
-        <Divider sx={{ my: 2 }} />
-        </>
+          <InputParameterRenderer
+            parameters={localInputParams}
+            title="Input Parameters"
+            icon={<InputIcon size={20} />}
+            color={nodeColor}
+            loading={loading}
+            disabled={disabled}
+            onUpdate={(params, type) => handleParameterChange(params, 'inputParameters')}
+            parameter={'inputParameters'}
+          />
         )}
+
         {displayOutputParameters && (
-        <InputParameterRenderer 
-        parameters={outputParameters} 
-        title="Output Parameters" 
-        icon={<OutputIcon size={20} />} 
-        color={nodeColor} 
-        loading={loading}
-        disabled={disabled}
-        onUpdate={handleSaveNodeDetails}
-        parameter={'outputParameters'}
-     />
+          <InputParameterRenderer
+            parameters={localOutputParams}
+            title="Output Parameters"
+            icon={<OutputIcon size={20} />}
+            color={nodeColor}
+            loading={loading}
+            disabled={disabled}
+            onUpdate={(params, type) => handleParameterChange(params, 'outputParameters')}
+            parameter={'outputParameters'}
+          />
         )}
 
-    <Divider sx={{ my: 2 }} />
+        <Divider sx={{ my: 2 }} />
 
-      {displayBasicInformation && (
-         <>
-          <BasicInformationSection 
+        {displayBasicInformation && (
+          <BasicInformationSection
             description={description}
             items={basicInfo}
             tags={tags}
@@ -396,18 +426,18 @@ const NodeDetailsModal = ({
             disabled={disabled}
             color={nodeColor}
           />
-          <Divider sx={{ my: 2 }} />
-          </>
         )}
 
-      <Button 
-          variant="contained" 
-          color="primary" 
-          onClick={() => handleSaveNodeDetails({},'')}
-          disabled={disabled}
-        >
-          Save
-        </Button>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSaveChanges}
+            disabled={!isDirty || disabled || loading}
+          >
+            Save Changes
+          </Button>
+        </Box>
       </Box>
     </Drawer>
   );

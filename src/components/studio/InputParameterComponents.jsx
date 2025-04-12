@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Box, Typography, Paper, Button, Chip, IconButton, Switch, Divider, Tooltip } from '@mui/material';
 import { Upload, X, Check, FileText, Code, Plus, Trash2 } from 'lucide-react';
 import InputBox from '@/components/Common/InputBox';
@@ -133,19 +133,20 @@ const KeyValueInput = ({
   </Box>
 );
 
-const StringParameter = ({ param = {}, color, onUpdate, parameters,parameter }) => {
-  const handleChange = (value)=>{
-    console.log("calling handleChnage", value);
-    console.log("parameters", parameters);
-    console.log("parameter", parameter);
+const StringParameter = ({ param = {}, color, onUpdate, parameters, parameter }) => {
+  const [localValue, setLocalValue] = useState(param.value || '');
 
+  useEffect(() => {
+    setLocalValue(param.value || '');
+  }, [param.value]);
+
+  const handleChange = (value) => {
+    setLocalValue(value);
     const updatedParams = parameters.map(p => 
       p.key === param.key ? { ...p, value } : p
     );
-      console.log("updatedParams", updatedParams)
-      onUpdate(updatedParams,parameter);
-
-  }
+    onUpdate(updatedParams, parameter, true);
+  };
 
   return (
     <Box className="w-full">
@@ -154,7 +155,7 @@ const StringParameter = ({ param = {}, color, onUpdate, parameters,parameter }) 
         className="mb-4"
         icon={""}
         color={color}
-        value={param.value || ''}
+        value={localValue}
         label={param.key}
         isShowLabel={true}
         onChange={handleChange}
@@ -163,13 +164,13 @@ const StringParameter = ({ param = {}, color, onUpdate, parameters,parameter }) 
   );
 };
 
-const NumberParameter = ({ param = {}, color, onUpdate, parameters,parameter }) => {
+const NumberParameter = ({ param = {}, color, onUpdate, parameters, parameter }) => {
   const handleChange = (value) => {
     if (onUpdate) {
       const updatedParams = parameters.map(p => 
         p.key === param.key ? { ...p, value: Number(value) } : p
       );
-      onUpdate(updatedParams,parameter);
+      onUpdate(updatedParams, parameter);
     }
   };
 
@@ -197,13 +198,13 @@ const NumberParameter = ({ param = {}, color, onUpdate, parameters,parameter }) 
   );
 };
 
-const BooleanParameter = ({ param = {}, color, onUpdate, parameters,parameter }) => {
+const BooleanParameter = ({ param = {}, color, onUpdate, parameters, parameter }) => {
   const handleChange = (event) => {
     if (onUpdate) {
       const updatedParams = parameters.map(p => 
         p.key === param.key ? { ...p, value: event.target.checked } : p
       );
-      onUpdate(updatedParams,parameter);
+      onUpdate(updatedParams, parameter);
     }
   };
 
