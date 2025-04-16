@@ -101,7 +101,7 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
       sx={{
         borderRight: "1px solid",
         borderColor: "divider",
-        // bgcolor: "background.paper",
+        // bgcolor: "red",
       }}
     >
       <Box className="flex items-center justify-between p-3 border-b" sx={{ borderColor: "divider" }}>

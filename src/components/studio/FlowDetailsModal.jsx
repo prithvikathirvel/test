@@ -9,7 +9,6 @@ const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
     });
 
     useEffect(() => {
-        // Update the form when initialData changes
         if (initialData) {
             setFlowDetails({
                 name: initialData?.name || '',

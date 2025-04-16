@@ -1,49 +1,58 @@
-import React from 'react'; 
-import { Box, Typography } from '@mui/material';
+import React from 'react';
+import { truncateLongStrings } from '@/utils/commonFunction';
+
 
 const OutputParameterComponents = ({ param }) => {
-    const greenColor = '#a2fca2';
+  
+  const greenColor = '#a2fca2';   // String values (as requested)
+  const whiteColor = '#ffffff';   // Keys and structural elements
+  const blueColor = '#71ADFF';    // Numbers
+  const yellowColor = '#FFD700';  // Booleans
+  const redColor = '#FF6B6B';     // Null values
 
-    const formatJsonWithStyling = (data) => {
-        try {
-            let jsonString = JSON.stringify(data, null, 2);
-            
-            // First color all the values in green (including arrays and nested objects)
-            jsonString = jsonString.replace(
-                /: (.*?)(?=,|\n|$)/g,
-                (match, value) => `: <span style="color: ${greenColor}">${value}</span>`
-            );
+  const formatJsonWithStyling = (data) => {
+    try {
+      const truncatedData = truncateLongStrings(data, 300);
+      let jsonString = JSON.stringify(truncatedData, null, 2);
+      
+      jsonString = jsonString.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      
+      jsonString = jsonString
+        .replace(/: null/g, ': <span style="color: ' + redColor + '">null</span>')
+        
+        .replace(/: (true|false)/g, (match, value) => 
+          ': <span style="color: ' + yellowColor + '">' + value + '</span>')
+        
+        .replace(/: (-?\d+(\.\d+)?([eE][+-]?\d+)?)/g, (match, value) => 
+          ': <span style="color: ' + blueColor + '">' + value + '</span>')
+        
+        .replace(/: "([^"]*)"/g, (match, value) => 
+          ': <span style="color: ' + greenColor + '">"' + value + '"</span>')
+        
+        .replace(/({|}|\[|\])/g, '<span style="color: ' + whiteColor + '">$1</span>')
+        
+        .replace(/"([^"]+)":/g, 
+          '<span style="color: ' + whiteColor + '">"$1"</span><span style="color: ' + whiteColor + '">:</span>');
 
-            // Then color the keys and structural elements in white
-            jsonString = jsonString
-                .replace(/({|}|\[|\])/g, '<span style="color: white">$1</span>')
-                .replace(
-                    /"([^"]+)":/g,
-                    '<span style="color: white">"$1"</span><span style="color: white">:</span>'
-                );
+      return jsonString;
+    } catch (error) {
+      console.error('Error formatting JSON:', error);
+      return 'Invalid JSON';
+    }
+  };
 
-            return jsonString;
-        } catch (error) {
-            return 'Invalid JSON';
-        }
-    };
-
-    return (
-        <Box className="bg-[#333333] h-auto rounded-sm p-4">
-            {formatJsonWithStyling(param).split('\n').map((line, index) => (
-                // <Typography 
-                <Typography 
-                    key={index} 
-                    component="div" 
-                    sx={{ 
-                        fontFamily: 'monospace',
-                        whiteSpace: 'pre-wrap'
-                    }}
-                    dangerouslySetInnerHTML={{ __html: line }}
-                />
-            ))}
-        </Box>
-    );
+  return (
+    <div className="!h-dvh bg-[#1E1E1E] rounded-md p-4 overflow-auto">
+      <pre className="font-mono text-sm whitespace-pre-wrap">
+        {formatJsonWithStyling(param).split('\n').map((line, index) => (
+          <div 
+            key={index}
+            dangerouslySetInnerHTML={{ __html: line }}
+          />
+        ))}
+      </pre>
+    </div>
+  );
 };
 
 export default OutputParameterComponents;

@@ -218,6 +218,23 @@ function sanitizeOutput (input) {
   return input;
 }
 
+const truncateLongStrings = (obj, maxLength = 300) => {
+  if (typeof obj === 'string') {
+    return obj.length > maxLength ? obj.slice(0, maxLength) + '... [truncated]' : obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => truncateLongStrings(item, maxLength));
+  }
+  if (typeof obj === 'object' && obj !== null) {
+    const newObj = {};
+    for (let key in obj) {
+      newObj[key] = truncateLongStrings(obj[key], maxLength);
+    }
+    return newObj;
+  }
+  return obj;
+};
+
 
 
 
@@ -234,5 +251,6 @@ export {
   timeAgo,
   sortByField,
   getLastOutputParameter,
-  sanitizeOutput
+  sanitizeOutput, 
+  truncateLongStrings
 }

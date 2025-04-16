@@ -1,6 +1,8 @@
 "use client"
 
-import { useState,useEffect  } from "react"
+import { useState, useEffect } from "react"
+import { useDispatch, useSelector } from "react-redux"
+import { updateSpecification } from "@/redux/slices/studioSlice"
 import {
   Button,
   TextField,
@@ -28,6 +30,8 @@ import {
   FileText as DescriptionIcon,
   Upload as UploadIcon,
   Code as CodeIcon,
+  Pencil as EditIcon,
+  Eye as EyeIcon
 } from "lucide-react"
 
 import InputBox from "@/components/Common/InputBox" 
@@ -36,23 +40,17 @@ import UploadArea from "../studio/parameters/common/UploadArea"
 import FilePreview from "../studio/parameters/common/FilePreview"
 
 const InputFieldConfiguration = ({ onSave, open, onClose }) => {
+  const dispatch = useDispatch()
+  const specification = useSelector((state) => state.studio.specification)
   const [fields, setFields] = useState([])
-  const [file,setFile]=useState([]);
+  const [file, setFile] = useState(null)
+  const [editIndex, setEditIndex] = useState(null)
+  const [previewField, setPreviewField] = useState(null)
   const [currentField, setCurrentField] = useState({
-    name: "",
-    input: "",
+    key: "",
+    value: "",
     type: "text",
   })
-
-  // useEffect(() => {
-  //   if (open) {
-  //     setCurrentField({
-  //       name: "",
-  //       input: "",
-  //       type: "text",
-  //     })
-  //   }
-  // }, [open])
 
   const inputTypes = ["text", "file", "object"]
 
@@ -61,41 +59,105 @@ const InputFieldConfiguration = ({ onSave, open, onClose }) => {
       ...prev,
       [field]: value
     }))
-    console.log(currentField,'curr')
   }
 
-  const handleInputBoxChange = (value, field = 'input') => {
+  useEffect(() => {
+    if (open && specification && specification.inputs && specification.inputs.length > 0) {
+      console.log("Loading inputs from specification:", specification.inputs);
+      // Make sure we create new objects to avoid reference issues
+      const loadedFields = specification.inputs.map(input => ({...input}));
+      setFields(loadedFields);
+    }
+  }, [open, specification]);
+
+  const handleInputBoxChange = (value, field = 'value') => {
     handleInputChange(field, value)
   }
 
   const handleFileChange = (event) => {
     if (event.target.files && event.target.files[0]) {
       const selectedFile = event.target.files[0];
-
       const reader = new FileReader();
-
       reader.readAsDataURL(selectedFile)
-
       reader.onload = async () => {
         const base64Data = reader.result;
-        console.log(base64Data,'on Data');
-        handleInputChange('input', base64Data)
-        setFile(base64Data)
+        handleInputChange('value', base64Data)
+        setFile(selectedFile)
       };
     }
   };
 
   const handleAdd = () => {
-    if (currentField.name && currentField.input) {
-      setFields([...fields, { ...currentField }])
-      setCurrentField({ name: "", input: "", type: "text" })
+    if (currentField.key && currentField.value) {
+      let newFields;
+      
+      if (editIndex !== null) {
+        // Update existing field
+        newFields = fields.map((field, index) => 
+          index === editIndex ? { ...currentField } : field
+        );
+        setEditIndex(null);
+      } else {
+        // Add new field
+        newFields = [...fields, { ...currentField }];
+      }
+      
+      setFields(newFields);
+      
+      // Update specification
+      const updatedSpec = {
+        ...specification,
+        inputs: newFields
+      }
+      dispatch(updateSpecification(updatedSpec))
+      
+      setCurrentField({ key: "", value: "", type: "text" })
     }
   }
 
+  const handleEdit = (index) => {
+    console.log("Editing field at index:", index);
+    console.log("Fields array:", fields);
+    
+    const fieldToEdit = {...fields[index]};
+    console.log("Field to edit:", fieldToEdit);
+    
+    setEditIndex(index);
+    setCurrentField(fieldToEdit);
+    
+    // Handle file type fields properly
+    if (fieldToEdit.type === 'file') {
+      try {
+        // If it's a file input, set the file state
+        console.log("Setting file for file type:", fieldToEdit.value);
+        setFile(fieldToEdit.value);
+      } catch (error) {
+        console.error("Error setting file:", error);
+        setFile(null);
+      }
+    } else {
+      setFile(null);
+    }
+  }
+
+  const handlePreview = (field) => {
+    setPreviewField(field);
+  }
 
   const handleDelete = (index) => {
     const newFields = fields.filter((_, i) => i !== index)
     setFields(newFields)
+    
+    const updatedSpec = {
+      ...specification,
+      inputs: newFields
+    }
+    dispatch(updateSpecification(updatedSpec))
+    
+    if (editIndex === index) {
+      setEditIndex(null);
+      setCurrentField({ key: "", value: "", type: "text" });
+    }
   }
 
   const handleSave = () => {
@@ -132,138 +194,293 @@ const InputFieldConfiguration = ({ onSave, open, onClose }) => {
   }
 
   const renderInputField = () => {
+    console.log("Rendering input field for:", currentField);
+    
     switch (currentField.type) {
       case "file":
         return (
-          file ? <UploadArea onUpload={handleFileChange} paramKey="input" /> :
-          <FilePreview
-            file={file}
-            fileId={currentField?.input}
-            onRemove={handleDelete}
-          />
+          <div className="mt-3">
+            {file ? 
+              <FilePreview
+                file={file}
+                fileId={currentField?.value}
+                onRemove={() => setFile(null)}
+              /> :
+              <UploadArea onUpload={handleFileChange} paramKey="value" />
+            }
+          </div>
         )
       case "object":
         return (
-          <InputBox
-            value={currentField?.input}
-            onChange={(value) => handleInputBoxChange(value, 'input')}
-            placeholder="Enter JSON object"
-            width="200px"
-          />
+          <div className="mt-3">
+            <InputBox
+              label="Input Object"
+              value={currentField?.value}
+              onChange={(value) => handleInputBoxChange(value, 'value')}
+              placeholder="Enter JSON object"
+              width="100%"
+              icon={getTypeIcon(currentField.type)}
+            />
+          </div>
         )
       default:
         return (
-          <InputBox
-           label="Input"
-            value={currentField?.input}
-            onChange={(value) => handleInputBoxChange(value, 'input')}
-            placeholder="Enter the Text Input"
-            width="200px"
-            icon={getTypeIcon(currentField.type)}
-          />
+          <div className="mt-3">
+            <InputBox
+              label="Input Text"
+              value={currentField?.value}
+              onChange={(value) => handleInputBoxChange(value, 'value')}
+              placeholder="Enter the Text Input"
+              width="100%"
+              icon={getTypeIcon(currentField.type)}
+            />
+          </div>
         )
     }
   }
+
+  const renderPreviewContent = (field) => {
+    switch (field.type) {
+      case "file":
+        return (
+          <div className="mt-4 max-w-full">
+            <FilePreview
+              file={field.value}
+              fileId={field.value}
+              onRemove={() => {}}
+            />
+          </div>
+        );
+      case "object":
+        try {
+          const formattedJson = JSON.stringify(JSON.parse(field.value), null, 2);
+          return (
+            <pre className="bg-gray-50 p-4 rounded-md overflow-auto max-h-80 text-sm mt-3 border border-gray-200">
+              {formattedJson}
+            </pre>
+          );
+        } catch (e) {
+          return <div className="text-red-500 mt-3">Invalid JSON format</div>;
+        }
+      default:
+        return <p className="text-gray-700 mt-3 p-4 bg-gray-50 rounded-md border border-gray-200">{field.value}</p>;
+    }
+  };
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="sm"
+      maxWidth="md"
       fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: '12px',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+          overflow: 'hidden'
+        }
+      }}
     >
-      <DialogTitle className="py-2 px-4 !text-[15px] !font-bold text-gray-800">
-        Input Field Configuration
-        <p className="text-gray-500 text-sm !font-medium">Add and configure input fields for your application.</p>
+      <DialogTitle 
+        className="py-5 px-6 border-b border-gray-200"
+        sx={{
+          backgroundColor: 'white',
+          '& .MuiTypography-root': {
+            fontWeight: 600
+          }
+        }}
+      >
+        <Typography className="text-gray-800 font-semibold">
+          Input Field Configuration
+        </Typography>
+        <Typography className="text-gray-500 !font-medium !mt-1 !text-[13px]">
+          Add and configure input fields for your application
+        </Typography>
       </DialogTitle>
 
-      <DialogContent className="p-8 space-y-8">
-        <Paper elevation={0} className="border border-gray-200 rounded-xl p-6 bg-white shadow-sm">
-          <Typography variant="subtitle1" className="!text-[14px] !font-semibold text-gray-800 !mb-6">
-            Add New Field
-          </Typography>
-
-          <Stack direction={{ xs: "column", sm: "row" }} spacing={4} className="mb-6">
-
-            <InputBox
-              label="Field Name"
-              value={currentField.name}
-              onChange={(value) => handleInputBoxChange(value, 'name')}
-              placeholder="Enter field name"
-              width='200px'
-              icon={''}
-            />
-
-            <CustomSelect
-              label="Type"
-              value={currentField.type}
-              onChange={(e) => handleInputChange('type', e.target.value)}
-              options={inputTypes.map((type) => ({
-                value: type,
-                label: type.charAt(0).toUpperCase() + type.slice(1),
-                icon: getTypeIcon(type)
-              }))}
-              placeholder="Select type"
-              width="200px"
-            />
-          </Stack>
-
-          <div className="pt-4">
-            {renderInputField()}
-          </div>
-
-          <Box className="flex justify-end mt-6">
-            <Button
-              variant="contained"
-              onClick={handleAdd}
-              disabled={!currentField.name || !currentField.input}
-              startIcon={<AddIcon />}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-200"
-              sx={{
-                '&:disabled': {
-                  opacity: 0.7,
-                  cursor: 'not-allowed',
-                },
-              }}
+      <DialogContent className="p-0">
+        <div className="p-6 grid grid-cols-1 gap-8">
+          {/* Add/Edit Field Section */}
+          <Paper 
+            elevation={0} 
+            className="border border-gray-200 rounded-xl p-6 bg-white"
+            sx={{
+              transition: 'all 0.2s ease',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+              '&:hover': {
+                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)'
+              }
+            }}
+          >
+            <Typography 
+              variant="subtitle1" 
+              className="text-gray-800 mb-5 font-semibold"
+              sx={{ fontSize: '16px' }}
             >
-              Add Field
-            </Button>
-          </Box>
-        </Paper>
-
-        {fields.length > 0 && (
-          <Box className="space-y-6">
-            <Typography variant="h6" className="text-xl font-semibold text-gray-800 mb-4">
-              Added Fields ({fields.length})
+              {editIndex !== null ? "Edit Field" : "Add New Field"}
             </Typography>
 
-            <Paper elevation={0} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-              <Box className="bg-gray-50 px-6 py-3 border-b border-gray-200">
-                <Grid container spacing={2} className="font-medium text-gray-600 text-sm uppercase tracking-wider">
-                  <Grid item xs={4}>
-                    Field Name
-                  </Grid>
-                  <Grid item xs={4}>
-                    Input
-                  </Grid>
-                  <Grid item xs={3}>
-                    Type
-                  </Grid>
-                  <Grid item xs={1}></Grid>
-                </Grid>
-              </Box>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+              <div>
+                <InputBox
+                  label="Field Name"
+                  value={currentField.key}
+                  onChange={(value) => handleInputBoxChange(value, 'key')}
+                  placeholder="Enter field name"
+                  width="100%"
+                />
+              </div>
+              
+              <div>
+                <CustomSelect
+                  label="Field Type"
+                  value={currentField.type}
+                  onChange={(e) => handleInputChange('type', e.target.value)}
+                  options={inputTypes.map((type) => ({
+                    value: type,
+                    label: type.charAt(0).toUpperCase() + type.slice(1),
+                    icon: getTypeIcon(type)
+                  }))}
+                  placeholder="Select type"
+                  width="100%"
+                />
+              </div>
+            </div>
 
-              <Box className="divide-y divide-gray-200">
-                {fields.map((field, index) => (
-                  <Box key={index} className="px-6 py-4 hover:bg-gray-50 transition-colors">
-                    <Grid container spacing={3} alignItems="center">
-                      <Grid item xs={4}>
-                        <Typography className="font-medium truncate text-gray-900">{field.name}</Typography>
-                      </Grid>
-                      <Grid item xs={4}>
-                        <Typography className="text-gray-600 truncate">{field.input}</Typography>
-                      </Grid>
-                      <Grid item xs={3}>
+            <div className="mb-2">
+              {renderInputField()}
+            </div>
+
+            <div className="flex justify-end mt-6 space-x-3">
+              {editIndex !== null && (
+                <Button
+                  variant="outlined"
+                  onClick={() => {
+                    setEditIndex(null);
+                    setCurrentField({ key: "", value: "", type: "text" });
+                  }}
+                  startIcon={<CloseIcon className="h-4 w-4" />}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                  sx={{
+                    borderRadius: '8px',
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    padding: '10px 18px',
+                    borderColor: 'rgb(209, 213, 219)',
+                    '&:hover': {
+                      borderColor: 'rgb(156, 163, 175)',
+                      backgroundColor: 'rgba(243, 244, 246, 0.8)'
+                    }
+                  }}
+                >
+                  Cancel Edit
+                </Button>
+              )}
+              <Button
+                variant="contained"
+                onClick={handleAdd}
+                disabled={!currentField.key || !currentField.value}
+                startIcon={editIndex !== null ? <SaveIcon className="h-4 w-4" /> : <AddIcon className="h-4 w-4" />}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                sx={{
+                  borderRadius: '8px',
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  padding: '10px 18px',
+                  boxShadow: '0 2px 4px rgba(37, 99, 235, 0.1)',
+                  '&:hover': {
+                    boxShadow: '0 4px 8px rgba(37, 99, 235, 0.2)'
+                  },
+                  '&:disabled': {
+                    opacity: 0.7,
+                    backgroundColor: 'rgba(59, 130, 246, 0.7)'
+                  }
+                }}
+              >
+                {editIndex !== null ? "Update Field" : "Add Field"}
+              </Button>
+            </div>
+          </Paper>
+
+          {/* Fields List Section */}
+          {fields.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <Typography 
+                  variant="subtitle1" 
+                  className="text-gray-800 font-semibold"
+                  sx={{ fontSize: '16px' }}
+                >
+                  Added Fields
+                </Typography>
+                <Chip 
+                  label={fields.length} 
+                  size="small" 
+                  color="primary"
+                  sx={{
+                    borderRadius: '6px',
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    height: '24px'
+                  }}
+                />
+              </div>
+
+              <Paper 
+                elevation={0} 
+                className="border border-gray-200 rounded-xl overflow-hidden bg-white"
+                sx={{
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
+                  '&:hover': {
+                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)'
+                  }
+                }}
+              >
+                {/* Header */}
+                <div className="bg-gray-50 border-b border-gray-200 px-6 py-3.5 grid grid-cols-12 gap-4">
+                  <div className="col-span-4">
+                    <Typography variant="body2" className="font-medium text-gray-600 uppercase text-xs tracking-wider">
+                      Field Name
+                    </Typography>
+                  </div>
+                  <div className="col-span-4">
+                    <Typography variant="body2" className="font-medium text-gray-600 uppercase text-xs tracking-wider">
+                      Input
+                    </Typography>
+                  </div>
+                  <div className="col-span-2">
+                    <Typography variant="body2" className="font-medium text-gray-600 uppercase text-xs tracking-wider">
+                      Type
+                    </Typography>
+                  </div>
+                  <div className="col-span-2 text-right">
+                    <Typography variant="body2" className="font-medium text-gray-600 uppercase text-xs tracking-wider">
+                      Actions
+                    </Typography>
+                  </div>
+                </div>
+
+                {/* Rows */}
+                <div>
+                  {fields.map((field, index) => (
+                    <div
+                      key={index}
+                      className={`grid grid-cols-12 gap-4 items-center px-6 py-4 hover:bg-gray-50 transition-colors ${
+                        index !== fields.length - 1 ? "border-b border-gray-200" : ""
+                      } ${editIndex === index ? "bg-blue-50" : ""}`}
+                    >
+                      <div className="col-span-4">
+                        <Typography variant="body1" className="font-medium text-gray-900 truncate">
+                          {field.key}
+                        </Typography>
+                      </div>
+                      <div className="col-span-4">
+                        <Typography variant="body2" className="text-gray-600 truncate block max-w-[200px]">
+                          {field.type === 'file' ? 'File data' : field.value}
+                        </Typography>
+                      </div>
+                      <div className="col-span-2">
                         <Chip
                           icon={getTypeIcon(field.type)}
                           label={field.type}
@@ -271,53 +488,87 @@ const InputFieldConfiguration = ({ onSave, open, onClose }) => {
                           color={getTypeColor(field.type)}
                           className="capitalize"
                           sx={{
-                            '& .MuiChip-root': {
-                              height: '28px',
-                              padding: '0 8px',
-                            },
+                            borderRadius: '6px',
                             '& .MuiChip-label': {
-                              fontSize: '0.875rem',
-                              fontWeight: 500,
-                            },
+                              paddingLeft: '4px',
+                              fontWeight: 500
+                            }
                           }}
                         />
-                      </Grid>
-                      <Grid item xs={1} className="text-right">
+                      </div>
+                      <div className="col-span-2 flex justify-end space-x-2">
                         <IconButton
-                          onClick={() => handleDelete(index)}
-                          color="error"
+                          onClick={() => handlePreview(field)}
                           size="small"
-                          className="hover:bg-red-50"
+                          className="text-blue-500 hover:bg-blue-50"
+                          title="Preview"
                           sx={{
-                            '& .MuiIconButton-root': {
-                              padding: '6px',
-                            },
-                            '& .MuiSvgIcon-root': {
-                              fontSize: '1.125rem',
-                            },
+                            padding: '6px',
+                            borderRadius: '6px',
+                            backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(59, 130, 246, 0.12)'
+                            }
                           }}
                         >
-                          <DeleteIcon fontSize="small" />
+                          <EyeIcon className="h-4 w-4" />
                         </IconButton>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                ))}
-              </Box>
-            </Paper>
-          </Box>
-        )}
+                        <IconButton
+                          onClick={() => handleEdit(index)}
+                          size="small"
+                          className="text-green-500 hover:bg-green-50"
+                          title="Edit"
+                          sx={{
+                            padding: '6px',
+                            borderRadius: '6px',
+                            backgroundColor: 'rgba(34, 197, 94, 0.08)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(34, 197, 94, 0.12)'
+                            }, 
+                            paddingRight:'2px'
+                          }}
+                        >
+                          <EditIcon className="h-4 w-4" />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => handleDelete(index)}
+                          size="small"
+                          className="text-red-500 hover:bg-red-50"
+                          title="Delete"
+                          sx={{
+                            padding: '6px',
+                            borderRadius: '6px',
+                            backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                            '&:hover': {
+                              backgroundColor: 'rgba(239, 68, 68, 0.12)'
+                            }
+                          }}
+                        >
+                          <DeleteIcon className="h-4 w-4" />
+                        </IconButton>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Paper>
+            </div>
+          )}
+        </div>
       </DialogContent>
 
-      <DialogActions className="p-6 bg-gray-50 border-t border-gray-200">
+      <DialogActions className="px-6 py-4 border-t border-gray-200 bg-gray-50">
         <Button
           onClick={onClose}
-          startIcon={<CloseIcon />}
-          className="text-gray-700 hover:bg-gray-100 px-6 py-3 rounded-lg font-medium transition-all duration-200"
+          startIcon={<CloseIcon className="h-4 w-4" />}
+          className="text-gray-700 hover:bg-gray-100"
           sx={{
-            '& .MuiButton-startIcon': {
-              marginRight: '12px',
-            },
+            borderRadius: '8px',
+            textTransform: 'none',
+            fontWeight: 500,
+            padding: '10px 18px',
+            '&:hover': {
+              backgroundColor: 'rgba(243, 244, 246, 0.8)'
+            }
           }}
         >
           Cancel
@@ -325,18 +576,89 @@ const InputFieldConfiguration = ({ onSave, open, onClose }) => {
         <Button
           variant="contained"
           onClick={handleSave}
-          color="primary"
-          startIcon={<SaveIcon />}
-          className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-medium transition-all duration-200"
+          startIcon={<SaveIcon className="h-4 w-4" />}
+          className="bg-blue-600 hover:bg-blue-700"
           sx={{
-            '& .MuiButton-startIcon': {
-              marginRight: '12px',
-            },
+            borderRadius: '8px',
+            textTransform: 'none',
+            fontWeight: 500,
+            padding: '10px 18px',
+            boxShadow: '0 2px 4px rgba(37, 99, 235, 0.1)',
+            '&:hover': {
+              boxShadow: '0 4px 8px rgba(37, 99, 235, 0.2)'
+            }
           }}
         >
           Save Configuration
         </Button>
       </DialogActions>
+      
+      {/* Preview Dialog */}
+      {previewField && (
+        <Dialog 
+          open={!!previewField} 
+          onClose={() => setPreviewField(null)}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: '12px',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.12)',
+              overflow: 'hidden'
+            }
+          }}
+        >
+          <DialogTitle className="flex justify-between items-center py-4 px-6 border-b border-gray-200 bg-white">
+            <Typography className="text-gray-800 font-semibold">
+              Field Preview: {previewField.key}
+            </Typography>
+            <IconButton 
+              onClick={() => setPreviewField(null)} 
+              size="small"
+              sx={{
+                borderRadius: '6px',
+                padding: '6px',
+                backgroundColor: 'rgba(107, 114, 128, 0.08)',
+                '&:hover': {
+                  backgroundColor: 'rgba(107, 114, 128, 0.12)'
+                }
+              }}
+            >
+              <CloseIcon className="h-5 w-5" />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent className="p-6">
+            <div className="space-y-6">
+              <div className="flex items-center space-x-2">
+                <Typography variant="body1" className="font-medium text-gray-700">
+                  Type:
+                </Typography>
+                <Chip
+                  icon={getTypeIcon(previewField.type)}
+                  label={previewField.type}
+                  size="small"
+                  color={getTypeColor(previewField.type)}
+                  className="capitalize"
+                  sx={{
+                    borderRadius: '6px',
+                    '& .MuiChip-label': {
+                      paddingLeft: '4px',
+                      fontWeight: 500
+                    }
+                  }}
+                />
+              </div>
+              
+              <div>
+                <Typography variant="body1" className="font-medium text-gray-700 mb-2">
+                  Value:
+                </Typography>
+                {renderPreviewContent(previewField)}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   )
 }

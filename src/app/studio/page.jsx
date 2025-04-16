@@ -61,6 +61,7 @@ const StudioListing = () => {
       version: "1.0.0",
       isPublic: true,
       createdBy: "user",
+      inputs:[]
     };
   
     dispatch(

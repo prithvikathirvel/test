@@ -485,7 +485,7 @@ const Studio = () => {
         fitView: true,
         style: { backgroundColor: "#F7F9FB" },
         defaultEdgeOptions: {
-            type: "be", // Change edge type to bezier for smooth curves
+            type: "be",
             animated: true,
             style: { stroke: 'var(--primary-color)', strokeWidth: 2 }
         }
@@ -512,13 +512,7 @@ const Studio = () => {
                     output={flowOutput}
                     lastParam={formattedOututParam}
                 />
-                <Button 
-                    variant="contained" 
-                    onClick={() => setInputConfigOpen(true)}
-                    sx={{ position: 'absolute', top: 10, right: 10, zIndex: 1001 }}
-                >
-                    Configure Inputs
-                </Button>
+                
                 <InputFieldConfiguration 
                     open={inputConfigOpen}
                     onClose={() => setInputConfigOpen(false)}
@@ -548,6 +542,24 @@ const Studio = () => {
                                         <Eye size={24} />
                                     </IconButton>
                                 )}
+
+                
+
+                                    <Button
+                                        variant="contained"
+                                        onClick={() => setInputConfigOpen(true)}
+                                        sx={{
+                                            backgroundColor: 'var(--primary-color)',
+                                            '&:hover': {
+                                                backgroundColor: '#5f50e3'
+                                            },
+                                            textTransform: 'none',
+                                            fontSize: '14px',
+                                            py: 0.75
+                                        }}
+                                    >
+                                        Configure Inputs
+                                    </Button>
 
                                 <Button
                                     variant="contained"
@@ -586,6 +598,9 @@ const Studio = () => {
                                         {isFlowRunning ? 'Running...' : 'Run'}
                                     </Button>
                                 {/* )} */}
+
+
+                          
 
                                 <Button
                                     variant="contained"
