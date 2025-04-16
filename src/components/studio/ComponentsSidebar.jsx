@@ -12,6 +12,7 @@ import {
   ChevronRight,
   FileInput,
   CloudUpload,
+  Layers
 } from "lucide-react"
 import { useSelector } from "react-redux"
 import InputBox from "@/components/Common/InputBox"
@@ -22,8 +23,20 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
   const models = useSelector((state) => state.studio.models)
   const inputNodes = useSelector((state) => state.studio.inputs)
   const outputNodes = useSelector((state) => state.studio.outputs)
+  const prebuiltFlows = useSelector((state) => state.studio.prebuiltFlows)
 
   const nodeTypes = [
+    {
+      title: "Prebuilt Flows",
+      icon: <Layers size={18} />,
+      nodes: prebuiltFlows?.map((flow) => ({
+        ...flow,
+        displayName: flow.name,
+        key: `flow-${flow.id}`,
+        id: flow.id,
+        type: "flow"
+      })) || [],
+    },
     {
       title: "Inputs",
       icon: <FileInput size={18} />,
@@ -52,17 +65,22 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
   ]
 
   function mapToNodes(items, prefix) {
-    return items.map((item, index) => ({
+    return items?.map((item, index) => ({
       ...item,
       displayName: item.name,
       key: `${prefix}-${index}`,
       id: item.id,
-    }))
+    })) || []
   }
 
   const onDragStart = useCallback((event, nodeType, node) => {
-    event.dataTransfer.setData("application/node-spec", JSON.stringify(node))
-    event.dataTransfer.setData("application/reactflow", nodeType)
+    if (nodeType === "flow") {
+      event.dataTransfer.setData("application/flow-spec", JSON.stringify(node.graphSpec))
+      event.dataTransfer.setData("application/reactflow", "flow")
+    } else {
+      event.dataTransfer.setData("application/node-spec", JSON.stringify(node))
+      event.dataTransfer.setData("application/reactflow", nodeType)
+    }
     event.dataTransfer.effectAllowed = "move"
   }, [])
 
@@ -223,7 +241,6 @@ function ComponentSection({ section, isFirstSection, onDragStart }) {
   )
 }
 
-
 // Helper function to get color based on node type
 function getNodeColor(nodeType) {
   switch (nodeType) {
@@ -237,6 +254,8 @@ function getNodeColor(nodeType) {
       return "#9c27b0"
     case "Outputs":
       return "#f44336"
+    case "Prebuilt Flows":
+      return "#03A9F4"
     default:
       return "#757575"
   }

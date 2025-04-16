@@ -341,6 +341,13 @@ const NodeDetailsModal = ({
     }
   };
 
+  const handleDelete = () => {
+    if (onDelete && node) {
+      onDelete(node);
+      onClose();
+    }
+  };
+
   const { displayBasicInformation, displayInputParameters, displayOutputParameters } = sections;
 
   if (!node) return null;
@@ -384,7 +391,7 @@ const NodeDetailsModal = ({
         type={node?.data?.type || node?.type}
         color={getNodeColor(node?.data?.type || node?.type)}
         onClose={onClose}
-        onDelete={onDelete}
+        onDelete={handleDelete}
         onUpdateName={handleUpdateName}
       />
 

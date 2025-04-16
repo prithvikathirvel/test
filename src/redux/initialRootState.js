@@ -1,4 +1,4 @@
-import {inputNodes, outputNodes} from "@/utils/dataModels";
+import {inputNodes, outputNodes, prebuiltFlows} from "@/utils/dataModels";
 
 const initialRootState = {
   auth: {
@@ -11,6 +11,7 @@ const initialRootState = {
     models: [],
     inputs: inputNodes,
     outputs: outputNodes,
+    prebuiltFlows: prebuiltFlows,
     agentFlows: [],
     flow:{}, 
     flowListLoader: false, 

@@ -19,6 +19,7 @@ import { useParams } from 'next/navigation';
 import StudioChatBot from "@/components/studio/StudioChatBot";
 import { getLastOutputParameter } from "@/utils/commonFunction";
 import FlowOutputModal from "@/components/studio/FlowOutputModal";
+import InputFieldConfiguration from "@/components/InputFieldConfiguration";
 
 const drawerWidth = 280;
 
@@ -29,7 +30,7 @@ const Studio = () => {
     const [selectedNode, setSelectedNode] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [outputModalOpen, setOutputModalOpen] = useState(false);
-    // const [isFlowRunning, setIsFlowRunning] = useState(false);
+    const [inputConfigOpen, setInputConfigOpen] = useState(false);
     const [saveFlow, setSaveFlow] = useState(false);
     const [formattedOututParam, setFormattedOututParam] = useState('Empty');
     const [toggleViewMode, setToggleViewMode] = useState(false);
@@ -220,7 +221,7 @@ const Studio = () => {
                         label: node.name || "Unnamed Node",
                         name: node.name || "Unnamed Node",
                         type: node.type || "default",
-                        displayName: node.displayName || "Unnamed Display Node",
+                        displayName: node.displayName || node.name,
                         description: node.description || "",
                         inputParameters: node.inputParameters || [],
                         outputParameters: node.outputParameters || [],
@@ -274,41 +275,121 @@ const Studio = () => {
         (event) => {
             event.preventDefault();
             const type = event.dataTransfer.getData("application/reactflow");
-            let spec = null;
 
-            try {
-                spec = JSON.parse(event.dataTransfer.getData("application/node-spec"));
-            } catch (error) {
-                console.error("Error parsing node spec:", error);
+            // Handle flow drop
+            if (type === "flow") {
+                try {
+                    const flowSpec = JSON.parse(event.dataTransfer.getData("application/flow-spec"));
+                    if (!flowSpec) {
+                        console.error("No flow spec found in drop data");
+                        return;
+                    }
+
+                    // Calculate base position for the flow
+                    const basePosition = {
+                        x: event.clientX - drawerWidth,
+                        y: event.clientY - 100,
+                    };
+
+                    // Add position offsets to each node in the flow
+                    const nodesWithPositions = flowSpec.nodes.map((node, index) => {
+                        const row = Math.floor(index / 2);
+                        const col = index % 2;
+                        return {
+                            ...node,
+                            id: node.node_id,
+                            key: node.node_id,
+                            data: {
+                                label: node.name || "Unnamed Node",
+                                name: node.name || "Unnamed Node",
+                                type: node.type || "default",
+                                displayName: node.displayName || node.name,
+                                description: node.description || "",
+                                inputParameters: node.inputParameters || [],
+                                outputParameters: node.outputParameters || [],
+                                next: node.next || [],
+                            },
+                            position: {
+                                x: basePosition.x + (col * 250),
+                                y: basePosition.y + (row * 150),
+                            },
+                        };
+                    });
+
+                    // Add edges from the flow
+                    const edgeSet = new Set();
+                    const newEdges = flowSpec.edges
+                        .filter(edge => edge.from && edge.to)
+                        .map((edge) => {
+                            const edgeId = `${edge.from}-${edge.to}`;
+                            if (edgeSet.has(edgeId)) return null;
+                            edgeSet.add(edgeId);
+                            return {
+                                id: edgeId,
+                                source: edge.from,
+                                target: edge.to,
+                                animated: true,
+                            };
+                        })
+                        .filter(Boolean);
+
+                    // Update nodes and edges
+                    setNodesState((nds) => [...nds, ...nodesWithPositions]);
+                    setEdgesState((eds) => [...eds, ...newEdges]);
+                    
+                    // Update Redux store
+                    dispatch(setNodes({ type: "flow", graphSpec: flowSpec }));
+                    dispatch(setEdges({ type: "flow", graphSpec: flowSpec }));
+
+                } catch (error) {
+                    console.error("Error handling flow drop:", error);
+                }
                 return;
             }
 
-            // Generate a unique ID for the new node
-            const newNodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+            // Handle regular node drop
+            try {
+                const spec = JSON.parse(event.dataTransfer.getData("application/node-spec"));
+                if (!spec) {
+                    console.error("No node spec found in drop data");
+                    return;
+                }
 
-            const position = {
-                x: event.clientX - drawerWidth,
-                y: event.clientY - 100,
-            };
+                // Generate a unique ID for the new node
+                const newNodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-            const newNode = {
-                id: newNodeId,  // Use unique ID instead of spec.id
-                name: spec.name,
-                key: newNodeId,  // Use unique ID as key too
-                type: spec.type,
-                description: spec.description,
-                next: [],
-                position,
-                data: {
-                    ...spec,
-                    node_id: newNodeId  // Update the node_id in data as well
-                },
-            };
+                const position = {
+                    x: event.clientX - drawerWidth,
+                    y: event.clientY - 100,
+                };
 
-            setNodesState((nds) => nds.concat(newNode));
-            // dispatch(updateSpecification());
+                const newNode = {
+                    id: newNodeId,
+                    name: spec.name,
+                    key: newNodeId,
+                    type: spec.type,
+                    description: spec.description,
+                    next: [],
+                    position,
+                    data: {
+                        label: spec.name,
+                        name: spec.name,
+                        type: spec.type,
+                        description: spec.description,
+                        inputParameters: spec.inputParameters || [],
+                        outputParameters: spec.outputParameters || [],
+                        next: [],
+                    },
+                };
+
+                setNodesState((nds) => [...nds, newNode]);
+                dispatch(setNodes({ nodes: [...nodes, newNode], flow }));
+
+            } catch (error) {
+                console.error("Error handling node drop:", error);
+            }
         },
-        [setNodesState]
+        [dispatch, setNodesState, setEdgesState, nodes, flow]
     );
 
     useEffect(() => {
@@ -385,6 +466,12 @@ const Studio = () => {
         // The specification will be automatically updated by the updateNode action
     }, [dispatch]);
 
+    const handleInputConfigSave = (configurations) => {
+        console.log('Input configurations:', configurations);
+        // Here you can handle the saved configurations
+        toast.success('Input configurations saved successfully');
+    };
+
     const reactFlowProps = useMemo(() => ({
         nodes,
         edges,
@@ -424,6 +511,18 @@ const Studio = () => {
                     onClose={() => setOutputModalOpen(false)}
                     output={flowOutput}
                     lastParam={formattedOututParam}
+                />
+                <Button 
+                    variant="contained" 
+                    onClick={() => setInputConfigOpen(true)}
+                    sx={{ position: 'absolute', top: 10, right: 10, zIndex: 1001 }}
+                >
+                    Configure Inputs
+                </Button>
+                <InputFieldConfiguration 
+                    open={inputConfigOpen}
+                    onClose={() => setInputConfigOpen(false)}
+                    onSave={handleInputConfigSave}
                 />
                 <Grid container spacing={0} className="h-full">
                     <Grid size={2.5} className="h-full overflow-auto">

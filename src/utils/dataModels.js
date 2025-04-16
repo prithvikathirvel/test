@@ -96,4 +96,111 @@ const outputNodes = [
   }
 ]
 
-export {inputNodes, outputNodes};
+const prebuiltFlows = [
+  {
+    name: "Travel Plan Flow",
+    description: "Gets the current weather and required currency",
+    type: "flow",
+    graphSpec: {
+      nodes: [
+        {
+          node_id: "67dbef1fba68ebc0121fad70",
+          name: "Start Node",
+          displayName: "Start Node",
+          type: "input",
+          description: "Start Node",
+          next: ["67e694f8acffb296dfb3932e", "67e64d438da785d4b80d7b45"],
+          inputParameters: [],
+          outputParameters: []
+        },
+        {
+          node_id: "67e694f8acffb296dfb3932e",
+          name: "API caller",
+          displayName: "Weather API Caller",
+          type: "tool",
+          description: "Fetches response from external API",
+          next: ["67dbef1fbr78eac9021fahjuo89"],
+          inputParameters: [
+            {
+              key: "method",
+              value: "GET",
+              type: "text"
+            },
+            {
+              key: "url",
+              value: "https://api.openweathermap.org/data/2.5/weather?q=Chennai&cnt=16&appid=5f4c13fe637de59ea1c94ef1cf06cc0d",
+              type: "text"
+            }
+          ],
+          outputParameters: [
+            {
+              key: "api_response",
+              value: {},
+              type: "json"
+            }
+          ]
+        },
+        {
+          node_id: "67e64d438da785d4b80d7b45",
+          name: "LLM invoker",
+          displayName: "LLM invoker",
+          type: "agent",
+          description: "Invokes LLM for its response",
+          next: ["67dbef1fbr78eac9021fahjuo89"],
+          inputParameters: [
+            {
+              key: "prompt",
+              value: "What is the currency conversion rate from Ottawa to Chennai?",
+              type: "string"
+            }
+          ],
+          outputParameters: [
+            {
+              key: "llm_response",
+              value: "",
+              type: "text"
+            }
+          ]
+        },
+        {
+          node_id: "67dbef1fbr78eac9021fahjuo89",
+          name: "End Node",
+          displayName: "End Node",
+          type: "output",
+          description: "End Node",
+          next: [],
+          inputParameters: [],
+          outputParameters: []
+        }
+      ],
+      edges: [
+        {
+          from: "67dbef1fba68ebc0121fad70",
+          to: "67e694f8acffb296dfb3932e"
+        },
+        {
+          from: "67dbef1fba68ebc0121fad70",
+          to: "67e64d438da785d4b80d7b45"
+        },
+        {
+          from: "67e694f8acffb296dfb3932e",
+          to: "67dbef1fbr78eac9021fahjuo89"
+        },
+        {
+          from: "67e64d438da785d4b80d7b45",
+          to: "67dbef1fbr78eac9021fahjuo89"
+        }
+      ]
+    },
+    status: "active",
+    version: "1.0.0",
+    isPublic: true,
+    createdBy: "User",
+    updatedAt: "2025-04-12T05:23:48.164Z",
+    createdAt: "2025-04-01T09:41:10.598Z",
+    id: "39e2d144-aae6-4a84-98f1-06555013404c",
+    agent_id: "39e2d144-aae6-4a84-98f1-06555013404c"
+  }
+];
+
+export { inputNodes, outputNodes, prebuiltFlows };

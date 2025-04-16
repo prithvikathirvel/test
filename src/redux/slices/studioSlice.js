@@ -127,28 +127,42 @@ const studioSlice = createSlice({
   reducers: {
 
     setNodes: (state, action) => {
-      const { nodes, flow } = action.payload;
-      state.nodes = nodes?.map(newNode => {
-        const existingNode = state.nodes ? state.nodes.find(node => node.id === newNode.id) : null;
-        return {
-          ...newNode,
-          next: existingNode?.next || newNode.next || []
-        };
-      });
-      if (Array.isArray(state.nodes) && Array.isArray(state.edges)) {
-        state.specification = generateSpecification(flow, state.nodes, state.edges);
-        console.log("specification inside slice",state.specification);
+      if (action.payload.type === "flow") {
+        // When dropping a flow, add all its nodes
+        const flowSpec = action.payload.graphSpec;
+        state.nodes = [...state.nodes, ...flowSpec.nodes];
       } else {
-        state.specification = {};
+        // Handle normal node addition
+        const { nodes, flow } = action.payload;
+        state.nodes = nodes?.map(newNode => {
+          const existingNode = state.nodes ? state.nodes.find(node => node.id === newNode.id) : null;
+          return {
+            ...newNode,
+            next: existingNode?.next || newNode.next || []
+          };
+        });
+        if (Array.isArray(state.nodes) && Array.isArray(state.edges)) {
+          state.specification = generateSpecification(flow, state.nodes, state.edges);
+          console.log("specification inside slice",state.specification);
+        } else {
+          state.specification = {};
+        }
       }
     },
     setEdges: (state, action) => {
-      const { edges, flow } = action.payload;
-      state.edges = edges;
-      if (Array.isArray(state.nodes) && Array.isArray(state.edges)) {
-        state.specification = generateSpecification(flow,state.nodes, state.edges);
+      if (action.payload.type === "flow") {
+        // When dropping a flow, add all its edges
+        const flowSpec = action.payload.graphSpec;
+        state.edges = [...state.edges, ...flowSpec.edges];
       } else {
-        state.specification = {};
+        // Handle normal edge addition
+        const { edges, flow } = action.payload;
+        state.edges = edges;
+        if (Array.isArray(state.nodes) && Array.isArray(state.edges)) {
+          state.specification = generateSpecification(flow,state.nodes, state.edges);
+        } else {
+          state.specification = {};
+        }
       }
     },
     deleteNode: (state, action) => {
