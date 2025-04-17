@@ -56,11 +56,12 @@ export const getFlowById = createAsyncThunk('flow/getFlowById', async (data) => 
 export const updateFlow = createAsyncThunk('flow/updateFlow', async (data) => {
   console.log('Updating flow data...');
   try {
-    const {id,updatedData}=data
+    const {id,updatedData,onSuccess}=data
     console.log('Flow ID:', id);
     console.log('Updated Data:', updatedData);
     const response = await APIKit.put(`/agent-flow/${id}`, updatedData);
     showToaster('success', 'Flow updated successfully');
+    onSuccess();
     return response.data;
   } catch (error) {
     showToaster('error', error);

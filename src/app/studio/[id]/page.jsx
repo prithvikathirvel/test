@@ -277,77 +277,80 @@ const Studio = () => {
             const type = event.dataTransfer.getData("application/reactflow");
 
             // Handle flow drop
-            if (type === "flow") {
-                try {
-                    const flowSpec = JSON.parse(event.dataTransfer.getData("application/flow-spec"));
-                    if (!flowSpec) {
-                        console.error("No flow spec found in drop data");
-                        return;
-                    }
+            // if (type === "flow") {
+            //     try {
+            //         const flowSpec = JSON.parse(event.dataTransfer.getData("application/flow-spec"));
+            //         if (!flowSpec) {
+            //             console.error("No flow spec found in drop data");
+            //             return;
+            //         }
 
-                    // Calculate base position for the flow
-                    const basePosition = {
-                        x: event.clientX - drawerWidth,
-                        y: event.clientY - 100,
-                    };
+            //         // Calculate base position for the flow
+            //         const basePosition = {
+            //             x: event.clientX - drawerWidth,
+            //             y: event.clientY - 100,
+            //         };
 
-                    // Add position offsets to each node in the flow
-                    const nodesWithPositions = flowSpec.nodes.map((node, index) => {
-                        const row = Math.floor(index / 2);
-                        const col = index % 2;
-                        return {
-                            ...node,
-                            id: node.node_id,
-                            key: node.node_id,
-                            data: {
-                                label: node.name || "Unnamed Node",
-                                name: node.name || "Unnamed Node",
-                                type: node.type || "default",
-                                displayName: node.displayName || node.name,
-                                description: node.description || "",
-                                inputParameters: node.inputParameters || [],
-                                outputParameters: node.outputParameters || [],
-                                next: node.next || [],
-                            },
-                            position: {
-                                x: basePosition.x + (col * 250),
-                                y: basePosition.y + (row * 150),
-                            },
-                        };
-                    });
+            //         // Add position offsets to each node in the flow
+            //         const nodesWithPositions = flowSpec.nodes.map((node, index) => {
+            //             const row = Math.floor(index / 2);
+            //             const col = index % 2;
+            //             return {
+            //                 ...node,
+            //                 id: node.node_id,
+            //                 key: node.node_id,
+            //                 data: {
+            //                     label: node.name || "Unnamed Node",
+            //                     name: node.name || "Unnamed Node",
+            //                     type: node.type || "default",
+            //                     displayName: node.displayName || node.name,
+            //                     description: node.description || "",
+            //                     inputParameters: node.inputParameters || [],
+            //                     outputParameters: node.outputParameters || [],
+            //                     next: node.next || [],
+            //                 },
+            //                 position: {
+            //                     x: basePosition.x + (col * 250),
+            //                     y: basePosition.y + (row * 150),
+            //                 },
+            //             };
+            //         });
 
-                    // Add edges from the flow
-                    const edgeSet = new Set();
-                    const newEdges = flowSpec.edges
-                        .filter(edge => edge.from && edge.to)
-                        .map((edge) => {
-                            const edgeId = `${edge.from}-${edge.to}`;
-                            if (edgeSet.has(edgeId)) return null;
-                            edgeSet.add(edgeId);
-                            return {
-                                id: edgeId,
-                                source: edge.from,
-                                target: edge.to,
-                                animated: true,
-                            };
-                        })
-                        .filter(Boolean);
+            //         // Add edges from the flow
+            //         const edgeSet = new Set();
+            //         const newEdges = flowSpec.edges
+            //             .filter(edge => edge.from && edge.to)
+            //             .map((edge) => {
+            //                 const edgeId = `${edge.from}-${edge.to}`;
+            //                 if (edgeSet.has(edgeId)) return null;
+            //                 edgeSet.add(edgeId);
+            //                 return {
+            //                     id: edgeId,
+            //                     source: edge.from,
+            //                     target: edge.to,
+            //                     animated: true,
+            //                 };
+            //             })
+            //             .filter(Boolean);
 
-                    // Update nodes and edges
-                    setNodesState((nds) => [...nds, ...nodesWithPositions]);
-                    setEdgesState((eds) => [...eds, ...newEdges]);
+            //         // Update nodes and edges
+            //         setNodesState((nds) => [...nds, ...nodesWithPositions]);
+            //         setEdgesState((eds) => [...eds, ...newEdges]);
                     
-                    // Update Redux store
-                    dispatch(setNodes({ type: "flow", graphSpec: flowSpec }));
-                    dispatch(setEdges({ type: "flow", graphSpec: flowSpec }));
+            //         // Update Redux store
+            //         dispatch(setNodes({ type: "flow", graphSpec: flowSpec }));
+            //         dispatch(setEdges({ type: "flow", graphSpec: flowSpec }));
 
-                } catch (error) {
-                    console.error("Error handling flow drop:", error);
-                }
-                return;
-            }
+            //     } catch (error) {
+            //         console.error("Error handling flow drop:", error);
+            //     }
+            //     return;
+            // }
 
-            // Handle regular node drop
+            // if(type === "flow") {
+                
+            // }
+
             try {
                 const spec = JSON.parse(event.dataTransfer.getData("application/node-spec"));
                 if (!spec) {
@@ -364,7 +367,7 @@ const Studio = () => {
                 };
 
                 const newNode = {
-                    id: newNodeId,
+                    id: spec.type === "flow" ? spec.id : newNodeId,
                     name: spec.name,
                     key: newNodeId,
                     type: spec.type,
@@ -379,6 +382,7 @@ const Studio = () => {
                         inputParameters: spec.inputParameters || [],
                         outputParameters: spec.outputParameters || [],
                         next: [],
+                        // inputs: spec.inputs || [],
                     },
                 };
 
@@ -454,7 +458,7 @@ const Studio = () => {
         console.log('Flow ID:', flowId);
         console.log('specification',specification);
         console.log('flow before saving',flow);
-        dispatch(updateFlow({id: flowId, updatedData: specification}));
+        dispatch(updateFlow({id: flowId, updatedData: specification,onSuccess: (value) => console.log("Saved Successfully")}));
     }, [dispatch, flowId, specification, flow]);
 
     const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters,parameter) => {

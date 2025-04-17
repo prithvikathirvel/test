@@ -198,8 +198,9 @@ const prebuiltFlows = [
     createdBy: "User",
     updatedAt: "2025-04-12T05:23:48.164Z",
     createdAt: "2025-04-01T09:41:10.598Z",
-    id: "39e2d144-aae6-4a84-98f1-06555013404c",
-    agent_id: "39e2d144-aae6-4a84-98f1-06555013404c"
+    id: "39e2d144-aae6-4a84-98f1-06555013404c1",
+    agent_id: "39e2d144-aae6-4a84-98f1-06555013404c1",
+    inputs:[]
   }
 ];
 

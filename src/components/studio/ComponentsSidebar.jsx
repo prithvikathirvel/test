@@ -74,13 +74,8 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
   }
 
   const onDragStart = useCallback((event, nodeType, node) => {
-    if (nodeType === "flow") {
-      event.dataTransfer.setData("application/flow-spec", JSON.stringify(node.graphSpec))
-      event.dataTransfer.setData("application/reactflow", "flow")
-    } else {
-      event.dataTransfer.setData("application/node-spec", JSON.stringify(node))
-      event.dataTransfer.setData("application/reactflow", nodeType)
-    }
+    event.dataTransfer.setData("application/node-spec", JSON.stringify(node))
+    event.dataTransfer.setData("application/reactflow", nodeType)
     event.dataTransfer.effectAllowed = "move"
   }, [])
 
