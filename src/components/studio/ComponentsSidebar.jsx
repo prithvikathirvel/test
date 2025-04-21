@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { useSelector } from "react-redux"
 import InputBox from "@/components/Common/InputBox"
+import { sortByField } from "@/utils/commonFunction"
 
 export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideBar }) {
   const tools = useSelector((state) => state.studio.tools)
@@ -23,20 +24,11 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
   const models = useSelector((state) => state.studio.models)
   const inputNodes = useSelector((state) => state.studio.inputs)
   const outputNodes = useSelector((state) => state.studio.outputs)
-  const prebuiltFlows = useSelector((state) => state.studio.prebuiltFlows)
+  const prebuiltFlows1 = useSelector((state) => state.studio.prebuiltFlows)
+
+  const prebuiltFlows = sortByField(prebuiltFlows1, "updatedAt", "desc")
 
   const nodeTypes = [
-    {
-      title: "Prebuilt Flows",
-      icon: <Layers size={18} />,
-      nodes: prebuiltFlows?.map((flow) => ({
-        ...flow,
-        displayName: flow.name,
-        key: `flow-${flow.id}`,
-        id: flow.id,
-        type: "flow"
-      })) || [],
-    },
     {
       title: "Inputs",
       icon: <FileInput size={18} />,
@@ -46,6 +38,18 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
       title: "Agents",
       icon: <Database size={18} />,
       nodes: mapToNodes(agents, "agent"),
+    },
+
+    {
+      title: "Agent Flows",
+      icon: <Layers size={18} />,
+      nodes: prebuiltFlows?.map((flow) => ({
+        ...flow,
+        displayName: flow.name,
+        key: `flow-${flow.id}`,
+        id: flow.id,
+        type: "agentflow"
+      })) || [],
     },
     {
       title: "Tools",

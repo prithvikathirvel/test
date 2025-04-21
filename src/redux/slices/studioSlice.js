@@ -224,6 +224,10 @@ const studioSlice = createSlice({
         ...action.payload
       };
       state.flow = state.specification;
+      // state.flow =  {
+      //   ...state.specification,
+      //   ...action.payload
+      // };
     }, 
     
   },
@@ -312,6 +316,7 @@ const studioSlice = createSlice({
       });
       builder.addCase(getAllFlows.fulfilled, (state, action) => {
         state.flows = action.payload;
+        state.prebuiltFlows =action.payload;
         state.getAllFlowsLoader = false;
       });
       builder.addCase(getAllFlows.rejected, (state) => {
@@ -342,7 +347,8 @@ const generateSpecification = (flow, nodes, edges) => {
     return {};
   }
   const specification = {
-  ...flow, 
+  ...flow,
+  inputs: flow?.inputs || [],
   graphSpec: {
     nodes: nodes.map(node => ({
       node_id: node.id,  

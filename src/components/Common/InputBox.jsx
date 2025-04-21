@@ -1,9 +1,8 @@
 "use client"
-import React,{useState} from 'react';
+import React from 'react';
 import { Box, InputBase, Typography } from '@mui/material';
 import { Search } from 'lucide-react';
 import { convertToTitleCase } from '@/utils/commonFunction';
-
 
 const InputBox = ({
   placeholder = "Enter",
@@ -20,18 +19,19 @@ const InputBox = ({
   type = 'text',
   ...props
 }) => {
-
-  const [inputValue, setInputValue] = useState(value);
-
   const handleChange = (event) => {
-    setInputValue(event.target.value);
-    onChange(event.target.value)
-};
+    onChange(event.target.value);
+  };
 
   return (
     <Box className={className}>
-      {isShowLabel && <Typography className='!mb-2 !font-bold  !text-[13px] '>{convertToTitleCase(label)}</Typography>}
-
+      {isShowLabel && (
+        <Typography
+          className='!mb-2 !font-bold  !text-[13px] '
+        >
+          {convertToTitleCase(label)}
+        </Typography>
+      )}
       <Box
         className={`flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-md ${className} m-0`}
         sx={{
@@ -46,8 +46,8 @@ const InputBox = ({
         {icon}
         <InputBase
           placeholder={placeholder}
-          value={inputValue}
-          onChange={(e)=>handleChange(e)}
+          value={value}
+          onChange={(e) => handleChange(e)}
           className="flex-1 outline-none"
           disabled={disabled}
           type={type}

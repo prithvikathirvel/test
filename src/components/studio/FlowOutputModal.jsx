@@ -25,6 +25,9 @@ const FlowOutputModal = ({ open, onClose, output, lastParam }) => {
     const [copied, setCopied] = useState({ full: false, last: false })
     const theme = useTheme()
 
+    console.log('lastParam Inside FlowOutputModal', lastParam);
+    console.log('output Inside FlowOutputModal', output)
+
     if (!output) return null
 
     const handleTabChange = (event, newValue) => {
@@ -37,7 +40,8 @@ const FlowOutputModal = ({ open, onClose, output, lastParam }) => {
         setTimeout(() => setCopied({ ...copied, [type]: false }), 2000)
     }
 
-    const lastParamData = lastParam && output[lastParam] ? output[lastParam] : null
+    // Get the actual data from the output using the lastParam as the key
+    const lastParamData = lastParam && output ? output[lastParam] : null
 
     return (
         <Dialog
@@ -69,15 +73,13 @@ const FlowOutputModal = ({ open, onClose, output, lastParam }) => {
 
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                 <Tabs value={activeTab} onChange={handleTabChange} aria-label="output tabs">
-                <Tab label="Formatted Output" disabled={!lastParamData} />
+                    <Tab label="Formatted Output" disabled={!lastParamData} />
                     <Tab label="Complete Output" />
                 </Tabs>
             </Box>
 
             <DialogContent sx={{ p: 3 }}>
-                {activeTab === 0 && (
-
-
+                {activeTab === 0 && lastParamData && (
                     <Box>
                         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -113,7 +115,7 @@ const FlowOutputModal = ({ open, onClose, output, lastParam }) => {
                     </Box>
                 )}
 
-                {activeTab === 1 && lastParamData && (
+                {(activeTab === 1 || (activeTab === 0 && !lastParamData)) && (
                     <Box>
                         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
                             <Typography variant="subtitle1" fontWeight="500">
@@ -157,4 +159,3 @@ const FlowOutputModal = ({ open, onClose, output, lastParam }) => {
 }
 
 export default FlowOutputModal
-

@@ -176,26 +176,75 @@ function sortByField(arr, field, order = "asc") {
   }
 }
 
-function getLastOutputParameter(flowJson) {
-  console.log("getLastOutputParameter",flowJson);
+// function getLastOutputParameter(flowJson) {
+//   console.log("getLastOutputParameter",flowJson);
 
-  if (!flowJson || !flowJson.graphSpec || !Array.isArray(flowJson.graphSpec.nodes)) {
-    throw new Error("Error in getLastOutputParameter function");
-  }
-  const nodes = flowJson.graphSpec.nodes;
-  for (let i = nodes.length - 1; i >= 0; i--) {
-    const node = nodes[i];
-    if (Array.isArray(node.outputParameters) && node.outputParameters.length > 0) {
-      const lastParam = node.outputParameters[node.outputParameters.length - 1];
-      console.log("getLastOutputParameter",lastParam);
+//   if (!flowJson || !flowJson.graphSpec || !Array.isArray(flowJson.graphSpec.nodes)) {
+//     console.log("jet")
+//     throw new Error("Error in getLastOutputParameter function");
+//   }
+//   const nodes = flowJson.graphSpec.nodes;
+//   for (let i = nodes.length - 1; i >= 0; i--) {
+//     const node = nodes[i];
+//     console.log(node,'nodeee')
+//     if (Array.isArray(node.outputParameters) && node.outputParameters.length > 0) {
+//       const lastParam = node.outputParameters[node.outputParameters.length - 1];
+//       console.log("getLastOutputParameterrrr",lastParam);
       
-      return {
-        key: lastParam?.key,
-        value: lastParam?.value
-      };
-    }
+//       return {
+//         key: lastParam?.key,
+//         value: lastParam?.value
+//       };
+//     }
+//   }
+//   return null;
+// }
+
+function getLastOutputParameter(flowJson) {
+  if (
+    !flowJson ||
+    !flowJson.graphSpec ||
+    !Array.isArray(flowJson.graphSpec.nodes) ||
+    !Array.isArray(flowJson.graphSpec.edges)
+  ) {
+    throw new Error("Invalid flowJson structure");
   }
-  return null;
+
+  const { nodes, edges } = flowJson.graphSpec;
+
+  // Create a map for quick node lookup by ID
+  const nodeMap = {};
+  nodes.forEach(node => {
+    nodeMap[node.node_id] = node;
+  });
+
+  // Step 1: Find the End Node
+  const endNode = nodes.find(node => node.name === "End Node");
+  if (!endNode) {
+    throw new Error("End Node not found");
+  }
+
+  // Step 2: Trace back from End Node to its previous node
+  let currentNodeId = endNode.node_id;
+  let previousNode = null;
+
+  // Traverse backward one step to get the node before End Node
+  const edgeToEnd = edges.find(edge => edge.to === currentNodeId);
+  if (edgeToEnd) {
+    previousNode = nodeMap[edgeToEnd.from];
+  }
+
+  if (!previousNode || !Array.isArray(previousNode.outputParameters)) {
+    return null;
+  }
+
+  const outputParams = previousNode.outputParameters;
+  const lastParam = outputParams[outputParams.length - 1];
+
+  return {
+    key: lastParam?.key,
+    value: lastParam?.value
+  };
 }
 
 function sanitizeOutput (input) {

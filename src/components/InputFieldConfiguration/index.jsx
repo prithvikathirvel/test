@@ -70,6 +70,13 @@ const InputFieldConfiguration = ({ onSave, open, onClose }) => {
     }
   }, [open, specification]);
 
+  useEffect(() => {
+    if (fields.length > 0 && !editIndex) {
+      setCurrentField({ key: "", value: "", type: "text" });
+      setFile(null);
+    }
+  }, [fields, editIndex]);
+
   const handleInputBoxChange = (value, field = 'value') => {
     handleInputChange(field, value)
   }
@@ -103,6 +110,8 @@ const InputFieldConfiguration = ({ onSave, open, onClose }) => {
       }
       
       setFields(newFields);
+      setCurrentField({ key: "", value: "", type: "text" })
+
       
       // Update specification
       const updatedSpec = {
@@ -111,7 +120,6 @@ const InputFieldConfiguration = ({ onSave, open, onClose }) => {
       }
       dispatch(updateSpecification(updatedSpec))
       
-      setCurrentField({ key: "", value: "", type: "text" })
     }
   }
 

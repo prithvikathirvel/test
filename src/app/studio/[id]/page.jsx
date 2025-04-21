@@ -9,9 +9,9 @@ import ComponentsSidebar from "@/components/studio/ComponentsSidebar";
 import JsonSpecView from "@/components/studio/JsonSpecView";
 import { Save, Rocket, Code, List, Eye, Play } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import { toggleViewMode, updateSpecification } from "@/redux/slices/flowSlice";
+import { toggleViewMode } from "@/redux/slices/flowSlice";
 import SideDrawer from "@/components/Common/SideDrawer";
-import { fetchTools, fetchAgents, fetchModels ,getFlowById, updateFlow, setNodes, setEdges ,deleteNode, updateNodeConnections,updateNode,runFlow} from "@/redux/slices/studioSlice";
+import { fetchTools, fetchAgents, fetchModels ,getFlowById, updateFlow, setNodes, setEdges ,deleteNode, updateNodeConnections,updateNode,runFlow, updateSpecification, getAllFlows} from "@/redux/slices/studioSlice";
 import NodeDetailsModal from "@/components/studio/NodeDetailsModal";
 import { toast } from "react-toastify";
 import axios from "axios";
@@ -32,7 +32,7 @@ const Studio = () => {
     const [outputModalOpen, setOutputModalOpen] = useState(false);
     const [inputConfigOpen, setInputConfigOpen] = useState(false);
     const [saveFlow, setSaveFlow] = useState(false);
-    const [formattedOututParam, setFormattedOututParam] = useState('Empty');
+    const [formattedOututParam, setFormattedOututParam] = useState(null);
     const [toggleViewMode, setToggleViewMode] = useState(false);
     
     const params = useParams();
@@ -50,6 +50,7 @@ const Studio = () => {
         dispatch(fetchTools());
         dispatch(fetchModels());
         dispatch(fetchAgents());
+        dispatch(getAllFlows())
     }, [flowId, dispatch]);
 
 
@@ -276,86 +277,32 @@ const Studio = () => {
             event.preventDefault();
             const type = event.dataTransfer.getData("application/reactflow");
 
-            // Handle flow drop
-            // if (type === "flow") {
-            //     try {
-            //         const flowSpec = JSON.parse(event.dataTransfer.getData("application/flow-spec"));
-            //         if (!flowSpec) {
-            //             console.error("No flow spec found in drop data");
-            //             return;
-            //         }
-
-            //         // Calculate base position for the flow
-            //         const basePosition = {
-            //             x: event.clientX - drawerWidth,
-            //             y: event.clientY - 100,
-            //         };
-
-            //         // Add position offsets to each node in the flow
-            //         const nodesWithPositions = flowSpec.nodes.map((node, index) => {
-            //             const row = Math.floor(index / 2);
-            //             const col = index % 2;
-            //             return {
-            //                 ...node,
-            //                 id: node.node_id,
-            //                 key: node.node_id,
-            //                 data: {
-            //                     label: node.name || "Unnamed Node",
-            //                     name: node.name || "Unnamed Node",
-            //                     type: node.type || "default",
-            //                     displayName: node.displayName || node.name,
-            //                     description: node.description || "",
-            //                     inputParameters: node.inputParameters || [],
-            //                     outputParameters: node.outputParameters || [],
-            //                     next: node.next || [],
-            //                 },
-            //                 position: {
-            //                     x: basePosition.x + (col * 250),
-            //                     y: basePosition.y + (row * 150),
-            //                 },
-            //             };
-            //         });
-
-            //         // Add edges from the flow
-            //         const edgeSet = new Set();
-            //         const newEdges = flowSpec.edges
-            //             .filter(edge => edge.from && edge.to)
-            //             .map((edge) => {
-            //                 const edgeId = `${edge.from}-${edge.to}`;
-            //                 if (edgeSet.has(edgeId)) return null;
-            //                 edgeSet.add(edgeId);
-            //                 return {
-            //                     id: edgeId,
-            //                     source: edge.from,
-            //                     target: edge.to,
-            //                     animated: true,
-            //                 };
-            //             })
-            //             .filter(Boolean);
-
-            //         // Update nodes and edges
-            //         setNodesState((nds) => [...nds, ...nodesWithPositions]);
-            //         setEdgesState((eds) => [...eds, ...newEdges]);
-                    
-            //         // Update Redux store
-            //         dispatch(setNodes({ type: "flow", graphSpec: flowSpec }));
-            //         dispatch(setEdges({ type: "flow", graphSpec: flowSpec }));
-
-            //     } catch (error) {
-            //         console.error("Error handling flow drop:", error);
-            //     }
-            //     return;
-            // }
-
-            // if(type === "flow") {
-                
-            // }
-
             try {
                 const spec = JSON.parse(event.dataTransfer.getData("application/node-spec"));
+                console.log(spec,'speckyy')
                 if (!spec) {
                     console.error("No node spec found in drop data");
                     return;
+                }
+
+                const type = event.dataTransfer.getData("application/reactflow");
+                
+                // Handle flow type nodes
+                if (type === "agentflow") {
+                    // Extract inputs from the flow node
+                    const flowInputs = spec?.inputs || [];
+                    console.log('flow 1',flowInputs);
+                    
+                    if (flowInputs.length > 0) {
+                        const updatedConfig = {
+                            ...flow, // Use flow as base instead of specification
+                            inputs: [...(flow?.inputs || []), ...flowInputs]
+                        };
+                        console.log(updatedConfig,'flow 2')
+                        
+
+                        dispatch(updateSpecification(updatedConfig));
+                    }
                 }
 
                 // Generate a unique ID for the new node
@@ -367,7 +314,7 @@ const Studio = () => {
                 };
 
                 const newNode = {
-                    id: spec.type === "flow" ? spec.id : newNodeId,
+                    id: spec.type === "agentflow" ? spec.id : newNodeId,
                     name: spec.name,
                     key: newNodeId,
                     type: spec.type,
@@ -380,7 +327,7 @@ const Studio = () => {
                         type: spec.type,
                         description: spec.description,
                         inputParameters: spec.inputParameters || [],
-                        outputParameters: spec.outputParameters || [],
+                        outputParameters: spec.type==='agentflow' ? [{key:"output",value:"",type:"text"}]: spec.outputParameters || [],
                         next: [],
                         // inputs: spec.inputs || [],
                     },
@@ -393,7 +340,7 @@ const Studio = () => {
                 console.error("Error handling node drop:", error);
             }
         },
-        [dispatch, setNodesState, setEdgesState, nodes, flow]
+        [dispatch, setNodesState, setEdgesState, nodes, flow, specification]
     );
 
     useEffect(() => {
@@ -650,8 +597,8 @@ const Studio = () => {
                             onUpdateParameters={handleUpdateNodeParameters}
                             sections={{
                                 displayBasicInformation: true,
-                                displayInputParameters: !!selectedNode?.data?.inputParameters,
-                                displayOutputParameters: !!selectedNode?.data?.outputParameters
+                                displayInputParameters: !!selectedNode?.data?.inputParameters.length>0,
+                                displayOutputParameters: !!selectedNode?.data?.outputParameters.length>0
                             }}
                             flow={flow}
                         />

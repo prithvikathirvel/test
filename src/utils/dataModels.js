@@ -64,6 +64,16 @@ const outputNodes = [
     type: "output",
     status: "active",
     description: "End Node",
+    inputParameters:[{
+      key:"final_input", 
+      value:"",
+      type:"string"
+    }],
+    outputParameters:[{
+      key:"output",
+      value:"final_output", 
+      type:"string"
+    }],
     tags: ["end"],
     createdAt: '',
     updatedAt: '',
@@ -200,7 +210,7 @@ const prebuiltFlows = [
     createdAt: "2025-04-01T09:41:10.598Z",
     id: "39e2d144-aae6-4a84-98f1-06555013404c1",
     agent_id: "39e2d144-aae6-4a84-98f1-06555013404c1",
-    inputs:[]
+    inputs:[{key:"check",value:"check1",type:"text"}]
   }
 ];
 
