@@ -26,7 +26,8 @@ const workSans = Inter({
 // Define paths that should not show navigation components
 const pathsWithoutNav = [
   '/login',
-  '/',
+  '/', 
+  '/test'
 ];
 
 const pathsWitoutHeader =[

@@ -31,7 +31,8 @@ import {
   Upload as UploadIcon,
   Code as CodeIcon,
   Pencil as EditIcon,
-  Eye as EyeIcon
+  Eye as EyeIcon,
+  List as ArrayIcon
 } from "lucide-react"
 
 import InputBox from "@/components/Common/InputBox" 
@@ -45,6 +46,7 @@ const InputFieldConfiguration = ({ onSave, open, onClose }) => {
   const [fields, setFields] = useState([])
   const [file, setFile] = useState(null)
   const [editIndex, setEditIndex] = useState(null)
+  const [newArrayItem, setNewArrayItem] = useState("");
   const [previewField, setPreviewField] = useState(null)
   const [currentField, setCurrentField] = useState({
     key: "",
@@ -52,8 +54,26 @@ const InputFieldConfiguration = ({ onSave, open, onClose }) => {
     type: "text",
   })
 
-  const inputTypes = ["text", "file", "object"]
+const handleAddArrayItem = () => {
+  if (!newArrayItem.trim()) return;
+  const arr = Array.isArray(currentField.value) ? currentField.value : [];
+  const updated = [...arr, newArrayItem.trim()];
+  handleInputChange("value", updated);
+  setNewArrayItem("");
+};
+const handleArrayItemChange = (idx, v) => {
+  if (!Array.isArray(currentField.value)) return;
+  const updated = [...currentField.value];
+  updated[idx] = v;
+  handleInputChange("value", updated);
+};
+const handleRemoveArrayItem = (idx) => {
+  if (!Array.isArray(currentField.value)) return;
+  const updated = currentField.value.filter((_, i) => i !== idx);
+  handleInputChange("value", updated);
+};
 
+  const inputTypes = ["text", "file", "object", "array"]
   const handleInputChange = (field, value) => {
     setCurrentField(prev => ({
       ...prev,
@@ -183,6 +203,8 @@ const InputFieldConfiguration = ({ onSave, open, onClose }) => {
         return <UploadIcon className="h-4 w-4" />
       case "object":
         return <CodeIcon className="h-4 w-4" />
+      case "array":
+        return <ArrayIcon className="h-4 w-4" />
       default:
         return <DescriptionIcon className="h-4 w-4" />
     }
@@ -196,6 +218,8 @@ const InputFieldConfiguration = ({ onSave, open, onClose }) => {
         return "primary"
       case "object":
         return "secondary"
+      case "array":
+        return "default"
       default:
         return "default"
     }
@@ -231,6 +255,49 @@ const InputFieldConfiguration = ({ onSave, open, onClose }) => {
             />
           </div>
         )
+      case "array":
+        return (
+          <div className="mt-3">
+            {Array.isArray(currentField.value) &&
+              currentField.value.map((item, idx) => (
+                <div key={idx} className="flex items-center mb-2">
+            <InputBox
+              label={`Item ${idx + 1}`}
+              value={item}
+              onChange={(v) => handleArrayItemChange(idx, v)}
+              placeholder="Enter item"
+              width="100%"
+            />
+            <IconButton
+              onClick={() => handleRemoveArrayItem(idx)}
+              size="small"
+              className="text-red-500 ml-2"
+            >
+              <DeleteIcon className="h-4 w-4" />
+            </IconButton>
+          </div>
+        ))
+      }
+      <div className="flex items-center">
+        <InputBox
+          label="New Item"
+          value={newArrayItem}
+          onChange={(v) => setNewArrayItem(v)}
+          placeholder="Enter new item"
+          width="100%"
+        />
+        <IconButton
+          onClick={handleAddArrayItem}
+          size="small"
+          className="text-green-500 ml-2"
+        >
+          <AddIcon className="h-4 w-4" />
+        </IconButton>
+      </div>
+    </div>
+  )
+
+        
       default:
         return (
           <div className="mt-3">
@@ -270,6 +337,14 @@ const InputFieldConfiguration = ({ onSave, open, onClose }) => {
         } catch (e) {
           return <div className="text-red-500 mt-3">Invalid JSON format</div>;
         }
+      case "array":
+        return (
+          <ul className="list-disc pl-6 mt-3">
+            {field.value.map((item, i) => (
+              <li key={i}>{item}</li>
+            ))}
+          </ul>
+        )
       default:
         return <p className="text-gray-700 mt-3 p-4 bg-gray-50 rounded-md border border-gray-200">{field.value}</p>;
     }
