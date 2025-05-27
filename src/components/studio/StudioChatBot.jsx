@@ -59,10 +59,30 @@ const StudioChatBot = ({ flow }) => {
   
     // Handle input change
     const handleInputChange = (key, value) => {
-      setInputValues((prevValues) => ({
-        ...prevValues,
-        [key]: value,
-      }));
+      // If the value is a File object, convert it to base64
+      if (value instanceof File) {
+        const reader = new FileReader();
+        reader.readAsDataURL(value);
+        reader.onload = () => {
+          // Get the base64 string
+          const base64String = reader.result;
+          // Prepend the filename with a ";" separator
+          const fileWithMetadata = `${value.name};${base64String}`;
+          setInputValues((prevValues) => ({
+            ...prevValues,
+            [key]: fileWithMetadata,
+          }));
+        };
+        reader.onerror = (error) => {
+          console.error('Error converting file to base64:', error);
+        };
+      } else {
+        // For non-file inputs, behave as before
+        setInputValues((prevValues) => ({
+          ...prevValues,
+          [key]: value,
+        }));
+      }
     };
   
     // Handle form submission
@@ -140,7 +160,7 @@ const StudioChatBot = ({ flow }) => {
       return (
         <div className="border border-gray-200 rounded-md overflow-hidden w-full" style={{ backgroundColor: "#f5f8fb" }}>
           <div className="px-3 py-2 border-b border-gray-200" style={{ backgroundColor: "#f5f8fb" }}>
-            <h3 className="text-sm font-medium text-gray-700">Flow Parameters</h3>
+            <h3 className="text-sm font-medium text-gray-700">Inputs</h3>
           </div>
   
           <div className="p-3 space-y-3">
@@ -150,6 +170,12 @@ const StudioChatBot = ({ flow }) => {
   
                 {input.type === "file" ? (
                   <div className="relative">
+                    {inputValues[input.key] && (
+                      <div className="mt-2 mb-3 text-xs text-gray-700">
+                        <span className="!font-semibold">Current File:</span> {inputValues[input.key].split(';')[0]}
+                      </div>
+                    )}
+                    <p className="mt-2 mb-2 text-xs text-gray-700 text-center">Or</p>
                     <input
                       type="file"
                       className="block w-full text-xs text-gray-500 file:mr-3 file:py-1.5 file:px-3 
@@ -157,6 +183,7 @@ const StudioChatBot = ({ flow }) => {
                       file:text-gray-700 hover:file:bg-gray-200 focus:outline-none"
                       onChange={(e) => handleInputChange(input.key, e.target.files[0])}
                     />
+                    
                   </div>
                 ) : input.type === "object" ? (
                   <textarea

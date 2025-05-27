@@ -36,9 +36,9 @@ const inputNodes = [
     updatedBy: "System"
   },
   {
-    key: "File",
+    key: "file",
     name: "File Node",
-    type: "input",
+    type: "inputs",
     status: "active",
     description: "Get File from user",
     tags: ["file", "input"],
@@ -48,11 +48,60 @@ const inputNodes = [
     updatedBy: "System",
     id: "input_2",
     inputParameters: [{
-      key: "File",
+      key: "file",
       value: "",
       type: "file"
-    }]
+    }], 
+    outputParameters:[{
+      key:"output",
+      value:"",
+      type:"string"
+    }],
   },
+  {
+    id: "67dbef1fba68eac0121fad7034",
+    name: "Ingestion Node",
+    type: "agent",
+    tags: [
+      "Ingestion Node",
+      "Ingestion Node"
+    ],
+    description: "Ingestion Node",
+    tools: [],
+    agents: [],
+    inputParameters: [
+      {
+        key: "file name",
+        value: "",
+        type: "text"
+      },
+      {
+        key: "file content",
+        value: "",
+        type: "string"
+      },
+      {
+        key: "ingest url",
+        value: "",
+        type: "string"
+      }
+    ],
+    outputParameters: [
+      {
+        key: "ingestionResponse",
+        value: "",
+        type: "string"
+      }
+    ],
+    status: true,
+    version: 1,
+    isPublic: true,
+    isActive: true,
+    createdBy: "Sunitha",
+    updatedBy: "Sunitha",
+    createdAt: "2025-03-20T10:34:07.825Z",
+    updatedAt: "2025-03-20T10:34:07.825Z"
+  }
 
 ]
 
