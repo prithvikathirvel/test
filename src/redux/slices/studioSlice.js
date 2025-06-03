@@ -97,13 +97,13 @@ export const saveFlow = createAsyncThunk('studio/saveFlow', async ({data, onSucc
 export const runFlow = createAsyncThunk('studio/runFlow', async ({data,onSuccess}) => {
     try {
       const response = await axios.post('http://127.0.0.1:8000/execute-graph', {
-        agent_id: data
+        ...data
       });
-      showToaster('success', 'Flow Executed successfully');
+      // showToaster('success', 'Flow Executed successfully');
       onSuccess();
       return response.data;
     } catch (error) {
-      showToaster('error', error);
+       showToaster('error', error);
       throw error;
     }
   }

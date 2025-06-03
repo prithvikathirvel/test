@@ -132,7 +132,7 @@ const StudioListing = () => {
             className={`px-5 py-2.5 !bg-[var(--primary-color)] hover:cursor-pointer text-white rounded-lg flex items-center font-medium`}
           >
             <Plus size={18} className="mr-2" />
-            Create New Flow
+            Create Agentic Flow
           </button>
         </Container>
 

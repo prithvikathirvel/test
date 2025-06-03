@@ -34,7 +34,7 @@ const Studio = () => {
     const [saveFlow, setSaveFlow] = useState(false);
     const [formattedOututParam, setFormattedOututParam] = useState(null);
     const [toggleViewMode, setToggleViewMode] = useState(false);
-    
+    const [renderFlow, setRenderFlow] = useState(false);
     const params = useParams();
     const flowId = params.id;
     const flow = useSelector(state => state.studio.flow);
@@ -45,222 +45,180 @@ const Studio = () => {
     const isFlowRunning = useSelector(state => state.studio.isFlowRunning);
     const nodeTypes = useNodeTypes();
 
+    // Effect for initial data fetch
     useEffect(() => {
-        dispatch(getFlowById({ id: flowId }));
-        dispatch(fetchTools());
-        dispatch(fetchModels());
-        dispatch(fetchAgents());
-        dispatch(getAllFlows())
+        const fetchInitialData = async () => {
+            try {
+                await dispatch(getFlowById({ id: flowId })).unwrap();
+                dispatch(fetchTools());
+                dispatch(fetchModels());
+                dispatch(fetchAgents());
+                dispatch(getAllFlows())
+            } catch (error) {
+                console.error("Error fetching initial flow data:", error);
+            }
+        };
+        fetchInitialData();
     }, [flowId, dispatch]);
 
-
-    // useEffect(() => {
-    //     if (!flow?.graphSpec?.nodes || !flow?.graphSpec?.edges) return;
-
-    //     if (Array.isArray(flow.graphSpec.nodes) && Array.isArray(flow.graphSpec.edges)) {
-    //         const nodeSpacing = { x: 300, y: 250 };
-    //         const maxColumns = 4;
-
-    //         const nodesWithPositions = flow.graphSpec.nodes.map((node, index) => {
-    //             const column = index % maxColumns;
-    //             const row = Math.floor(index / maxColumns);
-
-    //             return {
-    //                 ...node,
-    //                 id: node.node_id,
-    //                 key: node.node_id,
-    //                 data: {
-    //                     label: node.name || "Unnamed Node",
-    //                     name: node.name || "Unnamed Node",
-    //                     type: node.type || "default",
-    //                     description: node.description || "",
-    //                     inputParameters: node.inputParameters || [],
-    //                     outputParameters: node.outputParameters || [],
-    //                     next: node.next || [],
-    //                 },
-    //                 position: {
-    //                     x: node.position?.x ?? column * nodeSpacing.x,
-    //                     y: node.position?.y ?? row * nodeSpacing.y,
-    //                 },
-    //             };
-    //         });
-
-    //         setNodesState(nodesWithPositions);
-
-    //         const edgeSet = new Set();
-    //         const uniqueEdges = flow.graphSpec.edges
-    //             .filter(edge => edge.from && edge.to)
-    //             .map((edge) => {
-    //                 const edgeId = ${edge.from}-${edge.to};
-    //                 if (edgeSet.has(edgeId)) return null;
-    //                 edgeSet.add(edgeId);
-    //                 return {
-    //                     id: edgeId,
-    //                     source: edge.from,
-    //                     target: edge.to,
-    //                     animated: true,
-    //                 };
-    //             })
-    //             .filter(Boolean);
-
-    //         setEdgesState(uniqueEdges);
-    //         console.log("nodes", nodesWithPositions);
-    //         console.log("uniqueEdges", uniqueEdges);
-    //     } else {
-    //         console.error('Invalid graphSpec:', flow.graphSpec);
-    //     }
-    // }, [flow?.graphSpec, setNodesState, setEdgesState]);
-
-
+    // Effect for processing flow data and updating nodes/edges
     useEffect(() => {
         if (!flow?.graphSpec?.nodes || !flow?.graphSpec?.edges) return;
         
-        if (Array.isArray(flow.graphSpec.nodes) && Array.isArray(flow.graphSpec.edges)) {
-            const adjacencyList = {};
-            flow.graphSpec.edges.forEach(edge => {
-                if (!adjacencyList[edge.from]) adjacencyList[edge.from] = [];
-                adjacencyList[edge.from].push(edge.to);
-            });
-            
-            const nodeMap = {};
-            flow.graphSpec.nodes.forEach(node => {
-                nodeMap[node.node_id] = node;
-            });
-            
-            const incomingEdges = {};
-            flow.graphSpec.edges.forEach(edge => {
-                incomingEdges[edge.to] = (incomingEdges[edge.to] || 0) + 1;
-            });
-            
-            const rootNodes = flow.graphSpec.nodes
-                .filter(node => !incomingEdges[node.node_id])
-                .map(node => node.node_id);
-            
-            const horizontalSpacing = 400;
-            const verticalSpacing = 150;   
-            const nodeHeight = 75;        
-            
+        console.log("Processing flow data");
+        const adjacencyList = {};
+        flow.graphSpec.edges.forEach(edge => {
+            if (!adjacencyList[edge.from]) adjacencyList[edge.from] = [];
+            adjacencyList[edge.from].push(edge.to);
+        });
+        
+        const nodeMap = {};
+        flow.graphSpec.nodes.forEach(node => {
+            nodeMap[node.node_id] = node;
+        });
+        
+        const incomingEdges = {};
+        flow.graphSpec.edges.forEach(edge => {
+            incomingEdges[edge.to] = (incomingEdges[edge.to] || 0) + 1;
+        });
+        
+        const rootNodes = flow.graphSpec.nodes
+            .filter(node => !incomingEdges[node.node_id])
+            .map(node => node.node_id);
+        
+        const horizontalSpacing = 400;
+        const verticalSpacing = 150;   
+        const nodeHeight = 75;        
+        
 
-            const calculatePositions = () => {
-                const positions = {};
-                const processedNodes = new Set();
-                const levelSpaceUsed = {}; 
+        const calculatePositions = () => {
+            const positions = {};
+            const processedNodes = new Set();
+            const levelSpaceUsed = {}; 
+            
+            const processNode = (nodeId, level = 0, verticalPosition = 0) => {
+                if (processedNodes.has(nodeId)) return;
+                processedNodes.add(nodeId);
                 
-                const processNode = (nodeId, level = 0, verticalPosition = 0) => {
-                    if (processedNodes.has(nodeId)) return;
-                    processedNodes.add(nodeId);
-                    
-                 
-                    if (!levelSpaceUsed[level]) levelSpaceUsed[level] = 0;
-                    
+                if (!levelSpaceUsed[level]) levelSpaceUsed[level] = 0;
+
+                const children = adjacencyList[nodeId] || [];
                 
-                    const children = adjacencyList[nodeId] || [];
-                    
-                    positions[nodeId] = {
-                        x: level * horizontalSpacing,
-                        y: verticalPosition
-                    };
-                    
-                    if (children.length > 0) {
-                        const nextLevel = level + 1;
-                        if (!levelSpaceUsed[nextLevel]) levelSpaceUsed[nextLevel] = 0;
-                        
-                        const totalStackHeight = (children.length - 1) * verticalSpacing;
-                        const startY = verticalPosition - totalStackHeight / 2;
-                        
-                        children.forEach((childId, index) => {
-                            const childY = startY + index * verticalSpacing;
-                            processNode(childId, nextLevel, childY);
-                        });
-                    }
+                positions[nodeId] = {
+                    x: level * horizontalSpacing,
+                    y: verticalPosition
                 };
-                
-                rootNodes.forEach((rootId, index) => {
-                    const rootY = index * (verticalSpacing * 2); 
-                    processNode(rootId, 0, rootY);
-                    levelSpaceUsed[0] = rootY + verticalSpacing;
-                });
-                
 
-                flow.graphSpec.nodes.forEach(node => {
-                    if (!processedNodes.has(node.node_id)) {
-                        const disconnectedLevel = Object.keys(levelSpaceUsed).length;
-                        if (!levelSpaceUsed[disconnectedLevel]) levelSpaceUsed[disconnectedLevel] = 0;
-                        
-                        const verticalPos = levelSpaceUsed[disconnectedLevel];
-                        positions[node.node_id] = {
-                            x: disconnectedLevel * horizontalSpacing,
-                            y: verticalPos
-                        };
-                        
-                        levelSpaceUsed[disconnectedLevel] += verticalSpacing;
-                        processedNodes.add(node.node_id);
-                        
-                        const children = adjacencyList[node.node_id] || [];
-                        if (children.length > 0) {
-                            children.forEach((childId, index) => {
-                                const childY = verticalPos - (children.length - 1) * verticalSpacing / 2 + index * verticalSpacing;
-                                processNode(childId, disconnectedLevel + 1, childY);
-                            });
-                        }
-                    }
-                });
-                
-                return positions;
+                if (children.length > 0) {
+                    const nextLevel = level + 1;
+                    if (!levelSpaceUsed[nextLevel]) levelSpaceUsed[nextLevel] = 0;
+                    
+                    const totalStackHeight = (children.length - 1) * verticalSpacing;
+                    const startY = verticalPosition - totalStackHeight / 2;
+                    
+                    children.forEach((childId, index) => {
+                        const childY = startY + index * verticalSpacing;
+                        processNode(childId, nextLevel, childY);
+                    });
+                }
             };
             
-            const positions = calculatePositions();
-            
-            const nodesWithPositions = flow.graphSpec.nodes.map(node => {
-                const calculatedPosition = positions[node.node_id] || { x: 0, y: 0 };
-                
-                return {
-                    ...node,
-                    id: node.node_id,
-                    key: node.node_id,
-                    data: {
-                        label: node.name || "Unnamed Node",
-                        name: node.name || "Unnamed Node",
-                        type: node.type || "default",
-                        displayName: node.displayName || node.name,
-                        description: node.description || "",
-                        inputParameters: node.inputParameters || [],
-                        outputParameters: node.outputParameters || [],
-                        next: node.next || [],
-                    },
-                    position: {
-                        x: node.position?.x ?? calculatedPosition.x,
-                        y: node.position?.y ?? calculatedPosition.y,
-                    },
-                };
+            rootNodes.forEach((rootId, index) => {
+                const rootY = index * (verticalSpacing * 2); 
+                processNode(rootId, 0, rootY);
+                levelSpaceUsed[0] = rootY + verticalSpacing;
             });
             
-            setNodesState(nodesWithPositions);
-            
-            const edgeSet = new Set();
-            const uniqueEdges = flow.graphSpec.edges
-                .filter(edge => edge.from && edge.to)
-                .map((edge) => {
-                    const edgeId = `${edge.from}-${edge.to}`;
-                    if (edgeSet.has(edgeId)) return null;
-                    edgeSet.add(edgeId);
-                    return {
-                        id: edgeId,
-                        source: edge.from,
-                        target: edge.to,
-                        animated: true,
+
+            flow.graphSpec.nodes.forEach(node => {
+                if (!processedNodes.has(node.node_id)) {
+                    const disconnectedLevel = Object.keys(levelSpaceUsed).length;
+                    if (!levelSpaceUsed[disconnectedLevel]) levelSpaceUsed[disconnectedLevel] = 0;
+                    
+                    const verticalPos = levelSpaceUsed[disconnectedLevel];
+                    positions[node.node_id] = {
+                        x: disconnectedLevel * horizontalSpacing,
+                        y: verticalPos
                     };
-                })
-                .filter(Boolean);
+                    
+                    levelSpaceUsed[disconnectedLevel] += verticalSpacing;
+                    processedNodes.add(node.node_id);
+                    
+                    const children = adjacencyList[node.node_id] || [];
+                    if (children.length > 0) {
+                        children.forEach((childId, index) => {
+                            const childY = verticalPos - (children.length - 1) * verticalSpacing / 2 + index * verticalSpacing;
+                            processNode(childId, disconnectedLevel + 1, childY);
+                        });
+                    }
+                }
+            });
             
-            setEdgesState(uniqueEdges);
-            console.log("nodes", nodesWithPositions);
-            console.log("uniqueEdges", uniqueEdges);
-        } else {
-            console.error('Invalid graphSpec:', flow.graphSpec);
+            return positions;
+        };
+        
+        const positions = calculatePositions();
+        
+        const nodesWithPositions = flow.graphSpec.nodes.map(node => {
+            const calculatedPosition = positions[node.node_id] || { x: 0, y: 0 };
+            
+            return {
+                ...node,
+                id: node.node_id,
+                key: node.node_id,
+                data: {
+                    label: node.name || "Unnamed Node",
+                    name: node.name || "Unnamed Node",
+                    type: node.type || "default",
+                    displayName: node.displayName || node.name,
+                    description: node.description || "",
+                    inputParameters: node.inputParameters || [],
+                    outputParameters: node.outputParameters || [],
+                    next: node.next || [],
+                },
+                position: {
+                    x: node.position?.x ?? calculatedPosition.x,
+                    y: node.position?.y ?? calculatedPosition.y,
+                },
+            };
+        });
+        
+        setNodesState(nodesWithPositions);
+        
+        const edgeSet = new Set();
+        const uniqueEdges = flow.graphSpec.edges
+            .filter(edge => edge.from && edge.to)
+            .map((edge) => {
+                const edgeId = `${edge.from}-${edge.to}`;
+                if (edgeSet.has(edgeId)) return null;
+                edgeSet.add(edgeId);
+                return {
+                    id: edgeId,
+                    source: edge.from,
+                    target: edge.to,
+                    animated: true,
+                };
+            })
+            .filter(Boolean);
+        
+        setEdgesState(uniqueEdges);
+        console.log("nodes", nodesWithPositions);
+        console.log("uniqueEdges", uniqueEdges);
+        
+        // Reset renderFlow after processing
+        if (renderFlow) {
+            setRenderFlow(false);
         }
-    }, [flow?.graphSpec, setNodesState, setEdgesState]);
-    
+    }, [flow?.graphSpec, renderFlow]);
+
+    // Effect for handling renderFlow changes
+    useEffect(() => {
+        if (renderFlow) {
+            console.log("Refreshing flow data due to renderFlow change");
+            dispatch(getFlowById({ id: flowId }));
+        }
+    }, [renderFlow, flowId, dispatch]);
+
     const onConnect = useCallback(
         (params) => {
             setEdgesState((eds) => addEdge(params, eds));
@@ -343,10 +301,15 @@ const Studio = () => {
         [dispatch, setNodesState, setEdgesState, nodes, flow, specification]
     );
 
+    const handleRenderFlow = () => {
+        setRenderFlow(!renderFlow);
+    }
+
     useEffect(() => {
         console.log("calling dispatch setNodes");
         dispatch(setNodes({nodes: nodes,flow: flow}));
     }, [nodes]);
+
 
     useEffect(() => {
         console.log("calling dispatch setEdges");
@@ -371,7 +334,7 @@ const Studio = () => {
     };
 
     const handleRunFlow = useCallback(() => {
-      dispatch(runFlow({data:flow?.id, onSuccess: () => handleOpenOutputModal(flow)}))
+      dispatch(runFlow({data:{agent_id:flow?.id}, onSuccess: () => handleOpenOutputModal(flow)}))
     }, [flow, dispatch]);
     
     const handleDeployFlow = useCallback(() => {
@@ -455,7 +418,7 @@ const Studio = () => {
 
     return (
         <div className="h-full w-full overflow-hidden">
-                    <StudioChatBot className='!z-100' opened={true} flow= {flow} handleRunFlow={handleRunFlow} flowOutput={flowOutput} lastParam={formattedOututParam}/>
+                    <StudioChatBot className='!z-100' opened={true} flow= {flow} handleRenderFlow={handleRenderFlow}/>
             <Box className="h-full w-full">
                 <FlowOutputModal
                     open={outputModalOpen}
