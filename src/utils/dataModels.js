@@ -21,13 +21,13 @@ const inputNodes = [
     description: "Get Text from user",
     tags: ["text", "input"],
     inputParameters:[{
-      key: "input",
+      key: "text",
       value: "",
       type: "string"
     }],
     outputParameters:[{
       key:"output",
-      value:"output",
+      value:"",
       type:"string"
     }],
     createdAt: '',
@@ -101,6 +101,54 @@ const inputNodes = [
     updatedBy: "Sunitha",
     createdAt: "2025-03-20T10:34:07.825Z",
     updatedAt: "2025-03-20T10:34:07.825Z"
+  }, 
+  {
+    "id": "decision_0",
+    "key": "Decision",
+    "name": "Decision Node",
+    "type": "decision",
+    "status": "active",
+    "description": "Decision Node with two output paths",
+    "tags": ["decision", "control"],
+    "inputParameters": [
+      {
+        "key": "inputValue",
+        "value": "",  
+        "type": "text"
+      },
+      {
+        "key": "condition",
+        "value": "greater_than",      
+        "type": "dropdown", 
+        "dropdownOptions": [
+         "greater_than",
+         "less_than",
+         "equal_to", 
+         "not_equal_to", 
+         "greater_than_or_equal_to", 
+         "less_than_or_equal_to",
+         "contains",
+         "not_contains",
+         "is_empty",
+         "is_not_empty",
+         "starts_with",
+         "ends_with"
+        ]
+      },
+      {
+        "key": "comparisonValue",
+        "value": "100",       
+        "type": "text"
+      }
+    ],
+    "outputParameters": [
+      {
+        "key": "output",
+        "value": "", 
+        "type": "text"
+      }
+    ],
+    "next": ["node_if_true", "node_if_false"]  
   }
 
 ]

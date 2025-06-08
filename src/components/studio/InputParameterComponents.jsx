@@ -408,7 +408,7 @@ const FileParameter = ({ param = {}, onUpdate, parameters, parameter }) => {
       setFile(selectedFile);
       reader.onload = async () => {
         const base64Data = reader.result;
-        const fileContent = base64Data.split(',')[1];
+        const fileContent = base64Data;
         console.log('Base64 content:', fileContent);
         
         const newFileId = 'file_' + Math.random().toString(36).substring(2, 10);
@@ -566,13 +566,54 @@ const ArrayParameter = ({ param, color, onUpdate, parameters, parameter }) => {
   );
 };
 
-export const getParameterComponent = (param, color, onUpdate, parameters,parameter) => {
-  const props = { param, color, onUpdate, parameters,parameter };
+const DropdownParameter = ({
+  param = {},
+  color,
+  onUpdate,
+  parameters,
+  parameter,
+}) => {
+  const { key, value = '', dropdownOptions = [] } = param;
+
+  const handleChange = (selectedValue) => {
+    // Create updated parameters array with the new value
+    const updatedParams = parameters.map(p => 
+      p.key === param.key ? { ...p, value: selectedValue } : p
+    );
+    // Call onUpdate with the same signature as other parameter components
+    onUpdate(updatedParams, parameter, true);
+  };
+
+  return (
+    <Box className="w-full">
+      <select
+        value={value}
+        onChange={(e) => handleChange(e.target.value)}
+        className="w-full p-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        style={{
+          borderColor: color,
+          backgroundColor: 'white',
+          minHeight: '40px',
+        }}
+      >
+        {dropdownOptions.map((option, index) => (
+          <option key={index} value={option}>
+            {option.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+          </option>
+        ))}
+      </select>
+    </Box>
+  );
+};
+
+export const getParameterComponent = (param, color, onUpdate, parameters, parameter) => {
+  const props = { param, color, onUpdate, parameters, parameter };
 
   if (!param) {
     console.warn('Undefined parameter passed to getParameterComponent');
     return null;
   }
+
   console.log("parameter inside getParameterComponent", parameter);
 
   switch (param.type?.toLowerCase()) {
@@ -588,6 +629,8 @@ export const getParameterComponent = (param, color, onUpdate, parameters,paramet
       return <FileParameter {...props} />;
     case 'array':
       return <ArrayParameter {...props} />;
+    case 'dropdown':
+      return <DropdownParameter {...props} />;
     default:
       return <StringParameter {...props} />;
   }

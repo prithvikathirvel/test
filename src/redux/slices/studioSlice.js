@@ -181,22 +181,32 @@ const studioSlice = createSlice({
       state.specification = generateSpecification(flow, state.nodes, state.edges);
     },
     updateNodeConnections: (state, action) => {
-      const { source, target } = action.payload;
+      const { source, target, sourceHandle } = action.payload;
 
       state.nodes = state.nodes.map(node => {
         if (node.id === source) {
-          const nextArray = node.next || [];
-
-          if (!nextArray.includes(target)) {
+          // For decision nodes, we store the connections in a special way
+          if (node.type === 'decision' || node.data?.type === 'decision') {
+            const conditionType = sourceHandle === 'true' ? 'conditionMetPath' : 'conditionNotMetPath';
             return {
               ...node,
-              next: [...nextArray, target]
+              [conditionType]: target,
+              // Keep the original next array for backward compatibility
+              next: [...(node.next || []), target].filter(Boolean)
             };
+          } else {
+            // For regular nodes, just add to the next array
+            const nextArray = node.next || [];
+            if (!nextArray.includes(target)) {
+              return {
+                ...node,
+                next: [...nextArray, target]
+              };
+            }
           }
         }
         return node;
       });
-      //state.specification = generateSpecification(state.nodes, state.edges);
     },
     updateNode: (state, action) => {
       const { flow, nodeId, updatedNode,parameter } = action.payload;
@@ -346,25 +356,74 @@ const generateSpecification = (flow, nodes, edges) => {
   if (!Array.isArray(nodes) || !Array.isArray(edges)) {
     return {};
   }
+
+  // Create a map of node connections from edges
+  const nodeConnections = {};
+  edges.forEach(edge => {
+    if (!nodeConnections[edge.source]) {
+      nodeConnections[edge.source] = [];
+    }
+    nodeConnections[edge.source].push({
+      target: edge.target,
+      sourceHandle: edge.sourceHandle
+    });
+  });
+
   const specification = {
-  ...flow,
-  inputs: flow?.inputs || [],
-  graphSpec: {
-    nodes: nodes.map(node => ({
-      node_id: node.id,  
-      name: node.data?.name || node.name,
-      displayName: node.data?.displayName || node.name,
-      type: node.data?.type || node.type,
-      description: node.data?.description || node.description,
-      next: node.data?.next || node.next || [],
-      inputParameters: node.data?.inputParameters || node.inputParameters || [],
-      outputParameters: node.data?.outputParameters || node.outputParameters || []
-    })),
-    edges: edges.map(edge => ({
-      from: edge.source,  
-      to: edge.target,    
-    })),
-  }
+    ...flow,
+    inputs: flow?.inputs || [],
+    graphSpec: {
+      nodes: nodes.map(node => {
+        const connections = nodeConnections[node.id] || [];
+        const isDecisionNode = node.type === 'decision' || node.data?.type === 'decision';
+        
+        // For decision nodes, find condition met/not met paths
+        let conditionMetPath = null;
+        let conditionNotMetPath = null;
+        
+        if (isDecisionNode) {
+          connections.forEach(conn => {
+            if (conn.sourceHandle === 'true') {
+              conditionMetPath = conn.target;
+            } else if (conn.sourceHandle === 'false') {
+              conditionNotMetPath = conn.target;
+            }
+          });
+        }
+
+        return {
+          node_id: node.id,
+          name: node.data?.name || node.name,
+          displayName: node.data?.displayName || node.name,
+          type: node.data?.type || node.type,
+          description: node.data?.description || node.description,
+          next: isDecisionNode ? [] : (node.data?.next || node.next || []),
+          ...(isDecisionNode && { 
+            conditionMetPath,
+            conditionNotMetPath,
+            // Keep next array for backward compatibility
+            next: [...(node.next || []), conditionMetPath, conditionNotMetPath].filter(Boolean)
+          }),
+          inputParameters: node.data?.inputParameters || node.inputParameters || [],
+          outputParameters: node.data?.outputParameters || node.outputParameters || []
+        };
+      }),
+      edges: edges.map(edge => {
+        // For decision nodes, map true/false to condition met/not met
+        let condition = edge.sourceHandle;
+        if (condition === 'true') {
+          condition = 'conditionMet';
+        } else if (condition === 'false') {
+          condition = 'conditionNotMet';
+        }
+        
+        return {
+          from: edge.source,
+          to: edge.target,
+          ...(condition && { condition })
+        };
+      })
+    }
   };
 
   return specification;

@@ -114,7 +114,7 @@ function CustomNode({ data, type }) {
           <Circle size={12} />
         </IconButton>
       </Box>
-      {nodeType !== "output" && (
+      {nodeType !== "output" && nodeType !== "decision" && (
         <Handle
           type="source"
           position={Position.Right}
@@ -125,6 +125,63 @@ function CustomNode({ data, type }) {
             right: -4,
           }}
         />
+      )}
+      {nodeType === "decision" && (
+        <>
+          <Handle
+            id="true"
+            type="source"
+            position={Position.Right}
+            style={{
+              background: "#4CAF50",
+              width: 10,
+              height: 10,
+              right: -5,
+              top: '30%',
+              border: '2px solid #fff',
+              zIndex: 2
+            }}
+            data-handleid="true"
+          />
+          <div style={{
+            position: 'absolute',
+            right: -25,
+            top: '30%',
+            transform: 'translateY(-120%)',
+            fontSize: 10,
+            color: '#4CAF50',
+            fontWeight: 'bold',
+            zIndex: 2
+          }}>
+           True
+          </div>
+          <Handle
+            id="false"
+            type="source"
+            position={Position.Right}
+            style={{
+              background: "#F44336",
+              width: 10,
+              height: 10,
+              right: -5,
+              bottom: '30%',
+              border: '2px solid #fff',
+              zIndex: 2
+            }}
+            data-handleid="false"
+          />
+          <div style={{
+            position: 'absolute',
+            right: -30,
+            bottom: '30%',
+            transform: 'translateY(50%)',
+            fontSize: 10,
+            color: '#F44336',
+            fontWeight: 'bold'
+          }}>
+           False
+          </div>
+        </>
       )}
     </Box>
   );

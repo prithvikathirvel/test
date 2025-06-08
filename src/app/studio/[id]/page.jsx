@@ -162,7 +162,8 @@ const Studio = () => {
         const nodesWithPositions = flow.graphSpec.nodes.map(node => {
             const calculatedPosition = positions[node.node_id] || { x: 0, y: 0 };
             
-            return {
+            // Create base node object
+            const nodeData = {
                 ...node,
                 id: node.node_id,
                 key: node.node_id,
@@ -181,6 +182,17 @@ const Studio = () => {
                     y: node.position?.y ?? calculatedPosition.y,
                 },
             };
+
+            // Preserve condition paths for decision nodes
+            if (node.type === 'decision' || node.data?.type === 'decision') {
+                nodeData.conditionMetPath = node.conditionMetPath || null;
+                nodeData.conditionNotMetPath = node.conditionNotMetPath || null;
+                // Also include these in the data object for consistency
+                nodeData.data.conditionMetPath = node.conditionMetPath || null;
+                nodeData.data.conditionNotMetPath = node.conditionNotMetPath || null;
+            }
+
+            return nodeData;
         });
         
         setNodesState(nodesWithPositions);
@@ -189,21 +201,33 @@ const Studio = () => {
         const uniqueEdges = flow.graphSpec.edges
             .filter(edge => edge.from && edge.to)
             .map((edge) => {
-                const edgeId = `${edge.from}-${edge.to}`;
+                // Map condition values back to handle values
+                let handleType = edge.condition;
+                if (edge.condition === 'conditionMet') {
+                    handleType = 'true';
+                } else if (edge.condition === 'conditionNotMet') {
+                    handleType = 'false';
+                }
+
+                const edgeId = `${edge.from}-${edge.to}-${handleType || ''}`;
                 if (edgeSet.has(edgeId)) return null;
                 edgeSet.add(edgeId);
+                
                 return {
                     id: edgeId,
                     source: edge.from,
                     target: edge.to,
+                    sourceHandle: handleType,
                     animated: true,
+                    style: { 
+                        stroke: handleType === 'true' ? '#4CAF50' : 
+                               handleType === 'false' ? '#F44336' : '#555' 
+                    },
                 };
             })
             .filter(Boolean);
         
         setEdgesState(uniqueEdges);
-        console.log("nodes", nodesWithPositions);
-        console.log("uniqueEdges", uniqueEdges);
         
         // Reset renderFlow after processing
         if (renderFlow) {
@@ -221,10 +245,20 @@ const Studio = () => {
 
     const onConnect = useCallback(
         (params) => {
-            setEdgesState((eds) => addEdge(params, eds));
+            // Add the edge with sourceHandle if it exists
+            const edge = {
+                ...params,
+                type: 'bezier',
+                style: { stroke: params.sourceHandle === 'true' ? '#4CAF50' : params.sourceHandle === 'false' ? '#F44336' : '#555' },
+            };
+            
+            setEdgesState((eds) => addEdge(edge, eds));
+            
+            // Update node connections in the store
             dispatch(updateNodeConnections({
                 source: params.source,
-                target: params.target
+                target: params.target,
+                sourceHandle: params.sourceHandle
             }));
         },
         [dispatch, setEdgesState]
@@ -264,7 +298,7 @@ const Studio = () => {
                 }
 
                 // Generate a unique ID for the new node
-                const newNodeId = `node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                const newNodeId = `${spec?.name}_node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
                 const position = {
                     x: event.clientX - drawerWidth,
