@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import {
   Typography,
   Box,
@@ -27,6 +27,8 @@ import {
   Info as InfoIcon,
   Trash2 as DeleteIcon,
   Edit as EditIcon,
+  Play as PlayIcon,
+  Save as SaveIcon,
 } from 'lucide-react';
 import { convertToTitleCase } from '@/utils/commonFunction';
 import { getNodeColor } from '@/utils/commonFunction';
@@ -34,7 +36,10 @@ import { getParameterComponent } from './InputParameterComponents';
 import DashedBox from '@/components/Common/DashedBox';
 import CustomAccordion from '@/components/Common/CustomAccordion';
 import OutputParameterComponents from './OutputParameterComponents';
+import JsonOutputDrawer from './JsonOutputDrawer';
 import { updateNode } from '@/redux/slices/studioSlice';
+import { runFlow } from '@/redux/slices/studioSlice';
+import { useSelector } from 'react-redux';
 
 const InfoItem = ({ label, value, icon }) => (
   <Box key={label} className="flex justify-between">
@@ -84,7 +89,7 @@ const TagsSection = ({ tags, color }) => (
   </Box>
 );
 
-const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName }) => {
+const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName,handleSaveChanges,isDirty,disabled,loading,handleTestClick }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(title || 'Undefined Node');
 
@@ -108,7 +113,7 @@ const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName }) =>
 
   return (
     <Box className="flex justify-between items-center p-4">
-      <Box className="flex gap-4 justify-between min-w-70 items-center">
+      <Box className="flex gap-4 justify-between min-w-65  items-center">
         {isEditing ? (
           <TextField
             value={editedName}
@@ -121,21 +126,44 @@ const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName }) =>
         ) : (
           <Typography className="font-bold">{editedName || 'Undefined Node'}</Typography>
         )}
-        <Chip
+        {/* <Chip
           label={convertToTitleCase(type)}
           size="medium"
           className="font-bold text-[0.7rem]"
           sx={{ color: '#f5f5f7', ml: 2, backgroundColor: color }}
-        />
+        /> */}
       </Box>
-      <Box className="flex items-center gap-1">
-        <Tooltip title={isEditing ? "Save" : "Edit Node"}>
+      <Box className="flex items-center !gap-1 !m-2">
+
+      <Tooltip title={isEditing ? "Test" : "Test"}>
+          <IconButton
+            onClick={handleTestClick}
+            color={isEditing ? "primary" : "default"}
+            aria-label={isEditing ? "Test" : "Test"}
+            disabled={loading}
+          >
+            <PlayIcon size={18} color={'green'}/>
+          </IconButton>
+        </Tooltip>
+        
+        <Tooltip title={isEditing ? "Save Changes" : "Save Changes"}>
+          <IconButton
+            onClick={handleSaveChanges}
+            color={isEditing ? "primary" : "default"}
+            aria-label={isEditing ? "Save Changes" : "Save Changes"}
+            disabled={!isDirty || disabled || loading}
+          >
+            <SaveIcon size={18} color={'blue'}/>
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip title={isEditing ? "Save Name" : "Edit Name"}>
           <IconButton
             onClick={handleEditClick}
             color={isEditing ? "primary" : "default"}
-            aria-label={isEditing ? "Save" : "Edit Node"}
+            aria-label={isEditing ? "Save Name" : "Edit Name"}
           >
-            <EditIcon size={18} />
+            <EditIcon size={18} color={'grey'}/>
           </IconButton>
         </Tooltip>
         <Tooltip title="Delete Node">
@@ -144,14 +172,14 @@ const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName }) =>
             color="error"
             aria-label="Delete Node"
           >
-            <DeleteIcon size={18} />
+            <DeleteIcon size={18} color={'red'}/>
           </IconButton>
         </Tooltip>
         <Tooltip title="Close">
           <IconButton
             onClick={onClose}
             aria-label="Close"
-            sx={{ color: 'black' }}
+            sx={{ color: 'black',marginRight: '10px' }}
           >
             <CloseIcon size={18} />
           </IconButton>
@@ -166,27 +194,9 @@ const InputParameterRenderer = ({ parameters, title, icon, color, loading, disab
     title={title}
     icon={icon}
     emptyStateMessage={`No ${title.toLowerCase()} parameters available`}
-    // badgeCount={parameters?.length}
-    // badgeColor="primary"
-    // tooltip={disabled ? undefined : `${title} - ${parameters?.length || 0} parameters`}
     loading={loading}
     loadingText={`Loading...`}
     disabled={disabled}
-    // headerActions={
-    //   parameters?.length > 0 && (
-    //     <Tooltip title={`Add new ${title.toLowerCase()}`} arrow>
-    //       <IconButton
-    //         size="small"
-    //         className="!w-6 !h-6 !bg-gray-50 hover:!bg-gray-100"
-    //         onClick={() => {}}
-    //         aria-label={`Add new ${title.toLowerCase()}`}
-    //         disabled={disabled}
-    //       >
-    //         <Plus size={14} />
-    //       </IconButton>
-    //     </Tooltip>
-    //   )
-    // }
   >
     {parameters?.length > 0 && (
       <Stack spacing={2}>
@@ -205,8 +215,6 @@ const OutputParameterRenderer = ({ parameters, title, icon, color, loading, disa
     title={title}
     icon={icon}
     emptyStateMessage={`No ${title.toLowerCase()} parameters available`}
-    // badgeCount={parameters?.length}
-    // badgeColor="primary"
     tooltip={disabled ? undefined : `${title} - ${parameters?.length || 0} parameters`}
     loading={loading}
     loadingText={`Loading...`}
@@ -233,19 +241,6 @@ const BasicInformationSection = ({ description, items, tags, loading, disabled, 
     loading={loading}
     loadingText="Loading basic information..."
     disabled={disabled}
-    // headerActions={
-    //   <Tooltip title="Edit basic information" arrow>
-    //     <IconButton
-    //       size="small"
-    //       className="!w-6 !h-6 !bg-gray-50 hover:!bg-gray-100"
-    //       onClick={() => {}}
-    //       aria-label="Edit basic information"
-    //       disabled={disabled}
-    //     >
-    //       <Edit size={14} />
-    //     </IconButton>
-    //   </Tooltip>
-    // }
   >
     <DescriptionSection description={description} />
     <TagsSection tags={tags} color={color} />
@@ -265,6 +260,7 @@ const BasicInformationSection = ({ description, items, tags, loading, disabled, 
 );
 
 const NodeDetailsModal = ({
+  flowId,
   open,
   onClose,
   node,
@@ -278,11 +274,18 @@ const NodeDetailsModal = ({
     displayOutputParameters: true,
   },
   flow,
+  onOpenExecutionOutput
 }) => {
   const dispatch = useDispatch();
   const [localInputParams, setLocalInputParams] = useState([]);
   const [localOutputParams, setLocalOutputParams] = useState([]);
   const [isDirty, setIsDirty] = useState(false);
+  const [outputDrawerOpen, setOutputDrawerOpen] = useState(false);
+  const [executionOutput, setExecutionOutput] = useState(null);
+  const [output, setOutput] = useState(null);
+  const [executionStatus, setExecutionStatus] = useState('success');
+  const flowOutput = useSelector(state => state.studio.flowOutput);
+  const isFlowRunning = useSelector(state => state.studio.isFlowRunning);
 
   useEffect(() => {
     if (node?.data) {
@@ -301,9 +304,56 @@ const NodeDetailsModal = ({
     setIsDirty(true);
   };
 
+  const handleTestClick = async () => {
+    if (!node?.id) return;
+    setOutputDrawerOpen(true);
+    setExecutionStatus('pending');
+    setExecutionOutput({ status: 'executing', message: 'Test execution started...' });
+
+    try {
+      const resultAction = await dispatch(
+        runFlow({
+          data: { test: node.id, agent_id: flowId },
+          onSuccess: () => {
+            console.log('Flow executed successfully');
+          },
+        })
+      )
+        .unwrap()
+        .then((response) => {
+          console.log("Response from sssss:", response);
+          setOutput(response);
+        })
+        .catch((error) => {
+          throw error;
+        })
+        .finally(() => {
+        });
+
+      
+    } catch (error) {
+      
+    } finally {
+      
+    }
+  
+    // const resultAction = await dispatch(runFlow({ data: { test: node.id, agent_id: flowId } }));
+
+    // if (runFlow.fulfilled.match(resultAction)) {
+    //   setExecutionStatus('success');
+      
+    //   console.log("Payload to set:", resultAction.payload);
+    //   console.log("Payload type:", typeof resultAction.payload);
+    //   console.log("Is payload null/undefined?", resultAction.payload == null);
+      
+    //   setOutput(resultAction.payload); 
+    // } 
+    
+};
+
+
   const handleSaveChanges = () => {
     if (node && isDirty) {
-      // Update both input and output parameters at once
       dispatch(updateNode({
         flow: flow,
         nodeId: node.id,
@@ -324,14 +374,6 @@ const NodeDetailsModal = ({
 
   const handleUpdateName = (newName) => {
     if (node && node.id) {
-      const updatedNode = {
-        ...node,
-        data: {
-          ...node.data,
-          name: newName,
-        },
-      };
-
       dispatch(updateNode({
         flow: flow,
         nodeId: node.id,
@@ -375,78 +417,117 @@ const NodeDetailsModal = ({
   ];
 
   return (
-    <Drawer
-      anchor="right"
-      open={open}
-      onClose={onClose}
-      PaperProps={{
-        sx: {
-          width: 480,
-          maxWidth: '100%',
-        },
-      }}
-    >
-      <ModalHeader
-        title={node?.data?.name || node?.name}
-        type={node?.data?.type || node?.type}
-        color={getNodeColor(node?.data?.type || node?.type)}
+    <>
+      <Drawer
+        anchor="right"
+        open={open}
         onClose={onClose}
-        onDelete={handleDelete}
-        onUpdateName={handleUpdateName}
-      />
+        PaperProps={{
+          sx: {
+            width: 480,
+            maxWidth: '100%',
+          },
+        }}
+      >
+        <ModalHeader
+          title={node?.data?.name || node?.name}
+          type={node?.data?.type || node?.type}
+          color={getNodeColor(node?.data?.type || node?.type)}
+          onClose={onClose}
+          onDelete={handleDelete}
+          onUpdateName={handleUpdateName}
+          handleSaveChanges={handleSaveChanges}
+          isDirty={isDirty}
+          disabled={disabled}
+          loading={loading}
+          handleTestClick={handleTestClick}
+        />
 
-      <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
-        {displayInputParameters && (
-          <InputParameterRenderer
-            parameters={localInputParams}
-            title="Input Parameters"
-            icon={<InputIcon size={20} />}
-            color={nodeColor}
-            loading={loading}
-            disabled={disabled}
-            onUpdate={(params, type) => handleParameterChange(params, 'inputParameters')}
-            parameter={'inputParameters'}
-          />
-        )}
+        <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
+          {displayInputParameters && (
+            <InputParameterRenderer
+              parameters={localInputParams}
+              title="Input Parameters"
+              icon={<InputIcon size={20} />}
+              color={nodeColor}
+              loading={loading}
+              disabled={disabled}
+              onUpdate={(params, type) => handleParameterChange(params, 'inputParameters')}
+              parameter={'inputParameters'}
+            />
+          )}
 
-        {displayOutputParameters && (
-          <InputParameterRenderer
-            parameters={localOutputParams}
-            title="Output Parameters"
-            icon={<OutputIcon size={20} />}
-            color={nodeColor}
-            loading={loading}
-            disabled={disabled}
-            onUpdate={(params, type) => handleParameterChange(params, 'outputParameters')}
-            parameter={'outputParameters'}
-          />
-        )}
+          {displayOutputParameters && (
+            <InputParameterRenderer
+              parameters={localOutputParams}
+              title="Output Parameters"
+              icon={<OutputIcon size={20} />}
+              color={nodeColor}
+              loading={loading}
+              disabled={disabled}
+              onUpdate={(params, type) => handleParameterChange(params, 'outputParameters')}
+              parameter={'outputParameters'}
+            />
+          )}
 
-        <Divider sx={{ my: 2 }} />
+          <Divider sx={{ my: 2 }} />
 
-        {displayBasicInformation && (
-          <BasicInformationSection
-            description={description}
-            items={basicInfo}
-            tags={tags}
-            loading={loading}
-            disabled={disabled}
-            color={nodeColor}
-          />
-        )}
+          {displayBasicInformation && (
+            <BasicInformationSection
+              description={description}
+              items={basicInfo}
+              tags={tags}
+              loading={loading}
+              disabled={disabled}
+              color={nodeColor}
+            />
+          )}
 
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSaveChanges}
-            disabled={!isDirty || disabled || loading}
-          >
-            Save Changes
-          </Button>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={handleTestClick}
+              disabled={disabled || loading}
+              startIcon={<PlayIcon size={16} />}
+              sx={{
+                borderColor: nodeColor,
+                color: nodeColor,
+                '&:hover': {
+                  borderColor: nodeColor,
+                  backgroundColor: `${nodeColor}10`
+                }
+              }}
+            >
+              Test & View Output
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSaveChanges}
+              disabled={!isDirty || disabled || loading}
+              sx={{
+                backgroundColor: nodeColor,
+                '&:hover': {
+                  backgroundColor: nodeColor,
+                  opacity: 0.9
+                }
+              }}
+            >
+              Save Changes
+            </Button>
+          </Box>
         </Box>
-      </Box>
-    </Drawer>
+      </Drawer>
+
+      <JsonOutputDrawer
+        open={outputDrawerOpen}
+        onClose={() => setOutputDrawerOpen(false)}
+        outputData={output}
+        title={`${node?.data?.name || 'Node'} Execution Output`}
+        status={isFlowRunning ? 'pending' : 'success'}
+      />
+    </>
   );
 };
 

@@ -7,7 +7,7 @@ import "reactflow/dist/style.css";
 import { useNodeTypes } from "@/components/FlowNodes";
 import ComponentsSidebar from "@/components/studio/ComponentsSidebar";
 import JsonSpecView from "@/components/studio/JsonSpecView";
-import { Save, Rocket, Code, List, Eye, Play } from "lucide-react";
+import { Save, Rocket, Code, Workflow, Eye, Play,ChevronRight,List } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleViewMode } from "@/redux/slices/flowSlice";
 import SideDrawer from "@/components/Common/SideDrawer";
@@ -24,6 +24,22 @@ import InputFieldConfiguration from "@/components/InputFieldConfiguration";
 const drawerWidth = 280;
 
 const Studio = () => {
+    // Sidebar open/close state and previous grid size
+    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [mainGridSize, setMainGridSize] = useState(9.5);
+    const [prevGridSize, setPrevGridSize] = useState(9.5);
+
+    // Handler to minimize/collapse sidebar
+    const handleMinimizeSideBar = useCallback(() => {
+        if (sidebarOpen) {
+            setPrevGridSize(mainGridSize);
+            setSidebarOpen(false);
+            setMainGridSize(12);
+        } else {
+            setSidebarOpen(true);
+            setMainGridSize(prevGridSize);
+        }
+    }, [sidebarOpen, mainGridSize, prevGridSize]);
     const dispatch = useDispatch();
     const [nodes, setNodesState, onNodesChange] = useNodesState([]);
     const [edges, setEdgesState, onEdgesChange] = useEdgesState([]);
@@ -35,6 +51,7 @@ const Studio = () => {
     const [formattedOututParam, setFormattedOututParam] = useState(null);
     const [toggleViewMode, setToggleViewMode] = useState(false);
     const [renderFlow, setRenderFlow] = useState(false);
+    const [output,setOutput] = useState(null);
     const params = useParams();
     const flowId = params.id;
     const flow = useSelector(state => state.studio.flow);
@@ -339,6 +356,10 @@ const Studio = () => {
         setRenderFlow(!renderFlow);
     }
 
+    const handleOpenExecutionOutput = () => {
+        setOutputModalOpen(true);
+    }
+
     useEffect(() => {
         console.log("calling dispatch setNodes");
         dispatch(setNodes({nodes: nodes,flow: flow}));
@@ -451,48 +472,38 @@ const Studio = () => {
 
 
     return (
-        <div className="h-full w-full overflow-hidden">
-                    <StudioChatBot className='!z-100' opened={true} flow= {flow} handleRenderFlow={handleRenderFlow}/>
-            <Box className="h-full w-full">
-                <FlowOutputModal
-                    open={outputModalOpen}
-                    onClose={() => setOutputModalOpen(false)}
-                    output={flowOutput}
-                    lastParam={formattedOututParam}
-                />
-                
-                <InputFieldConfiguration 
-                    open={inputConfigOpen}
-                    onClose={() => setInputConfigOpen(false)}
-                    onSave={handleInputConfigSave}
-                />
-                <Grid container spacing={0} className="h-full">
-                    <Grid size={2.5} className="h-full overflow-auto">
-                        <ComponentsSidebar />
-                    </Grid>
-                    <Grid size={9.5} className="h-full relative overflow-hidden">
-                        <Box className="p-2 absolute top-0 right-0 flex !justify-end z-10">
-                            <Box className="!flex gap-2">
-                                <ButtonGroup variant="outlined" size="small" sx={{ mr: 2 }}>
-                                    <Tooltip title="Toggle View Mode">
-                                        <Button onClick={handleToggleViewMode}>
-                                            {toggleViewMode ? <Code size={18} /> : <List size={18} />}
-                                        </Button>
-                                    </Tooltip>
-                                </ButtonGroup>
+        <>
+            <div className="h-full w-full overflow-hidden">
+                <StudioChatBot className='!z-100' opened={true} flow={flow} handleRenderFlow={handleRenderFlow} />
+                <Box className="h-full w-full">
+                    <FlowOutputModal
+                        open={outputModalOpen}
+                        onClose={() => setOutputModalOpen(false)}
+                        output={flowOutput}
+                        lastParam={formattedOututParam}
+                    />
 
-                                {flowOutput && (
-                                    <IconButton
-                                        onClick={() => setOutputModalOpen(true)}
-                                        color="primary"
-                                        title="View Flow Output"
-                                    >
-                                        <Eye size={24} />
-                                    </IconButton>
-                                )}
-
-                
-
+                    <InputFieldConfiguration
+                        open={inputConfigOpen}
+                        onClose={() => setInputConfigOpen(false)}
+                        onSave={handleInputConfigSave}
+                    />
+                    <Grid container spacing={0} className="h-full">
+                        {sidebarOpen && (
+                            <Grid size={2.5} className="h-full overflow-auto transition-all duration-900 ease-in-out" >
+                                <ComponentsSidebar minimizeSideBar={!sidebarOpen} handleMinimizeSideBar={handleMinimizeSideBar} />
+                            </Grid>
+                        )}
+                        <Grid size={sidebarOpen ? 9.5 : 12}>
+                            <Box className="p-2 absolute top-0 right-0 flex !justify-end z-10">
+                                <Box className="!flex gap-2">
+                                    <ButtonGroup variant="outlined" size="small" sx={{ mr: 2 }}>
+                                        <Tooltip title="Toggle View Mode">
+                                            <Button onClick={handleToggleViewMode}>
+                                                {toggleViewMode ? <Code size={18} /> : <Workflow size={18} />}
+                                            </Button>
+                                        </Tooltip>
+                                    </ButtonGroup>
                                     <Button
                                         variant="contained"
                                         onClick={() => setInputConfigOpen(true)}
@@ -508,26 +519,22 @@ const Studio = () => {
                                     >
                                         Configure Inputs
                                     </Button>
-
-                                <Button
-                                    variant="contained"
-                                    startIcon={studioUpdateFlowLoader ? <CircularProgress size={16} /> : <Save size={16} />}
-                                    onClick={() => handleSaveFlow()}
-                                    // disabled={isFlowRunning}
-                                    sx={{
-                                        backgroundColor: 'var(--primary-color)',
-                                        '&:hover': {
-                                            backgroundColor: '#5f50e3'
-                                        },
-                                        textTransform: 'none',
-                                        fontSize: '14px',
-                                        py: 0.75
-                                    }}
-                                >
-                                    {saveFlow ? 'Saving Flow...' : 'Save'}
-                                </Button>
-
-                                {/* {saveFlow && ( */}
+                                    <Button
+                                        variant="contained"
+                                        startIcon={studioUpdateFlowLoader ? <CircularProgress size={16} /> : <Save size={16} />}
+                                        onClick={() => handleSaveFlow()}
+                                        sx={{
+                                            backgroundColor: 'var(--primary-color)',
+                                            '&:hover': {
+                                                backgroundColor: '#5f50e3'
+                                            },
+                                            textTransform: 'none',
+                                            fontSize: '14px',
+                                            py: 0.75
+                                        }}
+                                    >
+                                        {saveFlow ? 'Saving Flow...' : 'Save'}
+                                    </Button>
                                     <Button
                                         variant="contained"
                                         startIcon={isFlowRunning ? <CircularProgress size={16} /> : <Play size={16} />}
@@ -545,64 +552,104 @@ const Studio = () => {
                                     >
                                         {isFlowRunning ? 'Running...' : 'Run'}
                                     </Button>
-                                {/* )} */}
-
-
-                          
-
-                                <Button
-                                    variant="contained"
-                                    startIcon={<Rocket size={16} />}
-                                    onClick={handleDeployFlow}
-                                    sx={{
-                                        backgroundColor: 'var(--primary-color)',
-                                        '&:hover': {
-                                            backgroundColor: '#5f50e3'
-                                        },
-                                        textTransform: 'none',
-                                        fontSize: '14px',
-                                        py: 0.75
-                                    }}
-                                >
-                                    Deploy
-                                </Button>
+                                    <Button
+                                        variant="contained"
+                                        startIcon={<Rocket size={16} />}
+                                        onClick={handleDeployFlow}
+                                        sx={{
+                                            backgroundColor: 'var(--primary-color)',
+                                            '&:hover': {
+                                                backgroundColor: '#5f50e3'
+                                            },
+                                            textTransform: 'none',
+                                            fontSize: '14px',
+                                            py: 0.75
+                                        }}
+                                    >
+                                        Deploy
+                                    </Button>
+                                </Box>
                             </Box>
-                        </Box>
-
-                        {!toggleViewMode ? (
-                            <div className="h-full w-full">
-                                <ReactFlow {...reactFlowProps}>
-                                    <Background />
-                                    <Controls />
-                                </ReactFlow>
-                            </div>
-                        ) : (
-                            <div className="h-full overflow-auto">
-                                <JsonSpecView />
-                            </div>
-                        )}
-
-                        <SideDrawer />
-                        <NodeDetailsModal
-                            open={modalOpen}
-                            onClose={() => {
-                                setModalOpen(false);
-                                setSelectedNode(null);
-                            }}
-                            node={selectedNode}
-                            onDelete={handleDeleteNode}
-                            onUpdateParameters={handleUpdateNodeParameters}
-                            sections={{
-                                displayBasicInformation: true,
-                                displayInputParameters: !!selectedNode?.data?.inputParameters.length>0,
-                                displayOutputParameters: !!selectedNode?.data?.outputParameters.length>0
-                            }}
-                            flow={flow}
-                        />
+                            {!toggleViewMode ? (
+                                <div className="h-full w-full">
+                                    <ReactFlow {...reactFlowProps}>
+                                        <Background />
+                                        <Controls />
+                                    </ReactFlow>
+                                </div>
+                            ) : (
+                                <div className="h-full overflow-auto">
+                                    <JsonSpecView />
+                                </div>
+                            )}
+                            <SideDrawer />
+                            <NodeDetailsModal
+                                flowId={flow?.id}
+                                open={modalOpen}
+                                onClose={() => {
+                                    setModalOpen(false);
+                                    setSelectedNode(null);
+                                }}
+                                node={selectedNode}
+                                onDelete={handleDeleteNode}
+                                onUpdateParameters={handleUpdateNodeParameters}
+                                sections={{
+                                    displayBasicInformation: true,
+                                    displayInputParameters: !!selectedNode?.data?.inputParameters.length > 0,
+                                    displayOutputParameters: !!selectedNode?.data?.outputParameters.length > 0
+                                }}
+                                flow={flow}
+                                onOpenExecutionOutput={handleOpenExecutionOutput}
+                            />
+                        </Grid>
                     </Grid>
-                </Grid>
-            </Box>
-        </div>
+                </Box>
+            </div>
+            {/* Floating button to reopen sidebar if closed */}
+            {!sidebarOpen && (
+                <Box
+                    sx={{
+                        position: 'fixed',
+                        marginLeft: 2,
+                        top: 10,
+                        // bottom: 400,
+                        //left: 10,
+                        // right: 10,
+                        zIndex: 9999,
+                    }}
+                >
+
+                    <ButtonGroup variant="outlined" size="small" sx={{
+                               mr: 3,
+                               width: 30,
+                               height: 35,
+                            }}>
+                        <Tooltip title="Minimize Sidebar">
+                            <Button onClick={handleMinimizeSideBar}>
+                                <List size={18} />
+                            </Button>
+                        </Tooltip>
+                    </ButtonGroup>
+
+
+                   {/* <IconButton
+                            onClick={handleMinimizeSideBar}
+                            sx={{
+                                // backgroundColor: 'var(--primary-color)',
+                                border: '1px solid var(--primary-color)',
+                                color: 'var(--primary-color)',
+                                width: 35,
+                                height: 35,
+                                // boxShadow: 3,
+                                '&:hover': { backgroundColor: 'var(--primary-color)', color: '#fff' },
+                                zIndex: 9999,
+                            }}
+                        >
+                            <ChevronRight size={24} />
+                        </IconButton> */}
+                </Box>
+            )}
+        </>
     );
 };
 
