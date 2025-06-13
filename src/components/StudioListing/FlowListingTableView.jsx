@@ -59,13 +59,13 @@ const FlowListingTableView = ({ filteredFlows, handleRunFlow, handleOpenStudio ,
                 </TableCell>
 
                 <TableCell className="!px-6 py-4 !justify-end whitespace-nowrap">
-                  <Box className="flex items-center justify-end">
-                    <Button
+                  <Box className="flex items-center justify-center">
+                    {/* <Button
                       onClick={() => handleRunFlow(flow)}
                       color="success"
                     >
                       <Play size={18} />
-                    </Button>
+                    </Button> */}
                     <Button
                       onClick={() => handleOpenStudio(flow.id)}
                       color="secondary"

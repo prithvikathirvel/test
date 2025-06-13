@@ -1,6 +1,6 @@
 "use client"
 
-import { BookOpen, Github, FileText, Video, Lightbulb, PlayCircle, ArrowRight, ChevronRight,Plus } from "lucide-react"
+import { BookOpen, Github, FileText, Video, Lightbulb, PlayCircle, ArrowRight, ChevronRight, Plus } from "lucide-react"
 import AnimatedText from "@/components/Common/AnimatedText"
 
 const resources = [
@@ -45,67 +45,59 @@ const resources = [
 export default function OnboardingPage() {
   return (
     <div className="min-h-screen bg-slate-50">
-     <header className="w-full bg-white text-black shadow-md z-50">
-  <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-    {/* Logo / Brand */}
-    <div className="flex items-center gap-3">
-      {/* Replace with logo image if needed */}
-      {/* <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center text-white font-bold text-sm">
-        S
-      </div> */}
-      <h1 className="text-2xl font-semibold tracking-tight">Sify Aurora</h1>
-    </div>
+      <header className="w-full bg-white text-black shadow-md z-50">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight">Sify Aurora</h1>
+          </div>
 
-    {/* Desktop Nav */}
-    <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-      <a href="#" className="hover:text-blue-600 transition-all">
-        Docs
-      </a>
-      <a href="#" className="hover:text-blue-600 transition-all">
-        Blog
-      </a>
-      <a href="#" className="hover:text-blue-600 transition-all">
-        Community
-      </a>
-      <a href="#" className="hover:text-blue-600 transition-all">
-        Pricing
-      </a>
-    </nav>
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+            <a href="#" className="hover:text-blue-600 transition-all">
+              Docs
+            </a>
+            <a href="#" className="hover:text-blue-600 transition-all">
+              Blog
+            </a>
+            <a href="#" className="hover:text-blue-600 transition-all">
+              Community
+            </a>
+            <a href="#" className="hover:text-blue-600 transition-all">
+              Pricing
+            </a>
+          </nav>
 
-    <div className="md:hidden">
-      <button className="text-black focus:outline-none">
-        <svg
-          className="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-    </div>
-  </div>
-</header>
+          <div className="md:hidden">
+            <button className="text-black focus:outline-none">
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </header>
 
 
-      {/* Hero Section */}
       <section className="pt-40 pb-20 text-center">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">Welcome to Sify Aurora</h2>
-         <AnimatedText texts={["Build and Orchestrate Seamless Workflows With AI Agents"]} />
+          <AnimatedText texts={["Build and Orchestrate Seamless Workflows With AI Agents"]} />
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button
+            {/* <button
             onClick={() => {}}
             className={`px-5 py-2.5 !bg-[var(--primary-color)] hover:cursor-pointer text-white rounded-lg flex items-center font-medium`}
           >
             Get Started <ChevronRight size={20} />
-          </button>
+          </button> */}
           </div>
         </div>
       </section>
 
-      {/* Resources Grid */}
       <section className="py-50">
         <div className="max-w-7xl mx-auto px-4">
           <h3 className="text-3xl font-bold text-center text-slate-800 mb-12">Explore Our Resources</h3>
@@ -132,7 +124,6 @@ export default function OnboardingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="py-20 bg-slate-100">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h3 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">Ready to Transform Your Business?</h3>
@@ -140,14 +131,14 @@ export default function OnboardingPage() {
             Join thousands of companies that trust Sify Aurora for their cloud-native solutions and digital
             transformation journey.
           </p>
-            <div className="flex justify-center">
+          <div className="flex justify-center">
             <button
-            onClick={() => {}}
-            className={`px-5 py-2.5 !bg-[var(--primary-color)] hover:cursor-pointer text-white rounded-lg flex items-center font-medium justify-center`}
-          >
-           Start your Free Trail <ChevronRight size={20} />
-          </button>
-            </div>
+              onClick={() => { }}
+              className={`px-5 py-2.5 !bg-[var(--primary-color)] hover:cursor-pointer text-white rounded-lg flex items-center font-medium justify-center`}
+            >
+              Start your Free Trail <ChevronRight size={20} />
+            </button>
+          </div>
         </div>
       </section>
 

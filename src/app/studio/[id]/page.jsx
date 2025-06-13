@@ -1,17 +1,17 @@
 "use client";
-import { Box, Typography, Button, ButtonGroup, Tooltip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions,CircularProgress } from "@mui/material";
+import { Box, Typography, Button, ButtonGroup, Tooltip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { useCallback, useState, useEffect ,useMemo} from "react";
+import { useCallback, useState, useEffect, useMemo } from "react";
 import ReactFlow, { Background, Controls, useNodesState, useEdgesState, addEdge } from "reactflow";
 import "reactflow/dist/style.css";
 import { useNodeTypes } from "@/components/FlowNodes";
 import ComponentsSidebar from "@/components/studio/ComponentsSidebar";
 import JsonSpecView from "@/components/studio/JsonSpecView";
-import { Save, Rocket, Code, Workflow, Eye, Play,ChevronRight,List } from "lucide-react";
+import { Save, Rocket, Code, Workflow, Eye, Play, ChevronRight, List } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleViewMode } from "@/redux/slices/flowSlice";
 import SideDrawer from "@/components/Common/SideDrawer";
-import { fetchTools, fetchAgents, fetchModels ,getFlowById, updateFlow, setNodes, setEdges ,deleteNode, updateNodeConnections,updateNode,runFlow, updateSpecification, getAllFlows} from "@/redux/slices/studioSlice";
+import { fetchTools, fetchAgents, fetchModels, getFlowById, updateFlow, setNodes, setEdges, deleteNode, updateNodeConnections, updateNode, runFlow, updateSpecification, getAllFlows } from "@/redux/slices/studioSlice";
 import NodeDetailsModal from "@/components/studio/NodeDetailsModal";
 import { toast } from "react-toastify";
 import axios from "axios";
@@ -24,22 +24,10 @@ import InputFieldConfiguration from "@/components/InputFieldConfiguration";
 const drawerWidth = 280;
 
 const Studio = () => {
-    // Sidebar open/close state and previous grid size
+
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [mainGridSize, setMainGridSize] = useState(9.5);
     const [prevGridSize, setPrevGridSize] = useState(9.5);
-
-    // Handler to minimize/collapse sidebar
-    const handleMinimizeSideBar = useCallback(() => {
-        if (sidebarOpen) {
-            setPrevGridSize(mainGridSize);
-            setSidebarOpen(false);
-            setMainGridSize(12);
-        } else {
-            setSidebarOpen(true);
-            setMainGridSize(prevGridSize);
-        }
-    }, [sidebarOpen, mainGridSize, prevGridSize]);
     const dispatch = useDispatch();
     const [nodes, setNodesState, onNodesChange] = useNodesState([]);
     const [edges, setEdgesState, onEdgesChange] = useEdgesState([]);
@@ -51,18 +39,17 @@ const Studio = () => {
     const [formattedOututParam, setFormattedOututParam] = useState(null);
     const [toggleViewMode, setToggleViewMode] = useState(false);
     const [renderFlow, setRenderFlow] = useState(false);
-    const [output,setOutput] = useState(null);
+    const [output, setOutput] = useState(null);
     const params = useParams();
     const flowId = params.id;
     const flow = useSelector(state => state.studio.flow);
     const loading = useSelector(state => state.studio.studioLoader);
-    const specification = useSelector(state => state.studio.specification); 
-    const studioUpdateFlowLoader = useSelector(state => state.studio.studioUpdateFlowLoader);   
+    const specification = useSelector(state => state.studio.specification);
+    const studioUpdateFlowLoader = useSelector(state => state.studio.studioUpdateFlowLoader);
     const flowOutput = useSelector(state => state.studio.flowOutput);
     const isFlowRunning = useSelector(state => state.studio.isFlowRunning);
     const nodeTypes = useNodeTypes();
 
-    // Effect for initial data fetch
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -78,49 +65,48 @@ const Studio = () => {
         fetchInitialData();
     }, [flowId, dispatch]);
 
-    // Effect for processing flow data and updating nodes/edges
     useEffect(() => {
         if (!flow?.graphSpec?.nodes || !flow?.graphSpec?.edges) return;
-        
+
         console.log("Processing flow data");
         const adjacencyList = {};
         flow.graphSpec.edges.forEach(edge => {
             if (!adjacencyList[edge.from]) adjacencyList[edge.from] = [];
             adjacencyList[edge.from].push(edge.to);
         });
-        
+
         const nodeMap = {};
         flow.graphSpec.nodes.forEach(node => {
             nodeMap[node.node_id] = node;
         });
-        
+
         const incomingEdges = {};
         flow.graphSpec.edges.forEach(edge => {
             incomingEdges[edge.to] = (incomingEdges[edge.to] || 0) + 1;
         });
-        
+
         const rootNodes = flow.graphSpec.nodes
             .filter(node => !incomingEdges[node.node_id])
             .map(node => node.node_id);
-        
-        const horizontalSpacing = 400;
-        const verticalSpacing = 150;   
-        const nodeHeight = 75;        
-        
+
+        const horizontalSpacing = 300;
+        const verticalSpacing = 200;
+        const nodeHeight = 75;
+
 
         const calculatePositions = () => {
             const positions = {};
             const processedNodes = new Set();
-            const levelSpaceUsed = {}; 
-            
+            const levelSpaceUsed = {};
+
             const processNode = (nodeId, level = 0, verticalPosition = 0) => {
                 if (processedNodes.has(nodeId)) return;
                 processedNodes.add(nodeId);
-                
+
                 if (!levelSpaceUsed[level]) levelSpaceUsed[level] = 0;
 
                 const children = adjacencyList[nodeId] || [];
-                
+
                 positions[nodeId] = {
                     x: level * horizontalSpacing,
                     y: verticalPosition
@@ -129,38 +115,38 @@ const Studio = () => {
                 if (children.length > 0) {
                     const nextLevel = level + 1;
                     if (!levelSpaceUsed[nextLevel]) levelSpaceUsed[nextLevel] = 0;
-                    
+
                     const totalStackHeight = (children.length - 1) * verticalSpacing;
                     const startY = verticalPosition - totalStackHeight / 2;
-                    
+
                     children.forEach((childId, index) => {
                         const childY = startY + index * verticalSpacing;
                         processNode(childId, nextLevel, childY);
                     });
                 }
             };
-            
+
             rootNodes.forEach((rootId, index) => {
-                const rootY = index * (verticalSpacing * 2); 
+                const rootY = index * (verticalSpacing * 2);
                 processNode(rootId, 0, rootY);
                 levelSpaceUsed[0] = rootY + verticalSpacing;
             });
-            
+
 
             flow.graphSpec.nodes.forEach(node => {
                 if (!processedNodes.has(node.node_id)) {
                     const disconnectedLevel = Object.keys(levelSpaceUsed).length;
                     if (!levelSpaceUsed[disconnectedLevel]) levelSpaceUsed[disconnectedLevel] = 0;
-                    
+
                     const verticalPos = levelSpaceUsed[disconnectedLevel];
                     positions[node.node_id] = {
                         x: disconnectedLevel * horizontalSpacing,
                         y: verticalPos
                     };
-                    
+
                     levelSpaceUsed[disconnectedLevel] += verticalSpacing;
                     processedNodes.add(node.node_id);
-                    
+
                     const children = adjacencyList[node.node_id] || [];
                     if (children.length > 0) {
                         children.forEach((childId, index) => {
@@ -170,16 +156,14 @@ const Studio = () => {
                     }
                 }
             });
-            
+
             return positions;
         };
-        
+
         const positions = calculatePositions();
-        
+
         const nodesWithPositions = flow.graphSpec.nodes.map(node => {
             const calculatedPosition = positions[node.node_id] || { x: 0, y: 0 };
-            
-            // Create base node object
             const nodeData = {
                 ...node,
                 id: node.node_id,
@@ -200,25 +184,22 @@ const Studio = () => {
                 },
             };
 
-            // Preserve condition paths for decision nodes
             if (node.type === 'decision' || node.data?.type === 'decision') {
                 nodeData.conditionMetPath = node.conditionMetPath || null;
                 nodeData.conditionNotMetPath = node.conditionNotMetPath || null;
-                // Also include these in the data object for consistency
                 nodeData.data.conditionMetPath = node.conditionMetPath || null;
                 nodeData.data.conditionNotMetPath = node.conditionNotMetPath || null;
             }
 
             return nodeData;
         });
-        
+
         setNodesState(nodesWithPositions);
-        
+
         const edgeSet = new Set();
         const uniqueEdges = flow.graphSpec.edges
             .filter(edge => edge.from && edge.to)
             .map((edge) => {
-                // Map condition values back to handle values
                 let handleType = edge.condition;
                 if (edge.condition === 'conditionMet') {
                     handleType = 'true';
@@ -229,30 +210,29 @@ const Studio = () => {
                 const edgeId = `${edge.from}-${edge.to}-${handleType || ''}`;
                 if (edgeSet.has(edgeId)) return null;
                 edgeSet.add(edgeId);
-                
+
                 return {
                     id: edgeId,
                     source: edge.from,
                     target: edge.to,
                     sourceHandle: handleType,
                     animated: true,
-                    style: { 
-                        stroke: handleType === 'true' ? '#4CAF50' : 
-                               handleType === 'false' ? '#F44336' : '#555' 
+                    style: {
+                        stroke: handleType === 'true' ? '#4CAF50' :
+                            handleType === 'false' ? '#F44336' : '#555'
                     },
                 };
             })
             .filter(Boolean);
-        
+
         setEdgesState(uniqueEdges);
-        
-        // Reset renderFlow after processing
+
         if (renderFlow) {
             setRenderFlow(false);
         }
     }, [flow?.graphSpec, renderFlow]);
 
-    // Effect for handling renderFlow changes
+
     useEffect(() => {
         if (renderFlow) {
             console.log("Refreshing flow data due to renderFlow change");
@@ -260,18 +240,28 @@ const Studio = () => {
         }
     }, [renderFlow, flowId, dispatch]);
 
+
+    const handleMinimizeSideBar = useCallback(() => {
+        if (sidebarOpen) {
+            setPrevGridSize(mainGridSize);
+            setSidebarOpen(false);
+            setMainGridSize(12);
+        } else {
+            setSidebarOpen(true);
+            setMainGridSize(prevGridSize);
+        }
+    }, [sidebarOpen, mainGridSize, prevGridSize]);
+
     const onConnect = useCallback(
         (params) => {
-            // Add the edge with sourceHandle if it exists
             const edge = {
                 ...params,
                 type: 'bezier',
                 style: { stroke: params.sourceHandle === 'true' ? '#4CAF50' : params.sourceHandle === 'false' ? '#F44336' : '#555' },
             };
-            
+
             setEdgesState((eds) => addEdge(edge, eds));
-            
-            // Update node connections in the store
+
             dispatch(updateNodeConnections({
                 source: params.source,
                 target: params.target,
@@ -288,33 +278,30 @@ const Studio = () => {
 
             try {
                 const spec = JSON.parse(event.dataTransfer.getData("application/node-spec"));
-                console.log(spec,'speckyy')
+                console.log(spec, 'speckyy')
                 if (!spec) {
                     console.error("No node spec found in drop data");
                     return;
                 }
 
                 const type = event.dataTransfer.getData("application/reactflow");
-                
-                // Handle flow type nodes
+
                 if (type === "agentflow") {
-                    // Extract inputs from the flow node
                     const flowInputs = spec?.inputs || [];
-                    console.log('flow 1',flowInputs);
-                    
+                    console.log('flow 1', flowInputs);
+
                     if (flowInputs.length > 0) {
                         const updatedConfig = {
-                            ...flow, // Use flow as base instead of specification
+                            ...flow,
                             inputs: [...(flow?.inputs || []), ...flowInputs]
                         };
-                        console.log(updatedConfig,'flow 2')
-                        
+                        console.log(updatedConfig, 'flow 2')
+
 
                         dispatch(updateSpecification(updatedConfig));
                     }
                 }
 
-                // Generate a unique ID for the new node
                 const newNodeId = `${spec?.name}_node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
                 const position = {
@@ -336,7 +323,7 @@ const Studio = () => {
                         type: spec.type,
                         description: spec.description,
                         inputParameters: spec.inputParameters || [],
-                        outputParameters: spec.type==='agentflow' ? [{key:"output",value:"",type:"text"}]: spec.outputParameters || [],
+                        outputParameters: spec.type === 'agentflow' ? [{ key: "output", value: "", type: "text" }] : spec.outputParameters || [],
                         next: [],
                         // inputs: spec.inputs || [],
                     },
@@ -361,14 +348,12 @@ const Studio = () => {
     }
 
     useEffect(() => {
-        console.log("calling dispatch setNodes");
-        dispatch(setNodes({nodes: nodes,flow: flow}));
+        dispatch(setNodes({ nodes: nodes, flow: flow }));
     }, [nodes]);
 
 
     useEffect(() => {
-        console.log("calling dispatch setEdges");
-        dispatch(setEdges({edges: edges,flow: flow}));
+        dispatch(setEdges({ edges: edges, flow: flow }));
     }, [edges]);
 
 
@@ -383,17 +368,17 @@ const Studio = () => {
 
     const handleOpenOutputModal = (flow) => {
         setOutputModalOpen(true);
-         const lastParam = getLastOutputParameter(flow);
-         console.log(lastParam,'lastparamss')
-         setFormattedOututParam(lastParam?.value);
+        const lastParam = getLastOutputParameter(flow);
+        console.log(lastParam, 'lastparamss')
+        setFormattedOututParam(lastParam?.value);
     };
 
     const handleRunFlow = useCallback(() => {
-      dispatch(runFlow({data:{agent_id:flow?.id}, onSuccess: () => handleOpenOutputModal(flow)}))
+        dispatch(runFlow({ data: { agent_id: flow?.id }, onSuccess: () => handleOpenOutputModal(flow) }))
     }, [flow, dispatch]);
-    
+
     const handleDeployFlow = useCallback(() => {
-      dispatch(updateSpecification());
+        dispatch(updateSpecification());
     }, [dispatch]);
 
     const onNodeClick = useCallback((event, node) => {
@@ -410,7 +395,7 @@ const Studio = () => {
 
     const handleDeleteNode = useCallback((node) => {
         if (node && node.id) {
-            dispatch(deleteNode({flow: flow, nodeId: node.id}));
+            dispatch(deleteNode({ flow: flow, nodeId: node.id }));
             handleNodeDelete(node.id);
             setModalOpen(false);
             setSelectedNode(null);
@@ -421,23 +406,21 @@ const Studio = () => {
         setSaveFlow(false);
         console.log('save flow');
         console.log('Flow ID:', flowId);
-        console.log('specification',specification);
-        console.log('flow before saving',flow);
-        dispatch(updateFlow({id: flowId, updatedData: specification,onSuccess: (value) => console.log("Saved Successfully")}));
+        console.log('specification', specification);
+        console.log('flow before saving', flow);
+        dispatch(updateFlow({ id: flowId, updatedData: specification, onSuccess: (value) => console.log("Saved Successfully") }));
     }, [dispatch, flowId, specification, flow]);
 
-    const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters,parameter) => {
-        console.log(nodeId,'NodeIdddd')
-        console.log(updatedParameters,'updateddd')
-        console.log(parameter,'parameterrr')
-        dispatch(updateNode({flow:flow,nodeId:nodeId,updatedNode:updatedParameters,parameter:parameter}));
-    
-        // The specification will be automatically updated by the updateNode action
+    const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters, parameter) => {
+        console.log(nodeId, 'NodeIdddd')
+        console.log(updatedParameters, 'updateddd')
+        console.log(parameter, 'parameterrr')
+        dispatch(updateNode({ flow: flow, nodeId: nodeId, updatedNode: updatedParameters, parameter: parameter }));
+
     }, [dispatch]);
 
     const handleInputConfigSave = (configurations) => {
         console.log('Input configurations:', configurations);
-        // Here you can handle the saved configurations
         toast.success('Input configurations saved successfully');
     };
 
@@ -454,19 +437,19 @@ const Studio = () => {
         fitView: true,
         style: { backgroundColor: "#F7F9FB" },
         defaultEdgeOptions: {
-            type: "be",
+            // type: "bezier",
             animated: true,
             style: { stroke: 'var(--primary-color)', strokeWidth: 2 }
         }
     }), [
-        nodes, 
-        edges, 
-        onNodesChange, 
-        onEdgesChange, 
-        onConnect, 
-        nodeTypes, 
-        onDrop, 
-        onDragOver, 
+        nodes,
+        edges,
+        onNodesChange,
+        onEdgesChange,
+        onConnect,
+        nodeTypes,
+        onDrop,
+        onDragOver,
         onNodeClick
     ]);
 
@@ -476,18 +459,19 @@ const Studio = () => {
             <div className="h-full w-full overflow-hidden">
                 <StudioChatBot className='!z-100' opened={true} flow={flow} handleRenderFlow={handleRenderFlow} />
                 <Box className="h-full w-full">
-                    <FlowOutputModal
+                    {/* <FlowOutputModal
                         open={outputModalOpen}
                         onClose={() => setOutputModalOpen(false)}
                         output={flowOutput}
                         lastParam={formattedOututParam}
-                    />
-
-                    <InputFieldConfiguration
-                        open={inputConfigOpen}
-                        onClose={() => setInputConfigOpen(false)}
-                        onSave={handleInputConfigSave}
-                    />
+                    /> */}
+                    {inputConfigOpen && (
+                        <InputFieldConfiguration
+                            open={inputConfigOpen}
+                            onClose={() => setInputConfigOpen(false)}
+                            onSave={handleInputConfigSave}
+                        />
+                    )}
                     <Grid container spacing={0} className="h-full">
                         {sidebarOpen && (
                             <Grid size={2.5} className="h-full overflow-auto transition-all duration-900 ease-in-out" >
@@ -619,7 +603,14 @@ const Studio = () => {
                     }}
                 >
 
-                    <ButtonGroup variant="outlined" size="small" sx={{
+                    <button
+                        onClick={handleMinimizeSideBar}
+                        className="flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-200 hover:scale-105 group"
+                    >
+                        <List size={20} className="text-gray-600 group-hover: 'var(--primary-color)' transition-colors duration-200" />
+                    </button>
+
+                    {/* <ButtonGroup variant="outlined" size="small" sx={{
                                mr: 3,
                                width: 30,
                                height: 35,
@@ -629,10 +620,10 @@ const Studio = () => {
                                 <List size={18} />
                             </Button>
                         </Tooltip>
-                    </ButtonGroup>
+                    </ButtonGroup> */}
 
 
-                   {/* <IconButton
+                    {/* <IconButton
                             onClick={handleMinimizeSideBar}
                             sx={{
                                 // backgroundColor: 'var(--primary-color)',

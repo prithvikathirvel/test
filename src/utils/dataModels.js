@@ -137,7 +137,7 @@ const inputNodes = [
       },
       {
         "key": "comparisonValue",
-        "value": "100",       
+        "value": "",       
         "type": "text"
       }
     ],

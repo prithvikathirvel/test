@@ -50,7 +50,7 @@ function stringAvatar(name) {
       bgcolor: stringToColor(name),
       fontSize: '11px'
     },
-    children: nameParts.length > 1 
+    children: nameParts.length > 1
       ? `${nameParts[0][0]}${nameParts[1][0]}`
       : name[0],
   };
@@ -59,7 +59,7 @@ function stringAvatar(name) {
 
 function convertToTitleCase(str) {
   if (!str) {
-      return "Undefined Title"
+    return "Undefined Title"
   }
   return str.toLowerCase().replace(/\b\w/g, s => s.toUpperCase());
 }
@@ -87,7 +87,7 @@ const getNodeColor = (nodeType) => {
 const FileTypeIcon = ({ fileName }) => {
   if (!fileName) return <File />;
   const ext = fileName.split('.').pop().toLowerCase();
-  
+
   if (['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(ext)) return <Image className="text-blue-500" />;
   if (['mp4', 'mov', 'avi', 'webm'].includes(ext)) return <Video className="text-purple-500" />;
   if (['mp3', 'wav', 'ogg'].includes(ext)) return <AudioLines className="text-green-500" />;
@@ -131,22 +131,22 @@ const generateSpecification = (flow, nodes, edges) => {
     return {};
   }
   const specification = {
-  ...flow, 
-  graphSpec: {
-    nodes: nodes.map(node => ({
-      node_id: node.id,  
-      name: node.data?.name || node.name,
-      type: node.data?.type || node.type,
-      description: node.data?.description || node.description,
-      next: node.data?.next || node.next || [],
-      inputParameters: node.data?.inputParameters || node.inputParameters || [],
-      outputParameters: node.data?.outputParameters || node.outputParameters || []
-    })),
-    edges: edges.map(edge => ({
-      from: edge.source,  
-      to: edge.target,    
-    })),
-  }
+    ...flow,
+    graphSpec: {
+      nodes: nodes.map(node => ({
+        node_id: node.id,
+        name: node.data?.name || node.name,
+        type: node.data?.type || node.type,
+        description: node.data?.description || node.description,
+        next: node.data?.next || node.next || [],
+        inputParameters: node.data?.inputParameters || node.inputParameters || [],
+        outputParameters: node.data?.outputParameters || node.outputParameters || []
+      })),
+      edges: edges.map(edge => ({
+        from: edge.source,
+        to: edge.target,
+      })),
+    }
   };
 
   return specification;
@@ -190,7 +190,7 @@ function sortByField(arr, field, order = "asc") {
 //     if (Array.isArray(node.outputParameters) && node.outputParameters.length > 0) {
 //       const lastParam = node.outputParameters[node.outputParameters.length - 1];
 //       console.log("getLastOutputParameterrrr",lastParam);
-      
+
 //       return {
 //         key: lastParam?.key,
 //         value: lastParam?.value
@@ -211,24 +211,19 @@ function getLastOutputParameter(flowJson) {
   }
 
   const { nodes, edges } = flowJson.graphSpec;
-
-  // Create a map for quick node lookup by ID
   const nodeMap = {};
   nodes.forEach(node => {
     nodeMap[node.node_id] = node;
   });
 
-  // Step 1: Find the End Node
+
   const endNode = nodes.find(node => node.name === "End Node");
   if (!endNode) {
     throw new Error("End Node not found");
   }
-
-  // Step 2: Trace back from End Node to its previous node
   let currentNodeId = endNode.node_id;
   let previousNode = null;
 
-  // Traverse backward one step to get the node before End Node
   const edgeToEnd = edges.find(edge => edge.to === currentNodeId);
   if (edgeToEnd) {
     previousNode = nodeMap[edgeToEnd.from];
@@ -247,22 +242,22 @@ function getLastOutputParameter(flowJson) {
   };
 }
 
-function sanitizeOutput (input) {
+function sanitizeOutput(input) {
   if (typeof input === 'string') {
-      return input
-          .replace(/\\n/g, ' ')  // Remove literal "\n"
-          .replace(/\n/g, ' ')   // Remove actual newline characters
-          .replace(/\\\\/g, '\\')
-          .replace(/\\(?![\\/"])/g, '')
-          .trim();
+    return input
+      .replace(/\\n/g, ' ')
+      .replace(/\n/g, ' ')
+      .replace(/\\\\/g, '\\')
+      .replace(/\\(?![\\/"])/g, '')
+      .trim();
   } else if (Array.isArray(input)) {
-      return input.map(sanitizeOutput );
+    return input.map(sanitizeOutput);
   } else if (typeof input === 'object' && input !== null) {
-      const sanitized = {};
-      for (const key in input) {
-          sanitized[key] = sanitizeOutput (input[key]);
-      }
-      return sanitized;
+    const sanitized = {};
+    for (const key in input) {
+      sanitized[key] = sanitizeOutput(input[key]);
+    }
+    return sanitized;
   }
   return input;
 }
@@ -291,15 +286,15 @@ export {
   showToaster,
   stringAvatar,
   stringToColor,
-  convertToTitleCase, 
+  convertToTitleCase,
   getChipStyles,
-  getNodeColor, 
-  FileTypeIcon, 
+  getNodeColor,
+  FileTypeIcon,
   generateUUID,
   generateSpecification,
   timeAgo,
   sortByField,
   getLastOutputParameter,
-  sanitizeOutput, 
+  sanitizeOutput,
   truncateLongStrings
 }

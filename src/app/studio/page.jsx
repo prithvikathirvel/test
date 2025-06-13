@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
 import { useRouter } from "next/navigation"
 import { Network, Plus, Play, Trash2, Search, Filter, ArrowUpRight, Clock, Zap, Grid3X3, List } from "lucide-react"
-import { getAllFlows, saveFlow, updateSpecification,deleteFlow } from "@/redux/slices/studioSlice"
+import { getAllFlows, saveFlow, updateSpecification, deleteFlow } from "@/redux/slices/studioSlice"
 import FlowDetailsModal from "@/components/studio/FlowDetailsModal"
 import { Container, Box, Paper, Card, Button, ButtonGroup } from "@mui/material"
 import DetailsCard from "@/components/StudioListing/DetailsCard";
@@ -29,24 +29,24 @@ const StudioListing = () => {
 
 
 
-  useEffect(()=>{
+  useEffect(() => {
     dispatch(getAllFlows())
     setFlowDetailsModalOpen(false)
     if (newFlowId) {
       router.push(`/studio/${newFlowId}`)
     }
-  },[newFlowId])
+  }, [newFlowId])
 
   const handleDeleteFlow = (flowId) => {
-    dispatch(deleteFlow({ 
-      data: flowId, 
+    dispatch(deleteFlow({
+      data: flowId,
       onSuccess: () => {
         console.log("Deleted Successfully");
         dispatch(getAllFlows());
-      } 
+      }
     }));
   }
-  
+
 
   const handleFlowDetailsSubmit = (details) => {
     const initialSpec = {
@@ -61,9 +61,9 @@ const StudioListing = () => {
       version: "1.0.0",
       isPublic: true,
       createdBy: "user",
-      inputs:[]
+      inputs: []
     };
-  
+
     dispatch(
       saveFlow({
         data: initialSpec,
@@ -74,8 +74,8 @@ const StudioListing = () => {
       })
     );
   };
-  
-  
+
+
   const handleOpenStudio = (flowId) => {
     router.push(`/studio/${flowId}`)
   }
@@ -92,16 +92,9 @@ const StudioListing = () => {
     dispatch(updateSpecification(specification))
   }
 
-
-
-
-
-
-
   const searchFlow = (searchTerm) => {
     setSearchTerm(searchTerm)
   }
-  // console.log(sortByField(flows, "updatedAt", "desc"),'Sorted Array');
 
   const filteredFlows = sortByField(flows, "updatedAt", "desc").filter(
     (flow) =>
@@ -112,7 +105,7 @@ const StudioListing = () => {
   return (
     <Box className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       {studioSaveFlowLoader && (
-       <BlurredLoader title ="Creating Flow..."/>
+        <BlurredLoader title="Creating Flow..." />
       )}
 
       <Box className="px-4 sm:px-6 lg:px-8 py-10">
@@ -203,7 +196,7 @@ const StudioListing = () => {
             </p>
             <button
               onClick={handleCreateStudio}
-              className=  {`px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-lg hover:shadow-purple-500/20 transition-all duration-300 flex items-center font-medium`}
+              className={`px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-lg hover:shadow-purple-500/20 transition-all duration-300 flex items-center font-medium`}
             >
               <Plus size={18} className="mr-2" />
               Create New Flow
@@ -212,7 +205,6 @@ const StudioListing = () => {
         )}
       </Box>
 
-      {/* Modal */}
       <FlowDetailsModal
         open={flowDetailsModalOpen}
         onClose={() => setFlowDetailsModalOpen(false)}
