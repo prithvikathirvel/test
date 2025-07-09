@@ -50,7 +50,7 @@ const inputNodes = [
     inputParameters: [{
       key: "file",
       value: "",
-      type: "file"
+      type: "text"
     }], 
     outputParameters:[{
       key:"output",
