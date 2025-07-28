@@ -7,7 +7,7 @@ const ParameterHeader = ({ title, icon, description }) => (
   <Box className="flex items-center gap-2 mb-2">
     {icon}
     <Typography variant="subtitle2" className="font-medium">
-      {convertToTitleCase(title)+'sss'}
+      {convertToTitleCase(title)}
     </Typography>
     {description && (
       <Tooltip title={description} arrow>
@@ -18,5 +18,6 @@ const ParameterHeader = ({ title, icon, description }) => (
     )}
   </Box>
 );
+
 
 export default ParameterHeader;

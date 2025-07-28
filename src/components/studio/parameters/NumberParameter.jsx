@@ -17,11 +17,11 @@ const NumberParameter = ({ param = {}, color, onUpdate, parameters, parameter })
 
   return (
     <Box className="w-full">
-      <ParameterHeader
+      {/* <ParameterHeader
         title={param.name}
         description={param.description}
         icon={<Code size={16} />}
-      />
+      /> */}
       <Box className="w-full">
         <InputBox
           type="number"

@@ -1,5 +1,5 @@
 "use client"
-import { Inter } from "next/font/google"
+import {Geist} from "next/font/google"
 import "@/app/globals.css"
 import ReduxProvider from "@/components/providers/ReduxProvider"
 import Header from "@/components/layout/Header"
@@ -11,12 +11,14 @@ import './globals.css'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-
-const workSans = Inter({ 
+const inter = Geist({ 
   subsets: ["latin"],
-  weight: ['400', '500', '600', '700'],
-  style: ['normal', 'italic']
+  weight: ['400'],
+  style: ['normal']
 })
+
+
+
 
 // export const metadata = {
 //   title: "Agent Studio",
@@ -43,7 +45,7 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="en" className="h-full">
-      <body className={`${workSans.className} h-full overflow-hidden`}>
+      <body className={`${inter.className} h-full overflow-hidden`}>
         <ReduxProvider>
           <Box className="flex h-full !bg-dark-purple">
             <ToastContainer 

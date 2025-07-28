@@ -11,7 +11,7 @@ import {
   Typography,
   Button
 } from '@mui/material';
-import { Network, Play, ArrowUpRight, Trash2 } from 'lucide-react';
+import { Network, ArrowUpRight, Trash2 } from 'lucide-react';
 import { timeAgo } from '@/utils/commonFunction';
 
 const FlowListingTableView = ({ filteredFlows, handleRunFlow, handleOpenStudio , handleDeleteFlow}) => {
@@ -41,8 +41,8 @@ const FlowListingTableView = ({ filteredFlows, handleRunFlow, handleOpenStudio ,
               <TableRow key={flow.id || flow.agent_id} className="hover:bg-slate-50">
                 <TableCell className="px-6 py-4 whitespace-nowrap">
                   <Box className="flex items-center">
-                    <Box className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center mr-3">
-                      <Network size={15}className="!text-[#6e48aa]"/>
+                    <Box className="h-8 w-8 rounded-full bg-[var(--primary-color)]/10 flex items-center justify-center mr-3">
+                      <Network size={15}className="!text-[var(--primary-color)]"/>
                     </Box>
                     <Typography className="!text-sm !font-semibold">
                       {flow.name || flow.agent_name || "Unnamed Flow"}
@@ -60,12 +60,6 @@ const FlowListingTableView = ({ filteredFlows, handleRunFlow, handleOpenStudio ,
 
                 <TableCell className="!px-6 py-4 !justify-end whitespace-nowrap">
                   <Box className="flex items-center justify-center">
-                    {/* <Button
-                      onClick={() => handleRunFlow(flow)}
-                      color="success"
-                    >
-                      <Play size={18} />
-                    </Button> */}
                     <Button
                       onClick={() => handleOpenStudio(flow.id)}
                       color="secondary"

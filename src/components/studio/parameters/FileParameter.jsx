@@ -20,17 +20,23 @@ const FileParameter = ({ param = {}, onUpdate, parameters, parameter }) => {
       setFile(selectedFile);
       reader.onload = async () => {
         const base64Data = reader.result;
-        const fileContent = base64Data.split(',')[1];
+        const fileContent = base64Data;
+        console.log('Base64 content:', fileContent);
         
         const newFileId = 'file_' + Math.random().toString(36).substring(2, 10);
         setFileId(newFileId);
 
-        if (onUpdate) {
-          onUpdate({ ...param, value: fileContent }, parameter);
+        if (onUpdate && parameters) {
+          console.log('File parameter updated:', param);
+          const updatedParams = parameters.map(p => 
+            p.key === param.key ? { ...p, value: fileContent } : p
+          );
+          onUpdate(updatedParams, parameter, true);
         }
       };
     }
   };
+
 
   return (
     <Box className="mb-2">
@@ -52,8 +58,11 @@ const FileParameter = ({ param = {}, onUpdate, parameters, parameter }) => {
           onRemove={() => {
             setFile(null);
             setFileId('');
-            if (onUpdate) {
-              onUpdate({ ...param, value: null }, parameter);
+            if (onUpdate && parameters) {
+              const updatedParams = parameters.map(p => 
+                p.key === param.key ? { ...p, value: null } : p
+              );
+              onUpdate(updatedParams, parameter, true);
             }
           }}
         />

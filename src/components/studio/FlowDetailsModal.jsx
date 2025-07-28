@@ -34,15 +34,6 @@ const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
             <DialogTitle className='!text-[16px] !font-bold '>Flow Details</DialogTitle>
             <DialogContent>
-                {/* <TextField
-                    autoFocus
-                    margin="dense"
-                    label="Flow Name"
-                    fullWidth
-                    value={flowDetails.name}
-                    onChange={(e) => setFlowDetails(prev => ({ ...prev, name: e.target.value }))}
-                    required
-                /> */}
                 <InputBox
                     className="!mt-2"
                     id="name"
@@ -54,7 +45,6 @@ const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
                     placeholder="Enter flow name"
                     type="text"
                 />
-
                 <InputBox
                     className="!mt-2"
                     id="description"

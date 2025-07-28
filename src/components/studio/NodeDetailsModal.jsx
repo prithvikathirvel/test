@@ -424,7 +424,7 @@ const NodeDetailsModal = ({
         onClose={onClose}
         PaperProps={{
           sx: {
-            width: 480,
+            width: 600,
             maxWidth: '100%',
           },
         }}

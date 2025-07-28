@@ -38,7 +38,7 @@ const inputNodes = [
   {
     key: "file",
     name: "File Node",
-    type: "inputs",
+    type: "input",
     status: "active",
     description: "Get File from user",
     tags: ["file", "input"],
@@ -149,7 +149,80 @@ const inputNodes = [
       }
     ],
     "next": ["node_if_true", "node_if_false"]  
+  }, 
+
+  {
+    id: "67dbef1fba68eac0121fad7034",
+    name: "Code Node",
+    type: "agent",
+    tags: [
+      "Code Node",
+      "Code Node"
+    ],
+    description: "Code Node",
+    tools: [],
+    agents: [],
+    inputParameters: [
+      {
+        key: "code",
+        value: "",
+        type: "code"
+      },
+    ],
+    outputParameters: [
+      {
+        key: "response",
+        value: "codeResponse",
+        type: "string"
+      }
+    ],
+    status: true,
+    version: 1,
+    isPublic: true,
+    isActive: true,
+    createdBy: "Sunitha",
+    updatedBy: "Sunitha",
+    createdAt: "2025-03-20T10:34:07.825Z",
+    updatedAt: "2025-03-20T10:34:07.825Z"
+  }, 
+  {
+    "node_id": "Iterator Node_node-1753342600957-xyzabcd123",
+    "name": "Iterator Node",
+    "displayName": "Iterator Node",
+    "type": "iterator",
+    "description": "Iterator Node that loops through each item in a list",
+    "next": [],
+    "loopPath": null,
+    "completionPath": null,
+    "inputParameters": [
+      {
+        "key": "array",
+        "value": "",
+        "type": "text"  
+      },
+      {
+        "key": "iterationSteps",
+        "value": 1,
+        "type": "number"  
+      },
+      {
+        "key": "iterationVariable",
+        "value": "item",
+        "type": "text"  
+      }
+    ],
+    "outputParameters": [
+      {
+        "key": "output",
+        "value": "currentItem",
+        "type": "text"  
+      }
+    ]
   }
+  
+ 
+
+  
 
 ]
 

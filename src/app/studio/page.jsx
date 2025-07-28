@@ -15,6 +15,7 @@ import FlowListingTableView from "@/components/StudioListing/FlowListingTableVie
 import FlowListingGridView from "@/components/StudioListing/FlowListingGridView";
 import BlurredLoader from '@/components/Common/BlurredLoader';
 import colors from "@/utils/colors";
+import CustomButton from "@/components/Common/CustomButton";
 
 const StudioListing = () => {
   const dispatch = useDispatch()
@@ -120,13 +121,16 @@ const StudioListing = () => {
             <p className="text-slate-500 mt-1">Build, manage, and deploy intelligent workflows</p>
           </Box>
 
-          <button
+          <CustomButton
             onClick={handleCreateStudio}
-            className={`px-5 py-2.5 !bg-[var(--primary-color)] hover:cursor-pointer text-white rounded-lg flex items-center font-medium`}
+            variant="contained"
+            color="primary"
+            size="medium"
+            // className={`px-5 py-2.5 !bg-[var(--primary-color)] hover:cursor-pointer text-white rounded-lg flex items-center font-medium`}
           >
             <Plus size={18} className="mr-2" />
             Create Agentic Flow
-          </button>
+          </CustomButton>
         </Container>
 
 
@@ -164,9 +168,7 @@ const StudioListing = () => {
             >
               <List size={18} className={`!text-[var(--primary-color)]`} />
             </Button>
-
           </ButtonGroup>
-
         </Box>
 
         {filteredFlows.length > 0 ? (
@@ -187,20 +189,18 @@ const StudioListing = () => {
           )
         ) : (
           <div className="flex flex-col items-center justify-center py-16 px-4 bg-white/70 backdrop-blur-sm rounded-xl border border-dashed border-slate-200 shadow-sm">
-            <div className="h-20 w-20 rounded-full bg-purple-100 flex items-center justify-center mb-4">
-              <Network className="h-10 w-10 text-purple-400" />
-            </div>
+           
             <h3 className="text-xl font-bold text-slate-700 mb-2">No flows available</h3>
             <p className="text-slate-500 text-center max-w-md mb-6">
               Create your first AI flow to start building intelligent workflows that automate your tasks
             </p>
-            <button
+            <CustomButton
               onClick={handleCreateStudio}
-              className={`px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-lg hover:shadow-purple-500/20 transition-all duration-300 flex items-center font-medium`}
+              // className={`px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-lg hover:shadow-purple-500/20 transition-all duration-300 flex items-center font-medium`}
             >
               <Plus size={18} className="mr-2" />
               Create New Flow
-            </button>
+            </CustomButton>
           </div>
         )}
       </Box>

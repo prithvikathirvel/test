@@ -17,6 +17,7 @@ const ObjectParameter = ({ param, color = "#4f46e5", isAddNew = true, initialVal
     const updatedValues = { ...objectValues, [key]: value };
     setObjectValues(updatedValues);
     
+    // Update specification if onUpdate is provided
     if (onUpdate && parameters) {
       const updatedParams = parameters.map(p => 
         p.key === param.key ? { ...p, value: updatedValues } : p

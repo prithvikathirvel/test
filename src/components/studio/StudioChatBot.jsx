@@ -366,15 +366,22 @@ const StudioChatBot = ({
   // Handle file upload
   const handleFileUpload = async (event) => {
     const files = Array.from(event.target.files)
-    const pdfFiles = files.filter((file) => file.type === "application/pdf")
+    const allowedTypes = [
+      'application/pdf',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/csv'
+    ]
+    
+    const validFiles = files.filter((file) => allowedTypes.includes(file.type))
 
-    if (pdfFiles.length === 0) {
-      alert("Please select only PDF files.")
+    if (validFiles.length === 0) {
+      alert("Please select only PDF, XLS, XLSX, or CSV files.")
       return
     }
 
     try {
-      const filePromises = pdfFiles.map(async (file) => {
+      const filePromises = validFiles.map(async (file) => {
         const base64 = await convertFileToBase64(file)
         return {
           id: generateUniqueId(),
@@ -449,7 +456,7 @@ const StudioChatBot = ({
   
         // If there's no text message but files are uploaded
         if (!userMessage) {
-          userMessage = `Uploaded ${uploadedFiles.length} PDF file(s): ${uploadedFiles.map(f => f.name).join(", ")}`;
+          userMessage = `Uploaded ${uploadedFiles.length} file(s): ${uploadedFiles.map(f => f.name).join(", ")}`;
         }
       }
   
@@ -819,14 +826,14 @@ const StudioChatBot = ({
                 type="file"
                 ref={fileInputRef}
                 onChange={handleFileUpload}
-                accept=".pdf"
+                accept=".pdf, .xls, .xlsx, .csv"
                 multiple
                 className="hidden"
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-full hover:bg-gray-100"
-                aria-label="Upload PDF files"
+                aria-label="Upload PDF, XLS, XLSX, or CSV files"
                 disabled={isLoading}
               >
                 <Paperclip className="w-5 h-5" />

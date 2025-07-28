@@ -27,4 +27,5 @@ const UploadArea = ({ onUpload, paramKey }) => (
   </DashedBox>
 );
 
+
 export default UploadArea;

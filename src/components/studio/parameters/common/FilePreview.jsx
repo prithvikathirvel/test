@@ -39,4 +39,5 @@ const FilePreview = ({ file, fileId, onRemove }) => (
   </Paper>
 );
 
+
 export default FilePreview;

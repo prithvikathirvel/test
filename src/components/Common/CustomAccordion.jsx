@@ -12,25 +12,7 @@ import {
 import { ChevronDown } from 'lucide-react';
 import Loader from '@/components/Common/Loader'
 
-/**
- * CustomAccordion component with support for custom header content, badges, actions, loading states, and keyboard navigation.
- *
- * @param {object} props
- * @param {string} props.title - The title of the accordion
- * @param {ReactNode} props.icon - The icon to display next to the title
- * @param {boolean} [props.defaultExpanded=true] - Whether the accordion is expanded by default
- * @param {ReactNode} props.children - The content of the accordion
- * @param {string} [props.className=''] - Additional class names for the accordion
- * @param {string} [props.titleClassName='!text-[14px] !font-semibold !font-sans'] - Class names for the title typography
- * @param {ReactNode} [props.headerContent] - Custom content to display in the header
- * @param {ReactNode} [props.headerActions] - Action buttons to display in the header
- * @param {string} [props.emptyStateMessage] - Message to display when the accordion is empty
- * @param {number} [props.badgeCount] - Number to display in the badge
- * @param {string} [props.badgeColor] - Color of the badge (primary, secondary, error, etc.)
- * @param {boolean} [props.loading] - Whether the content is loading
- * @param {string} [props.loadingText] - Text to display while loading
- * @param {boolean} [props.disabled] - Whether the accordion is disabled
- */
+
 const CustomAccordion = ({
   title,
   icon,

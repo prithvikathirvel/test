@@ -375,11 +375,15 @@ const generateSpecification = (flow, nodes, edges) => {
     graphSpec: {
       nodes: nodes.map(node => {
         const connections = nodeConnections[node.id] || [];
-        const isDecisionNode = node.type === 'decision' || node.data?.type === 'decision';
+        const nodeType = node.data?.type || node.type;
+        const isDecisionNode = nodeType === 'decision';
+        const isIteratorNode = nodeType === 'iterator';
         
         // For decision nodes, find condition met/not met paths
         let conditionMetPath = null;
         let conditionNotMetPath = null;
+        let loopPath = null;
+        let completePath = null;
         
         if (isDecisionNode) {
           connections.forEach(conn => {
@@ -387,6 +391,14 @@ const generateSpecification = (flow, nodes, edges) => {
               conditionMetPath = conn.target;
             } else if (conn.sourceHandle === 'false') {
               conditionNotMetPath = conn.target;
+            }
+          });
+        } else if (isIteratorNode) {
+          connections.forEach(conn => {
+            if (conn.sourceHandle === 'loop') {
+              loopPath = conn.target;
+            } else if (conn.sourceHandle === 'complete') {
+              completePath = conn.target;
             }
           });
         }
@@ -397,12 +409,18 @@ const generateSpecification = (flow, nodes, edges) => {
           displayName: node.data?.displayName || node.name,
           type: node.data?.type || node.type,
           description: node.data?.description || node.description,
-          next: isDecisionNode ? [] : (node.data?.next || node.next || []),
+          next: (isDecisionNode || isIteratorNode) ? [] : (node.data?.next || node.next || []),
           ...(isDecisionNode && { 
             conditionMetPath,
             conditionNotMetPath,
             // Keep next array for backward compatibility
             next: [...(node.next || []), conditionMetPath, conditionNotMetPath].filter(Boolean)
+          }),
+          ...(isIteratorNode && {
+            loopPath,
+            completePath,
+            // Keep next array for backward compatibility
+            next: [...(node.next || []), loopPath, completePath].filter(Boolean)
           }),
           inputParameters: node.data?.inputParameters || node.inputParameters || [],
           outputParameters: node.data?.outputParameters || node.outputParameters || []

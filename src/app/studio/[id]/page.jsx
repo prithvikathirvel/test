@@ -20,7 +20,7 @@ import StudioChatBot from "@/components/studio/StudioChatBot";
 import { getLastOutputParameter } from "@/utils/commonFunction";
 import FlowOutputModal from "@/components/studio/FlowOutputModal";
 import InputFieldConfiguration from "@/components/InputFieldConfiguration";
-
+import CustomButton from "@/components/Common/CustomButton";
 const drawerWidth = 280;
 
 const Studio = () => {
@@ -216,7 +216,7 @@ const Studio = () => {
                     source: edge.from,
                     target: edge.to,
                     sourceHandle: handleType,
-                    animated: true,
+                    // animated: true,
                     style: {
                         stroke: handleType === 'true' ? '#4CAF50' :
                             handleType === 'false' ? '#F44336' : '#555'
@@ -404,10 +404,10 @@ const Studio = () => {
 
     const handleSaveFlow = useCallback(() => {
         setSaveFlow(false);
-        console.log('save flow');
-        console.log('Flow ID:', flowId);
-        console.log('specification', specification);
-        console.log('flow before saving', flow);
+        // console.log('save flow');
+        // console.log('Flow ID:', flowId);
+        // console.log('specification', specification);
+        // console.log('flow before saving', flow);
         dispatch(updateFlow({ id: flowId, updatedData: specification, onSuccess: (value) => console.log("Saved Successfully") }));
     }, [dispatch, flowId, specification, flow]);
 
@@ -438,7 +438,7 @@ const Studio = () => {
         style: { backgroundColor: "#F7F9FB" },
         defaultEdgeOptions: {
             // type: "bezier",
-            animated: true,
+            // animated: true,
             style: { stroke: 'var(--primary-color)', strokeWidth: 2 }
         }
     }), [
@@ -459,12 +459,6 @@ const Studio = () => {
             <div className="h-full w-full overflow-hidden">
                 <StudioChatBot className='!z-100' opened={true} flow={flow} handleRenderFlow={handleRenderFlow} />
                 <Box className="h-full w-full">
-                    {/* <FlowOutputModal
-                        open={outputModalOpen}
-                        onClose={() => setOutputModalOpen(false)}
-                        output={flowOutput}
-                        lastParam={formattedOututParam}
-                    /> */}
                     {inputConfigOpen && (
                         <InputFieldConfiguration
                             open={inputConfigOpen}
@@ -488,70 +482,43 @@ const Studio = () => {
                                             </Button>
                                         </Tooltip>
                                     </ButtonGroup>
-                                    <Button
+
+
+                                    <CustomButton
                                         variant="contained"
                                         onClick={() => setInputConfigOpen(true)}
-                                        sx={{
-                                            backgroundColor: 'var(--primary-color)',
-                                            '&:hover': {
-                                                backgroundColor: '#5f50e3'
-                                            },
-                                            textTransform: 'none',
-                                            fontSize: '14px',
-                                            py: 0.75
-                                        }}
                                     >
                                         Configure Inputs
-                                    </Button>
-                                    <Button
-                                        variant="contained"
-                                        startIcon={studioUpdateFlowLoader ? <CircularProgress size={16} /> : <Save size={16} />}
-                                        onClick={() => handleSaveFlow()}
-                                        sx={{
-                                            backgroundColor: 'var(--primary-color)',
-                                            '&:hover': {
-                                                backgroundColor: '#5f50e3'
-                                            },
-                                            textTransform: 'none',
-                                            fontSize: '14px',
-                                            py: 0.75
-                                        }}
-                                    >
-                                        {saveFlow ? 'Saving Flow...' : 'Save'}
-                                    </Button>
-                                    <Button
+                                    </CustomButton>
+
+
+                                    <CustomButton
                                         variant="contained"
                                         startIcon={isFlowRunning ? <CircularProgress size={16} /> : <Play size={16} />}
                                         onClick={handleRunFlow}
+                                        loading={isFlowRunning}
                                         disabled={isFlowRunning}
-                                        sx={{
-                                            backgroundColor: 'var(--primary-color)',
-                                            '&:hover': {
-                                                backgroundColor: '#5f50e3'
-                                            },
-                                            textTransform: 'none',
-                                            fontSize: '14px',
-                                            py: 0.75
-                                        }}
                                     >
                                         {isFlowRunning ? 'Running...' : 'Run'}
-                                    </Button>
-                                    <Button
+                                    </CustomButton>
+
+                                    <CustomButton
+                                        variant="contained"
+                                        startIcon={studioUpdateFlowLoader ? <CircularProgress size={16} /> : <Save size={16} />}
+                                        onClick={handleSaveFlow}
+                                        loading={studioUpdateFlowLoader}
+                                        disabled={studioUpdateFlowLoader}
+                                    >
+                                        {studioUpdateFlowLoader ? 'Saving Flow...' : 'Save'}
+                                    </CustomButton>
+
+                                    <CustomButton
                                         variant="contained"
                                         startIcon={<Rocket size={16} />}
                                         onClick={handleDeployFlow}
-                                        sx={{
-                                            backgroundColor: 'var(--primary-color)',
-                                            '&:hover': {
-                                                backgroundColor: '#5f50e3'
-                                            },
-                                            textTransform: 'none',
-                                            fontSize: '14px',
-                                            py: 0.75
-                                        }}
                                     >
                                         Deploy
-                                    </Button>
+                                    </CustomButton>
                                 </Box>
                             </Box>
                             {!toggleViewMode ? (
@@ -589,55 +556,24 @@ const Studio = () => {
                     </Grid>
                 </Box>
             </div>
-            {/* Floating button to reopen sidebar if closed */}
             {!sidebarOpen && (
                 <Box
                     sx={{
                         position: 'fixed',
                         marginLeft: 2,
                         top: 10,
-                        // bottom: 400,
-                        //left: 10,
-                        // right: 10,
                         zIndex: 9999,
                     }}
                 >
 
-                    <button
+                    <CustomButton
                         onClick={handleMinimizeSideBar}
-                        className="flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-200 hover:scale-105 group"
+                        variant="outlined"
+                        color="primary"
+                        size="small"                        // className="flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-200 hover:scale-105 group"
                     >
                         <List size={20} className="text-gray-600 group-hover: 'var(--primary-color)' transition-colors duration-200" />
-                    </button>
-
-                    {/* <ButtonGroup variant="outlined" size="small" sx={{
-                               mr: 3,
-                               width: 30,
-                               height: 35,
-                            }}>
-                        <Tooltip title="Minimize Sidebar">
-                            <Button onClick={handleMinimizeSideBar}>
-                                <List size={18} />
-                            </Button>
-                        </Tooltip>
-                    </ButtonGroup> */}
-
-
-                    {/* <IconButton
-                            onClick={handleMinimizeSideBar}
-                            sx={{
-                                // backgroundColor: 'var(--primary-color)',
-                                border: '1px solid var(--primary-color)',
-                                color: 'var(--primary-color)',
-                                width: 35,
-                                height: 35,
-                                // boxShadow: 3,
-                                '&:hover': { backgroundColor: 'var(--primary-color)', color: '#fff' },
-                                zIndex: 9999,
-                            }}
-                        >
-                            <ChevronRight size={24} />
-                        </IconButton> */}
+                    </CustomButton>
                 </Box>
             )}
         </>
