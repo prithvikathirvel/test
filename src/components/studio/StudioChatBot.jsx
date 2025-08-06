@@ -35,20 +35,16 @@ const StudioChatBot = ({
   const fileInputRef = useRef(null)
   const messagesEndRef = useRef(null); 
   const flowOutput = useSelector((state) => state.studio.flowOutput);
-  const sessionId = useSelector((state) => state.studio.session_id); 
+  const sessionId = useSelector((state) => state.studio.sessionId); 
   
   const dispatch = useDispatch();
-
-  // Use useRef for message ID counter to ensure it persists and updates correctly
   const messageIdCounter = useRef(0)
 
-  // Generate unique message ID
   const generateUniqueId = () => {
     messageIdCounter.current += 1
     return `msg-${Date.now()}-${messageIdCounter.current}-${Math.random().toString(36).substr(2, 9)}`
   }
 
-  // Color configurations
   const colorConfig = {
     blue: {
       primary: "bg-blue-600 hover:bg-blue-700",
@@ -198,9 +194,112 @@ const StudioChatBot = ({
     setMessages((prev) => prev.filter((msg) => msg.id !== messageId))
   }
 
+  // const handleSendMessage = async () => {
+  //   if (inputValue.trim() || uploadedFiles.length > 0) {
+  //     let userMessage = inputValue.trim()
+  
+  //     let fileData = [];
+  //     if (uploadedFiles.length > 0) {
+  //       fileData = uploadedFiles.map(file => file.base64);
+  //       if (!userMessage) {
+  //         userMessage = `Uploaded ${uploadedFiles.length} file(s): ${uploadedFiles.map(f => f.name).join(", ")}`;
+  //       }
+  //     }
+  
+  //     setIsLoading(true);
+  
+  //     addMessage(userMessage, "user");
+  
+  //     const payload = {
+  //       agent_id: flow?.id,
+  //       userInput: {
+  //         message: userMessage,
+  //         uploadedFiles: fileData, 
+  //         ...(sessionId && { session_id: sessionId })
+  //       }
+  //     }; 
+  //     console.log("SESSION ID", sessionId)
+      
+      
+  
+  //     // Generate unique loading message ID
+  //     const loadingId = generateUniqueId();
+  
+  //     // Add loading message
+  //     addMessage("Processing...", "bot", "loading", loadingId);
+  
+  //     try {
+  //       const resultAction = await dispatch(
+  //         runFlow({
+  //           data: payload,
+  //           onSuccess: () => {
+  //             console.log('Flow executed successfully');
+  //           },
+  //         })
+  //       )
+  //         .unwrap()
+  //         .then((response) => {
+  //           // Remove loading message
+  //           removeMessageById(loadingId);
+  
+  //           // Check if response requires input
+  //           if (response?.input) {
+  //             // Add a special message type for input form
+  //             addMessage(
+  //               "",
+  //               "bot",
+  //               "input-forms",
+  //               null,
+  //               { flow: flow} // Pass the flow data to the component
+  //             );
+  
+  //             // Check if handleRenderFlow exists and is a function
+  //             console.log("handleRenderFlow is:", typeof handleRenderFlow);
+  //             if (handleRenderFlow && typeof handleRenderFlow === 'function') {
+  //               console.log("Calling handleRenderFlow for input form");
+  //               handleRenderFlow();
+  //             } else {
+  //               console.error("handleRenderFlow is not a function or is undefined");
+  //             }
+  //           } else {
+  //             // Handle regular bot response
+  //             const botResponse = response?.bot_response || "Something went wrong";
+  //             addMessage(botResponse, "bot", "text");
+              
+  //             // Also call handleRenderFlow for regular responses
+  //             if (handleRenderFlow && typeof handleRenderFlow === 'function') {
+  //               console.log("Calling handleRenderFlow for regular response");
+  //               handleRenderFlow();
+  //             }
+  //           }
+  
+  //           return response;
+  //         })
+  //         .catch((error) => {
+  //           console.error('Error in runFlow:', error);
+  //           removeMessageById(loadingId);
+  //           addMessage("Sorry, something went wrong. Please try again.", "bot", "error");
+  //           throw error;
+  //         })
+  //         .finally(() => {
+  //           setIsLoading(false);
+  //         });
+  
+  //       if (resultAction) {
+  //         console.log('Flow executed successfully:', resultAction);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error in handleSendMessage:', error);
+  //     } finally {
+  //       setInputValue("");
+  //     }
+  //   }
+  // };
+
+
   const handleSendMessage = async () => {
     if (inputValue.trim() || uploadedFiles.length > 0) {
-      let userMessage = inputValue.trim()
+      let userMessage = inputValue.trim();
   
       let fileData = [];
       if (uploadedFiles.length > 0) {
@@ -211,96 +310,87 @@ const StudioChatBot = ({
       }
   
       setIsLoading(true);
-  
       addMessage(userMessage, "user");
+  
+      // --- START: The Fix ---
+      
+      // This console log is crucial for debugging.
+      // It will show you the session ID *before* the current message is sent.
+      // It should be null on the first message and have a value on all subsequent ones.
+      console.log("SESSION ID from Redux before sending:", sessionId);
   
       const payload = {
         agent_id: flow?.id,
         userInput: {
           message: userMessage,
-          uploadedFiles: fileData
+          uploadedFiles: fileData, 
+          // Your logic here is correct. It conditionally adds the session_id
+          // if it exists (i.e., after the first message).
+          ...(sessionId && { session_id: sessionId })
         }
-      }; 
+      };
       
-      if(sessionId && sessionId !== ""){
-        payload.userInput.session_id = sessionId;
-      }
-      
+      console.log("Sending payload:", JSON.stringify(payload, null, 2));
+      // --- END: The Fix ---
   
-      // Generate unique loading message ID
       const loadingId = generateUniqueId();
-  
-      // Add loading message
       addMessage("Processing...", "bot", "loading", loadingId);
   
       try {
-        const resultAction = await dispatch(
+        // The .unwrap() will give you the response data directly.
+        const response = await dispatch(
           runFlow({
             data: payload,
             onSuccess: () => {
-              console.log('Flow executed successfully');
+              // This is a good place for side-effects that don't depend on the response data
             },
           })
-        )
-          .unwrap()
-          .then((response) => {
-            // Remove loading message
-            removeMessageById(loadingId);
+        ).unwrap();
+        
+        // --- CRITICAL DEBUGGING STEP ---
+        // Log the response here to confirm the backend is sending the `session_id` as expected.
+        console.log("API Response received in component:", response);
+        // If you don't see `session_id` in this log, the problem is in your backend API.
   
-            // Check if response requires input
-            if (response?.input) {
-              // Add a special message type for input form
-              addMessage(
-                "",
-                "bot",
-                "input-forms",
-                null,
-                { flow: flow} // Pass the flow data to the component
-              );
+        // Remove loading message *after* a successful response
+        removeMessageById(loadingId);
   
-              // Check if handleRenderFlow exists and is a function
-              console.log("handleRenderFlow is:", typeof handleRenderFlow);
-              if (handleRenderFlow && typeof handleRenderFlow === 'function') {
-                console.log("Calling handleRenderFlow for input form");
-                handleRenderFlow();
-              } else {
-                console.error("handleRenderFlow is not a function or is undefined");
-              }
-            } else {
-              // Handle regular bot response
-              const botResponse = response?.bot_response || "Something went wrong";
-              addMessage(botResponse, "bot", "text");
-              
-              // Also call handleRenderFlow for regular responses
-              if (handleRenderFlow && typeof handleRenderFlow === 'function') {
-                console.log("Calling handleRenderFlow for regular response");
-                handleRenderFlow();
-              }
-            }
+        // The `runFlow.fulfilled` reducer in your slice has already updated the Redux store
+        // with the new session_id from the `response`. The component will re-render
+        // with the updated `sessionId` from `useSelector`, making it available for the next message.
   
-            return response;
-          })
-          .catch((error) => {
-            console.error('Error in runFlow:', error);
-            removeMessageById(loadingId);
-            addMessage("Sorry, something went wrong. Please try again.", "bot", "error");
-            throw error;
-          })
-          .finally(() => {
-            setIsLoading(false);
-          });
+        if (response?.input) {
+          addMessage(
+            "",
+            "bot",
+            "input-forms",
+            null,
+            { flow: flow }
+          );
   
-        if (resultAction) {
-          console.log('Flow executed successfully:', resultAction);
-        }
+          if (handleRenderFlow && typeof handleRenderFlow === 'function') {
+            handleRenderFlow();
+          }
+        } else {
+          const botResponse = response?.bot_response || "Something went wrong";
+          addMessage(botResponse, "bot", "text");
+          
+          if (handleRenderFlow && typeof handleRenderFlow === 'function') {
+            handleRenderFlow();
+          }
+        } 
+  
       } catch (error) {
-        console.error('Error in handleSendMessage:', error);
+        console.error('Error in handleSendMessage -> runFlow:', error);
+        removeMessageById(loadingId);
+        addMessage("Sorry, something went wrong. Please try again.", "bot", "error");
       } finally {
+        setIsLoading(false);
         setInputValue("");
+        // No need to set uploadedFiles here, as the user might want them for the next message
       }
     }
-  };
-
+};
   const makeApiCall = async (apiEndpoint, userMessage) => {
     try {
       setIsLoading(true)

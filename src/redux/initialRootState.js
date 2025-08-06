@@ -26,7 +26,7 @@ const initialRootState = {
     specification:{},
     flowOutput: null,
     isFlowRunning:false,
-    session_id: null
+    sessionId: null
   }
 }
 
