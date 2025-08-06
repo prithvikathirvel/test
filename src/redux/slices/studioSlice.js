@@ -338,7 +338,8 @@ const studioSlice = createSlice({
       });
       builder.addCase(runFlow.fulfilled, (state, action) => {
         state.isFlowRunning = false;
-        state.flowOutput = sanitizeOutput(action.payload);
+        state.flowOutput = sanitizeOutput(action.payload); 
+        state.sessionId = action.payload.session_id;
         console.log("flow output", state.flowOutput)
       });
       builder.addCase(runFlow.rejected, (state, action) => {
@@ -357,7 +358,6 @@ const generateSpecification = (flow, nodes, edges) => {
     return {};
   }
 
-  // Create a map of node connections from edges
   const nodeConnections = {};
   edges.forEach(edge => {
     if (!nodeConnections[edge.source]) {
@@ -379,7 +379,6 @@ const generateSpecification = (flow, nodes, edges) => {
         const isDecisionNode = nodeType === 'decision';
         const isIteratorNode = nodeType === 'iterator';
         
-        // For decision nodes, find condition met/not met paths
         let conditionMetPath = null;
         let conditionNotMetPath = null;
         let loopPath = null;
@@ -413,13 +412,11 @@ const generateSpecification = (flow, nodes, edges) => {
           ...(isDecisionNode && { 
             conditionMetPath,
             conditionNotMetPath,
-            // Keep next array for backward compatibility
             next: [...(node.next || []), conditionMetPath, conditionNotMetPath].filter(Boolean)
           }),
           ...(isIteratorNode && {
             loopPath,
             completePath,
-            // Keep next array for backward compatibility
             next: [...(node.next || []), loopPath, completePath].filter(Boolean)
           }),
           inputParameters: node.data?.inputParameters || node.inputParameters || [],
@@ -427,7 +424,6 @@ const generateSpecification = (flow, nodes, edges) => {
         };
       }),
       edges: edges.map(edge => {
-        // For decision nodes, map true/false to condition met/not met
         let condition = edge.sourceHandle;
         if (condition === 'true') {
           condition = 'conditionMet';

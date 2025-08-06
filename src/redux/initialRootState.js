@@ -25,7 +25,8 @@ const initialRootState = {
     getAllFlowsLoader: false,
     specification:{},
     flowOutput: null,
-    isFlowRunning:false
+    isFlowRunning:false,
+    session_id: null
   }
 }
 

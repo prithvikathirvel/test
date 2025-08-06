@@ -110,7 +110,7 @@ const AIAgentLanding = () => {
               AI Agents Effortlessly
             </h2>
             {/* <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-[var(--primary-color)]">Sify Aurora</span> */}
-
+            Components
             <p className="text-[15px] text-white mb-1">
               Transform your ideas into powerful AI agents with our intuitive visual builder.
             </p>

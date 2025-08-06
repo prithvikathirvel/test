@@ -4,26 +4,26 @@ import { Bot, Workflow, Database, Circle, CloudUpload, GitBranch, RotateCcw } fr
 import { useSelector } from "react-redux";
 import { useMemo } from "react";
 import { TextCursorInput } from 'lucide-react';
-import Tooltip from '@mui/material/Tooltip'; // Import Material UI Tooltip
+import Tooltip from '@mui/material/Tooltip';
 
 const getNodeIcon = (type, tools, agents, models, inputs, outputs, agentflows) => {
   const item = [...tools, ...agents, ...models, ...inputs, ...outputs, ...agentflows].find((item) => item.type === type);
   
   switch (type?.toLowerCase()) {
-    case "decision": return <GitBranch size={18} />;
-    case "iterator": return <RotateCcw size={18} />;
-    case "input": return <TextCursorInput size={18} />;
-    case "output": return <CloudUpload size={18} />;
+    case "decision": return <GitBranch size={25} />;
+    case "iterator": return <RotateCcw size={25} />;
+    case "input": return <TextCursorInput size={25} />;
+    case "output": return <CloudUpload size={25} />;
   }
   
-  if (!item) return <Workflow size={18} />;
+  if (!item) return <Workflow size={25} />;
 
   switch (item.type?.toLowerCase()) {
-    case "tool": return <Workflow size={18} />;
-    case "agent": return <Bot size={18} />;
-    case "model": return <Database size={18} />;
-    case "agentflow": return <Circle size={18} />;
-    default: return <Circle size={18} />;
+    case "tool": return <Workflow size={25} />;
+    case "agent": return <Bot size={25} />;
+    case "model": return <Database size={25} />;
+    case "agentflow": return <Circle size={25} />;
+    default: return <Circle size={25} />;
   }
 };
 
@@ -61,7 +61,7 @@ const getNodeStyles = (type, tools, agents, models, inputs, outputs, agentflows)
   }
 };
 
-// --- MAIN NODE COMPONENT ---
+
 
 function CustomNode({ data, type }) {
   const tools = useSelector((state) => state.studio.tools);
@@ -81,14 +81,20 @@ function CustomNode({ data, type }) {
       shadow-lg ${styles.shadow} hover:shadow-xl transition-all duration-300
       backdrop-blur-sm bg-opacity-95
     `}>
-      {/* Gradient Header */}
+
       <div className={`
-        bg-gradient-to-r ${styles.gradient} rounded-t-lg px-4 py-3
+        bg-gradient-to-r ${styles.gradient} rounded-t-lg px-4 py-2
         flex items-center gap-3 relative
       `}>
-        <div className="p-2">
-          <div className="text-white">{icon}</div>
-        </div>
+        {nodeType === "iterator" ? (
+          <div className="p-2">
+            <div className="text-white animate-spin">{icon}</div>
+          </div>
+        ) : (
+          <div className="p-2">
+            <div className="text-white">{icon}</div>
+          </div>
+        )}
         <div className="relative z-10 flex-1">
           <h3 className="text-white font-semibold text-sm leading-tight truncate">
             {data.displayName || data.name}
@@ -181,8 +187,6 @@ function CustomNode({ data, type }) {
   );
 }
 
-// --- HOOK FOR NODE TYPES ---
-
 export const useNodeTypes = () => {
   const tools = useSelector((state) => state.studio.tools);
   const agents = useSelector((state) => state.studio.agents);
@@ -192,20 +196,17 @@ export const useNodeTypes = () => {
   const flows = useSelector((state) => state.studio.flows);
     
   return useMemo(() => {
-    // Manually register built-in and special node types first
     const nodeTypes = {
       decision: CustomNode,
       iterator: CustomNode,
     };
         
-    // Register all dynamic node types from the Redux store
     [...tools, ...agents, ...models, ...inputs, ...outputs].forEach(item => {
       if (item && item.type) {
         nodeTypes[item.type] = CustomNode;
       }
     });
     
-    // Register flows with a proper type from the store
     if (Array.isArray(flows)) {
       flows.forEach(flow => {
         if (flow && flow.type) {
