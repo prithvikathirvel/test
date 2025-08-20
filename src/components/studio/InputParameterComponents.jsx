@@ -18,6 +18,7 @@ export const getParameterComponent = (param, color, onUpdate, parameters, parame
   }
 
   console.log("parameter inside getParameterComponent", parameter);
+  console.log('param', param);
 
   switch (param.type?.toLowerCase()) {
     case 'string':

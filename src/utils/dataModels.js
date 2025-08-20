@@ -236,7 +236,9 @@ const inputNodes = [
         "key": "templateData",
         "value": {},
         "type": "object",
-        "description": "A JSON object with the data to fill the template."
+        "description": "A JSON object with the data to fill the template.",
+        "key_name":"Field Name",
+        "key_value":"Field Type"
       }
     ],
     "outputParameters": [

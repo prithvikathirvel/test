@@ -141,7 +141,9 @@ const ObjectParameter = ({ param, color = "#4f46e5", isAddNew = true, initialVal
             <Box className={`grid gap-4 mt-4 ${error ? "mb-1" : "mb-3"}`}>
               <KeyValueInput 
                 newKey={newKey}
+                newKeyLabel={param.key_name}
                 newValue={newValue}
+                newValueLabel={param.key_value}
                 onKeyChange={(value) => {
                   setNewKey(value);
                   setError(null);

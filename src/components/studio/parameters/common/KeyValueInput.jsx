@@ -4,11 +4,11 @@ import { Box, Button } from '@mui/material';
 import { Plus } from 'lucide-react';
 import InputBox from '@/components/Common/InputBox';
 
-const KeyValueInput = ({newKey,newValue,onKeyChange,onValueChange,onAdd,color,onKeyPress,disabled = false}) => (
+const KeyValueInput = ({newKey,newValue,onKeyChange,onValueChange,onAdd,color,onKeyPress,disabled = false,newKeyLabel,newValueLabel}) => (
   <Box className="grid grid-cols-[1fr_1fr_auto] gap-4 items-end">
     <InputBox
-      label="Key"
-      placeholder="New key"
+      label={newKeyLabel}
+      placeholder={newKeyLabel}
       value={newKey}
       height="30px"
       onChange={onKeyChange}
@@ -18,8 +18,8 @@ const KeyValueInput = ({newKey,newValue,onKeyChange,onValueChange,onAdd,color,on
       disabled={disabled}
     />
     <InputBox
-      placeholder="New value"
-      label="Value"
+      placeholder={newValueLabel}
+      label={newValueLabel}
       value={newValue}
       // isShowLabel={false}
       height="30px"
