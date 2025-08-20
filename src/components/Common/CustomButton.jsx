@@ -132,18 +132,4 @@ const CustomButton = ({
   );
 };
 
-CustomButton.propTypes = {
-  children: PropTypes.node,
-  onClick: PropTypes.func,
-  disabled: PropTypes.bool,
-  loading: PropTypes.bool,
-  startIcon: PropTypes.node,
-  endIcon: PropTypes.node,
-  variant: PropTypes.oneOf(['contained', 'outlined', 'text']),
-  color: PropTypes.string,
-  size: PropTypes.oneOf(['small', 'medium', 'large']),
-  fullWidth: PropTypes.bool,
-  sx: PropTypes.object,
-};
-
 export default CustomButton;

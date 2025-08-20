@@ -1,18 +1,27 @@
 "use client";
- 
+
 import { useState } from "react";
 import { Drawer } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
- 
+import {
+  X,
+  User,
+  Lock,
+  ArrowRight,
+  KeyRound,
+  UserPlus
+} from "lucide-react";
+import CustomButton from "../Common/CustomButton";
+import InputBox from "../Common/InputBox";
+
 export default function LoginDrawer({ open, setOpen, handleLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
- 
+
   const handleLoginClick = (e) => {
     e.preventDefault();
-    handleLogin(username,password)
+    handleLogin(username, password);
   };
- 
+
   return (
     <Drawer
       anchor="right"
@@ -20,68 +29,65 @@ export default function LoginDrawer({ open, setOpen, handleLogin }) {
       onClose={() => setOpen(false)}
       PaperProps={{
         className:
-          "w-[420px] bg-white/20 backdrop-blur-2xl shadow-2xl rounded-l-[30px] p-8 transition-all duration-300 border border-gray-200/50",
+          "w-[420px] bg-white/20 backdrop-blur-2xl shadow-2xl rounded-l-[10px] p-8 transition-all duration-300 border border-gray-200/50",
       }}
     >
-      {/* Close Button */}
+
       <button
         onClick={() => setOpen(false)}
         className="absolute top-5 right-5 p-2 rounded-full bg-gray-200/50 hover:bg-gray-300 transition-all"
       >
-        <CloseIcon className="text-gray-600" />
+        <X size={20} className="text-gray-600" />
       </button>
- 
-      {/* Logo or Icon */}
-      <div className="flex justify-center mb-6">
-      {/* <span className="text-black text-2xl font-bold">Sify Aurora</span> */}
+
+      <div className="text-center mt-4 mb-8">
+        <h2 className="text-3xl font-extrabold text-gray-800">Welcome!</h2>
+        <p className="text-gray-500 text-sm mt-1">
+          Sign in to access your account
+        </p>
       </div>
- 
-      {/* Title */}
-      <h2 className="text-3xl font-extrabold text-center text-gray-800">
-        Welcome!!
-      </h2>
-      <p className="text-gray-500 text-sm text-center mb-8">
-        Sign in to access your account
-      </p>
- 
-      {/* Login Form */}
+
       <form onSubmit={handleLoginClick} className="flex flex-col gap-5">
-        <div className="relative">
-          <input
-            type="text"
+        
+      <InputBox
+            isShowLabel={false}
             placeholder="Username"
-            className="w-full p-4 pl-12 rounded-xl bg-white/70 shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            required
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            height="45px"
+            onChange={setUsername}
+            icon={<User size={18} className="text-gray-400" />}
           />
-          <span className="absolute top-4 left-4 text-gray-400">👤</span>
-        </div>
- 
-        <div className="relative">
-          <input
-            type="password"
+
+  <InputBox
+            isShowLabel={false}
             placeholder="Password"
-            className="w-full p-4 pl-12 rounded-xl bg-white/70 shadow-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-            required
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            height="45px"
+            onChange={setPassword}
+            icon={<Lock size={18} className="text-gray-400" />}
           />
-          <span className="absolute top-4 left-4 text-gray-400">🔒</span>
-        </div>
- 
-        {/* Login Button */}
-        <button
-          type="submit"
-          className="w-full py-4 mt-4 bg-[var(--primary-color)] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all"
-        >
-          Login
-        </button>
- 
-        {/* Forgot Password & Signup */}
+
+       
+
+       <CustomButton onClick={handleLoginClick}>
+        Sign In
+       </CustomButton>
+
         <div className="flex justify-between text-sm text-gray-500 mt-4">
-          <button className="hover:text-blue-600 transition-all">Forgot Password?</button>
-          <button className="hover:text-blue-600 transition-all">Create an Account</button>
+          <button
+            type="button"
+            className="flex items-center gap-1 hover:text-blue-600 transition-all"
+          >
+            <KeyRound size={14} />
+            Forgot Password?
+          </button>
+          <button
+            type="button"
+            className="flex items-center gap-1 hover:text-blue-600 transition-all"
+          >
+            <UserPlus size={14} />
+            Create Account
+          </button>
         </div>
       </form>
     </Drawer>

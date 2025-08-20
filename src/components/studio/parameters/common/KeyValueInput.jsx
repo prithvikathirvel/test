@@ -7,6 +7,7 @@ import InputBox from '@/components/Common/InputBox';
 const KeyValueInput = ({newKey,newValue,onKeyChange,onValueChange,onAdd,color,onKeyPress,disabled = false}) => (
   <Box className="grid grid-cols-[1fr_1fr_auto] gap-4 items-end">
     <InputBox
+      label="Key"
       placeholder="New key"
       value={newKey}
       height="30px"
@@ -18,8 +19,9 @@ const KeyValueInput = ({newKey,newValue,onKeyChange,onValueChange,onAdd,color,on
     />
     <InputBox
       placeholder="New value"
+      label="Value"
       value={newValue}
-      isShowLabel={false}
+      // isShowLabel={false}
       height="30px"
       onChange={onValueChange}
       color={color}

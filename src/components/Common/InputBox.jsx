@@ -36,6 +36,7 @@ const InputBox = ({
         className={`flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-md ${className} m-0`}
         sx={{
           '&:focus-within': {
+            borderWidth: 1.5,
             borderColor: color,
             boxShadow: '0 0 0 2px rgba(108, 92, 231, 0.1)',
           },

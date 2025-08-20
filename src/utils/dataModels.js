@@ -218,7 +218,37 @@ const inputNodes = [
         "type": "text"  
       }
     ]
+  },
+  {
+    "node_id": "Template Renderer_node-1753342600958-defgh456",
+    "name": "Template Renderer",
+    "displayName": "Template Renderer",
+    "type": "tool",
+    "description": "Renders a template with provided data. Uses Jinja2 syntax like {{ variable_name }}.",
+    "next": [],
+    "inputParameters": [
+      {
+        "key": "templateContent",
+        "value": "Hello, {{ name }}! Welcome to our service. Your user ID is {{ user.id }}.",
+        "type": "string"
+      },
+      {
+        "key": "templateData",
+        "value": {},
+        "type": "object",
+        "description": "A JSON object with the data to fill the template."
+      }
+    ],
+    "outputParameters": [
+      {
+        "key": "output",
+        "value": "renderedOutput",
+        "type": "string"
+      }
+    ]
   }
+
+
   
  
 

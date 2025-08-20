@@ -10,7 +10,7 @@ const ParameterHeader = ({ title, icon, description }) => (
       {convertToTitleCase(title)}
     </Typography>
     {description && (
-      <Tooltip title={description} arrow>
+      <Tooltip title={description} placement="right-start">
         <Box className="w-4 h-4 rounded-full bg-gray-200 flex items-center justify-center text-xs !cursor-help">
           ?
         </Box>
@@ -18,6 +18,5 @@ const ParameterHeader = ({ title, icon, description }) => (
     )}
   </Box>
 );
-
 
 export default ParameterHeader;
