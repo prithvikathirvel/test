@@ -279,6 +279,40 @@ const truncateLongStrings = (obj, maxLength = 300) => {
   return obj;
 };
 
+const parseAndNormalizeFormData = (botResponseString) => {
+  try {
+    // Step 1: Parse the main JSON string
+    const parsedData = JSON.parse(botResponseString);
+
+    // Step 2: Check if formValues exists and is a string
+    if (parsedData.formValues && typeof parsedData.formValues === 'string') {
+      try {
+        // Step 3: Sanitize the string by replacing single quotes with double quotes
+        // This makes it valid JSON.
+        const sanitizedFormValuesString = parsedData.formValues.replace(/'/g, '"');
+        
+        // Step 4: Parse the sanitized string into a proper object
+        const formValuesObject = JSON.parse(sanitizedFormValuesString);
+        
+        // Step 5: Replace the string version with the new object version
+        parsedData.formValues = formValuesObject;
+        
+      } catch (nestedError) {
+        console.error("Could not parse the nested formValues string:", nestedError);
+        // If parsing the nested string fails, set it to an empty object
+        // to prevent the component from crashing.
+        parsedData.formValues = {};
+      }
+    }
+    
+    return parsedData;
+
+  } catch (error) {
+    console.error("Could not parse the main bot_response string:", error);
+    // If the main string is invalid, return a default structure to avoid a crash
+    return { 'template Name': 'Error', formValues: {}, submit: '' };
+  }
+};
 
 
 
@@ -296,5 +330,6 @@ export {
   sortByField,
   getLastOutputParameter,
   sanitizeOutput,
-  truncateLongStrings
+  truncateLongStrings,
+  parseAndNormalizeFormData
 }

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState,useEffect} from 'react';
 import { Box, Typography, IconButton, Switch, Divider } from '@mui/material';
 import { X, Trash2 } from 'lucide-react';
 import InputBox from '@/components/Common/InputBox';
@@ -8,10 +8,25 @@ import KeyValueInput from './common/KeyValueInput';
 import ObjectParameterHeader from './common/ObjectParameterHeader';
 
 const ObjectParameter = ({ param, color = "#4f46e5", isAddNew = true, initialValues = {key:'key',value:'value'}, onChange, parameters, parameter, onUpdate }) => {
-  const [objectValues, setObjectValues] = useState(param.value || initialValues);
+  const isStringValue = typeof param.value === 'string';
+  const [objectValues, setObjectValues] = useState(isStringValue ? {} : param.value || initialValues);
+  const [useTextInput, setUseTextInput] = useState(isStringValue);
   const [newKey, setNewKey] = useState("");
   const [newValue, setNewValue] = useState("");
   const [error, setError] = useState(null);
+  const [textInputValue, setTextInputValue] = useState(JSON.stringify(param.value || initialValues, null, 2));
+
+  useEffect(() => {
+    const isString = typeof param.value === 'string';
+    setUseTextInput(isString);
+    
+    if (isString) {
+      setTextInputValue(param.value);
+    } else {
+      setObjectValues(param.value || initialValues);
+      setTextInputValue(JSON.stringify(param.value || initialValues, null, 2));
+    }
+  }, [param.value]);
 
   const handleValueChange = (key, value) => {
     const updatedValues = { ...objectValues, [key]: value };
@@ -26,6 +41,32 @@ const ObjectParameter = ({ param, color = "#4f46e5", isAddNew = true, initialVal
     }
     
     if (onChange) onChange(updatedValues);
+  };
+
+  const handleTextInputChange = (value) => {
+    setTextInputValue(value);
+    
+    // Just pass the string value directly, parsing will be done in the backend
+    if (onUpdate && parameters) {
+      const updatedParams = parameters.map(p => 
+        p.key === param.key ? { ...p, value } : p
+      );
+      onUpdate(updatedParams, parameter);
+    }
+    
+    if (onChange) onChange(value);
+  };
+
+  const toggleInputMode = () => {
+    if (!useTextInput) {
+      // Switching to text input mode - convert current object to string
+      setTextInputValue(
+        typeof objectValues === 'string' 
+          ? objectValues 
+          : JSON.stringify(objectValues || '', null, 2)
+      );
+    }
+    setUseTextInput(!useTextInput);
   };
 
   const handleAddNewField = () => {
@@ -113,53 +154,83 @@ const ObjectParameter = ({ param, color = "#4f46e5", isAddNew = true, initialVal
 
   return (
     <Box className="space-y-3">
-      <ObjectParameterHeader 
-        title={param.key}
-        description={param.description}
-      />
+      <Box className="flex justify-between items-center mb-1">
+        <ObjectParameterHeader 
+          title={param.key}
+          description={param.description}
+        />
+        <Box className="flex items-center">
+          <Typography variant="caption" className="mr-1 text-gray-500">
+            Use Text Input
+          </Typography>
+          <Switch
+            size="small"
+            checked={useTextInput}
+            onChange={toggleInputMode}
+            color="primary"
+          />
+        </Box>
+      </Box>
 
       <DashedBox className="!p-4">
-        <Box className="grid grid-cols-[1fr_1fr_auto] gap-4 mb-3 px-1">
-          <Typography variant="caption" className="font-medium text-gray-500">Key</Typography>
-          <Typography variant="caption" className="font-medium text-gray-500">Value</Typography>
-          <Box />
-        </Box>
-
-        <Box className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-          {Object.entries(objectValues).length === 0 ? (
-            <Box className="text-center py-4 text-sm text-gray-500">
-              No properties defined. Add a new key-value pair below.
+        {useTextInput ? (
+          <Box className="space-y-2">
+            <InputBox
+              value={textInputValue}
+              onChange={handleTextInputChange}
+              isShowLabel={false}
+              // multiline
+              rows={6}
+              className="font-mono text-sm"
+              color={color}
+              placeholder='Enter JSON object (e.g., {"key": "value"})'
+            />
+          </Box>
+        ) : (
+          <Box className="space-y-3">
+            <Box className="grid grid-cols-[1fr_1fr_auto] gap-4 mb-3 px-1">
+              <Typography variant="caption" className="font-medium text-gray-500">Key</Typography>
+              <Typography variant="caption" className="font-medium text-gray-500">Value</Typography>
+              <Box />
             </Box>
-          ) : (
-            Object.entries(objectValues).map(([key, value]) => renderKeyValuePair(key, value))
-          )}
-        </Box>
 
-        {isAddNew && (
-          <Box className="pt-2">
-            <Divider />
-            <Box className={`grid gap-4 mt-4 ${error ? "mb-1" : "mb-3"}`}>
-              <KeyValueInput 
-                newKey={newKey}
-                newKeyLabel={param.key_name}
-                newValue={newValue}
-                newValueLabel={param.key_value}
-                onKeyChange={(value) => {
-                  setNewKey(value);
-                  setError(null);
-                }}
-                onValueChange={setNewValue}
-                onAdd={handleAddNewField}
-                color={color}
-                onKeyPress={handleKeyPress}
-              />
+            <Box className="max-h-[300px] overflow-y-auto pr-1 space-y-3">
+              {Object.entries(objectValues).length === 0 ? (
+                <Box className="text-center py-4 text-sm text-gray-500">
+                  No properties defined. Add a new key-value pair below.
+                </Box>
+              ) : (
+                Object.entries(objectValues).map(([key, value]) => renderKeyValuePair(key, value))
+              )}
             </Box>
-            {error && (
-              <Box className="flex items-center gap-2 text-red-500 text-sm mt-2 bg-red-50 p-2 rounded-md border border-red-200">
-                <X size={14} />
-                <Typography variant="caption" className="text-red-600 font-medium">
-                  {error}
-                </Typography>
+
+            {isAddNew && (
+              <Box className="pt-2">
+                <Divider />
+                <Box className={`grid gap-4 mt-4 ${error ? "mb-1" : "mb-3"}`}>
+                  <KeyValueInput 
+                    newKey={newKey}
+                    newKeyLabel={param.key_name}
+                    newValue={newValue}
+                    newValueLabel={param.key_value}
+                    onKeyChange={(value) => {
+                      setNewKey(value);
+                      setError(null);
+                    }}
+                    onValueChange={setNewValue}
+                    onAdd={handleAddNewField}
+                    color={color}
+                    onKeyPress={handleKeyPress}
+                  />
+                </Box>
+                {error && (
+                  <Box className="flex items-center gap-2 text-red-500 text-sm mt-2 bg-red-50 p-2 rounded-md border border-red-200">
+                    <X size={14} />
+                    <Typography variant="caption" className="text-red-600 font-medium">
+                      {error}
+                    </Typography>
+                  </Box>
+                )}
               </Box>
             )}
           </Box>

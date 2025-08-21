@@ -4,9 +4,90 @@ import { useState, useRef, useEffect } from "react"
 import { MessageCircle, X, Send, User, Bot, CheckCircle, Loader2 ,XCircle, Paperclip, FileText, Trash2 } from "lucide-react"
 import { useDispatch, useSelector } from "react-redux"
 import { runFlow } from "@/redux/slices/studioSlice"
-import { updateSpecification } from "@/redux/slices/studioSlice" 
-import { updateFlow } from "@/redux/slices/studioSlice" 
-import { getLastOutputParameter } from "@/utils/commonFunction" 
+import { parseAndNormalizeFormData } from "@/utils/commonFunction"
+
+const DynamicFormComponent = ({ formData, resultActionbmit, colors }) => {
+  const [formValues, setFormValues] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Initialize form state when component mounts or formData changes
+  useEffect(() => {
+    const initialValues = Object.keys(formData.formValues).reduce((acc, key) => {
+      acc[key] = '';
+      return acc;
+    }, {});
+    setFormValues(initialValues);
+  }, [formData]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormValues(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    // The submitInfo contains metadata about the form being submitted
+    const submitInfo = {
+        templateName: formData['template Name'],
+        submitUrl: formData.submit // Pass the URL to the handler
+    };
+    await resultActionbmit(formValues, submitInfo);
+    // No need to set isSubmitting to false, as the parent component will take over
+  };
+  
+  const renderInput = (key, type) => {
+    const inputType = {
+      'string': 'text',
+      'number': 'number',
+      'date': 'date',
+      'email': 'email',
+      'password': 'password'
+    }[type] || 'text';
+
+    return (
+      <div key={key} className="mb-4">
+        <label htmlFor={key} className="block text-sm font-medium text-gray-700 capitalize mb-1">
+          {key.replace(/_/g, ' ')}
+        </label>
+        <input
+          type={inputType}
+          id={key}
+          name={key}
+          value={formValues[key] || ''}
+          onChange={handleInputChange}
+          required
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+        />
+      </div>
+    );
+  };
+
+  return (
+    <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 p-4">
+      <h4 className="font-semibold text-gray-800 mb-3 border-b pb-2">
+        {formData['template Name'] || 'Please fill the form'}
+      </h4>
+      <form onSubmit={handleSubmit}>
+        {Object.entries(formData.formValues).map(([key, type]) => renderInput(key, type))}
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className={`w-full text-white font-semibold py-2 px-4 rounded-md transition-all duration-200 ${colors.primary} disabled:bg-gray-400 disabled:cursor-not-allowed`}
+        >
+          {isSubmitting ? (
+             <div className="flex items-center justify-center">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Submitting...
+             </div>
+          ) : (
+            'Submit'
+          )}
+        </button>
+      </form>
+    </div>
+  );
+};
 
 
 const StudioChatBot = ({
@@ -54,30 +135,7 @@ const StudioChatBot = ({
       bg: "bg-blue-50",
       userBubble: "bg-blue-600",
     },
-    green: {
-      primary: "bg-green-600 hover:bg-green-700",
-      gradient: "from-green-600 to-green-700",
-      text: "text-green-600",
-      border: "border-green-200 hover:border-green-300",
-      bg: "bg-green-50",
-      userBubble: "bg-green-600",
-    },
-    purple: {
-      primary: "bg-purple-600 hover:bg-purple-700",
-      gradient: "from-purple-600 to-purple-700",
-      text: "text-purple-600",
-      border: "border-purple-200 hover:border-purple-300",
-      bg: "bg-purple-50",
-      userBubble: "bg-purple-600",
-    },
-    red: {
-      primary: "bg-red-600 hover:bg-red-700",
-      gradient: "from-red-600 to-red-700",
-      text: "text-red-600",
-      border: "border-red-200 hover:border-red-300",
-      bg: "bg-red-50",
-      userBubble: "bg-red-600",
-    },
+    // ... other colors
     primary: {
       primary: "bg-[var(--primary-color)] hover:bg-[var(--primary-color)]",
       gradient: "from-[var(--primary-color)] to-[var(--primary-color)]",
@@ -147,7 +205,6 @@ const StudioChatBot = ({
       const processedFiles = await Promise.all(filePromises)
       setUploadedFiles((prev) => [...prev, ...processedFiles])
 
-      // Clear the file input
       if (fileInputRef.current) {
         fileInputRef.current.value = ""
       }
@@ -194,109 +251,6 @@ const StudioChatBot = ({
     setMessages((prev) => prev.filter((msg) => msg.id !== messageId))
   }
 
-  // const handleSendMessage = async () => {
-  //   if (inputValue.trim() || uploadedFiles.length > 0) {
-  //     let userMessage = inputValue.trim()
-  
-  //     let fileData = [];
-  //     if (uploadedFiles.length > 0) {
-  //       fileData = uploadedFiles.map(file => file.base64);
-  //       if (!userMessage) {
-  //         userMessage = `Uploaded ${uploadedFiles.length} file(s): ${uploadedFiles.map(f => f.name).join(", ")}`;
-  //       }
-  //     }
-  
-  //     setIsLoading(true);
-  
-  //     addMessage(userMessage, "user");
-  
-  //     const payload = {
-  //       agent_id: flow?.id,
-  //       userInput: {
-  //         message: userMessage,
-  //         uploadedFiles: fileData, 
-  //         ...(sessionId && { session_id: sessionId })
-  //       }
-  //     }; 
-  //     console.log("SESSION ID", sessionId)
-      
-      
-  
-  //     // Generate unique loading message ID
-  //     const loadingId = generateUniqueId();
-  
-  //     // Add loading message
-  //     addMessage("Processing...", "bot", "loading", loadingId);
-  
-  //     try {
-  //       const resultAction = await dispatch(
-  //         runFlow({
-  //           data: payload,
-  //           onSuccess: () => {
-  //             console.log('Flow executed successfully');
-  //           },
-  //         })
-  //       )
-  //         .unwrap()
-  //         .then((response) => {
-  //           // Remove loading message
-  //           removeMessageById(loadingId);
-  
-  //           // Check if response requires input
-  //           if (response?.input) {
-  //             // Add a special message type for input form
-  //             addMessage(
-  //               "",
-  //               "bot",
-  //               "input-forms",
-  //               null,
-  //               { flow: flow} // Pass the flow data to the component
-  //             );
-  
-  //             // Check if handleRenderFlow exists and is a function
-  //             console.log("handleRenderFlow is:", typeof handleRenderFlow);
-  //             if (handleRenderFlow && typeof handleRenderFlow === 'function') {
-  //               console.log("Calling handleRenderFlow for input form");
-  //               handleRenderFlow();
-  //             } else {
-  //               console.error("handleRenderFlow is not a function or is undefined");
-  //             }
-  //           } else {
-  //             // Handle regular bot response
-  //             const botResponse = response?.bot_response || "Something went wrong";
-  //             addMessage(botResponse, "bot", "text");
-              
-  //             // Also call handleRenderFlow for regular responses
-  //             if (handleRenderFlow && typeof handleRenderFlow === 'function') {
-  //               console.log("Calling handleRenderFlow for regular response");
-  //               handleRenderFlow();
-  //             }
-  //           }
-  
-  //           return response;
-  //         })
-  //         .catch((error) => {
-  //           console.error('Error in runFlow:', error);
-  //           removeMessageById(loadingId);
-  //           addMessage("Sorry, something went wrong. Please try again.", "bot", "error");
-  //           throw error;
-  //         })
-  //         .finally(() => {
-  //           setIsLoading(false);
-  //         });
-  
-  //       if (resultAction) {
-  //         console.log('Flow executed successfully:', resultAction);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error in handleSendMessage:', error);
-  //     } finally {
-  //       setInputValue("");
-  //     }
-  //   }
-  // };
-
-
   const handleSendMessage = async () => {
     if (inputValue.trim() || uploadedFiles.length > 0) {
       let userMessage = inputValue.trim();
@@ -312,54 +266,43 @@ const StudioChatBot = ({
       setIsLoading(true);
       addMessage(userMessage, "user");
   
-      // --- START: The Fix ---
-      
-      // This console log is crucial for debugging.
-      // It will show you the session ID *before* the current message is sent.
-      // It should be null on the first message and have a value on all subsequent ones.
-      console.log("SESSION ID from Redux before sending:", sessionId);
-  
       const payload = {
         agent_id: flow?.id,
         userInput: {
           message: userMessage,
           uploadedFiles: fileData, 
-          // Your logic here is correct. It conditionally adds the session_id
-          // if it exists (i.e., after the first message).
           ...(sessionId && { session_id: sessionId })
         }
       };
       
-      console.log("Sending payload:", JSON.stringify(payload, null, 2));
-      // --- END: The Fix ---
-  
       const loadingId = generateUniqueId();
       addMessage("Processing...", "bot", "loading", loadingId);
   
       try {
-        // The .unwrap() will give you the response data directly.
-        const response = await dispatch(
-          runFlow({
-            data: payload,
-            onSuccess: () => {
-              // This is a good place for side-effects that don't depend on the response data
-            },
-          })
-        ).unwrap();
-        
-        // --- CRITICAL DEBUGGING STEP ---
-        // Log the response here to confirm the backend is sending the `session_id` as expected.
-        console.log("API Response received in component:", response);
-        // If you don't see `session_id` in this log, the problem is in your backend API.
-  
-        // Remove loading message *after* a successful response
+        const response = await dispatch(runFlow({ data: payload, onSuccess: () => {
+          console.log('Flow executed successfully');
+        }, })).unwrap();
         removeMessageById(loadingId);
-  
-        // The `runFlow.fulfilled` reducer in your slice has already updated the Redux store
-        // with the new session_id from the `response`. The component will re-render
-        // with the updated `sessionId` from `useSelector`, making it available for the next message.
-  
-        if (response?.input) {
+        
+        if (response?.type === 'form' && response.bot_response) {
+            try {
+                const parsedFormData = parseAndNormalizeFormData(response.bot_response)|| {};
+                if (parsedFormData.formValues && parsedFormData.submit) {
+                    addMessage(
+                        parsedFormData['template Name'] || 'Please fill out this form',
+                        "bot",
+                        "form",
+                        null,
+                        { formData: parsedFormData }
+                    );
+                } else {
+                    throw new Error("Parsed form data is missing required 'formValues' or 'submit' keys.");
+                }
+            } catch (e) {
+                console.error("Failed to parse form JSON from bot_response:", e);
+                addMessage("Sorry, I received a form but couldn't display it correctly.", "bot", "error");
+            }
+        } else if (response?.input) {
           addMessage(
             "",
             "bot",
@@ -387,79 +330,71 @@ const StudioChatBot = ({
       } finally {
         setIsLoading(false);
         setInputValue("");
-        // No need to set uploadedFiles here, as the user might want them for the next message
+        setUploadedFiles([]);
       }
     }
-};
-  const makeApiCall = async (apiEndpoint, userMessage) => {
+  };
+
+  // =================================================================
+  // START: UPDATED function to handle form submission via URL
+  // =================================================================
+  const handleFormSubmit = async (formData, submitInfo) => {
+    // 1. Add a user-facing message confirming what they submitted.
+    addMessage(`Submitted: ${submitInfo.templateName}`, 'user');
+    setIsLoading(true);
+
+    // 2. Add a bot loading message while we make the API call.
+    const loadingId = generateUniqueId();
+    addMessage("Processing your submission...", "bot", "loading", loadingId);
+
     try {
-      setIsLoading(true)
+      // 3. Make a direct API call to the URL provided in the form's JSON data.
+      console.log(`Submitting form data to URL: ${submitInfo.submitUrl}`);
+      console.log('Submitting data:', JSON.stringify(formData));
 
-      // Add loading message with unique ID
-      const loadingId = generateUniqueId()
-      addMessage("Let me fetch that information for you...", "bot", "loading", loadingId)
-
-      if (onApiCall) {
-        onApiCall(apiEndpoint, userMessage)
-      }
-
-      const response = await fetch(apiEndpoint.url)
-      const data = await response.json()
-
-      // Remove loading message
-      removeMessageById(loadingId)
-
-      // Process API response based on endpoint type
-      const processedResponse = apiEndpoint.responseProcessor ? apiEndpoint.responseProcessor(data) : data
-
-      // Add bot response with API data
-      addMessage(
-        apiEndpoint.successMessage || "Here's what I found:",
-        "bot",
-        "api-response",
-        null,
-        {
-          endpoint: apiEndpoint,
-          originalData: data,
+      const response = await fetch(submitInfo.submitUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Add any other necessary headers here, like Authorization tokens if required
         },
-        processedResponse,
-      )
-    } catch (error) {
-      // Remove loading message
-      setMessages((prev) => prev.filter((msg) => msg.messageType !== "loading"))
+        body: JSON.stringify(formData),
+      });
 
-      // Add error message
-      addMessage(
-        apiEndpoint.errorMessage || "Sorry, I couldn't fetch that information right now. Please try again later.",
-        "bot",
-        "error",
-      )
-    } finally {
-      setIsLoading(false)
-    }
-  }
+      // Remove loading message once the request is complete
+      removeMessageById(loadingId);
 
-  const findMatchingApiEndpoint = (userMessage) => {
-    const lowerMessage = userMessage.toLowerCase()
-
-    // Check if message matches any API trigger
-    for (const endpoint of apiConfig.endpoints || []) {
-      for (const trigger of endpoint.triggers) {
-        if (lowerMessage.includes(trigger.toLowerCase())) {
-          return endpoint
-        }
+      if (!response.ok) {
+        // Handle HTTP errors (e.g., 404, 500)
+        throw new Error(`API request failed with status: ${response.status}`);
       }
-    }
 
-    return null
-  }
+      // 4. Process the response from the API.
+      // We assume the submission URL will return a JSON object with a
+      // follow-up message for the user.
+      const result = await response.json();
+
+      // Display the response from the form submission API.
+      // If the API doesn't provide a 'bot_response', show a generic thank you message.
+      const botResponse = result?.bot_response || "Thank you! Your submission has been received.";
+      addMessage(botResponse, "bot", "text");
+
+    } catch (error) {
+      console.error('Error in handleFormSubmit -> fetch:', error);
+      removeMessageById(loadingId);
+      addMessage("Sorry, there was an error submitting your form. Please try again.", "bot", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  // =================================================================
+  // END: UPDATED function to handle form submission
+  // =================================================================
 
   const handleOptionClick = async (option, messageData) => {
     addMessage(option.text, "user")
 
-    if (option.apiEndpoint) {
-      await makeApiCall(option.apiEndpoint, option.text)
-    } else if (option.nextMessage) {
+    if (option.nextMessage) {
       setTimeout(() => {
         const nextMessage = {
           ...option.nextMessage,
@@ -486,14 +421,13 @@ const StudioChatBot = ({
     return timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   }
 
-  // Default User Message Component
   const DefaultUserMessage = ({ message, colors }) => (
     <div className={`px-4 py-3 rounded-2xl ${colors.userBubble} text-white rounded-br-md`}>
       <p className="text-sm leading-relaxed">{message.text}</p>
     </div>
   )
 
-  const DefaultBotMessage = ({ message, colors, onOptionClick }) => (
+  const DefaultBotMessage = ({ message, colors, onOptionClick, onFormSubmit }) => (
     <div>
       {message.messageType === "loading" ? (
         <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 px-4 py-3">
@@ -509,16 +443,13 @@ const StudioChatBot = ({
             <p className="text-sm leading-relaxed">{message.text}</p>
           </div>
         </div>
-      ) : 
-      // message.messageType === "input-form" ? (
-      //   <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-      //     <div className="p-3 border-b border-gray-200">
-      //       <p className="text-sm text-gray-700 mb-3">{message.text}</p>
-      //       <RunFlowComponent flow={message.customData.flow} />
-      //     </div>
-      //   </div>
-      // ) : 
-      (
+      ) : message.messageType === "form" ? (
+         <DynamicFormComponent 
+            formData={message.customData.formData} 
+            resultActionbmit={onFormSubmit}
+            colors={colors}
+         />
+      ) : (
         <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 px-4 py-3">
           <div 
             className="text-sm leading-relaxed" 
@@ -527,7 +458,6 @@ const StudioChatBot = ({
         </div>
       )}
   
-      {/* Rest of your component remains the same */}
       {message.options && (
         <div className="mt-3 space-y-2">
           {message.options.map((option, index) => (
@@ -553,16 +483,15 @@ const StudioChatBot = ({
       )
     } else {
       return CustomBotMessage ? (
-        <CustomBotMessage message={message} colors={colors} onOptionClick={handleOptionClick} />
+        <CustomBotMessage message={message} colors={colors} onOptionClick={handleOptionClick} onFormSubmit={handleFormSubmit} />
       ) : (
-        <DefaultBotMessage message={message} colors={colors} onOptionClick={handleOptionClick} />
+        <DefaultBotMessage message={message} colors={colors} onOptionClick={handleOptionClick} onFormSubmit={handleFormSubmit} />
       )
     }
   }
 
   return (
     <div className={`fixed ${positionConfig[position]} z-50`}>
-      {/* Chat Toggle Button */}
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
@@ -573,7 +502,6 @@ const StudioChatBot = ({
         </button>
       )}
 
-      {/* Chat Window */}
       {isOpen && (
         <div
           className="bg-white rounded-lg shadow-2xl flex flex-col border border-gray-200 overflow-hidden"
@@ -583,14 +511,13 @@ const StudioChatBot = ({
           <div className={`bg-gradient-to-r ${colors.gradient} text-white p-5 flex justify-between items-center`}>
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                {/* <CheckCircle className="w-5 h-5" /> */}
                 <img src="https://images.scalebranding.com/chatbot-woman-logo-0a79f97c-1fde-4cf9-8796-dbbbac54bb34.jpg" alt="Chatbot Logo" className="w-10 h-10 rounded-full object-cover" />
-                
               </div>
               <div>
                 <h3 className="font-semibold text-base">{botName}</h3>
                 <div className="flex items-center space-x-2">
-                <span className={`w-2 h-2 rounded-full ${botStatus === 'Online' ? 'bg-green-500' : 'bg-red-500'}`}></span>                  <p className="text-sm opacity-90">{botStatus}</p>
+                <span className={`w-2 h-2 rounded-full ${botStatus === 'Online' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                <p className="text-sm opacity-90">{botStatus}</p>
                 </div>
               </div>
             </div>
@@ -605,32 +532,21 @@ const StudioChatBot = ({
 
           {/* Messages Container */}
           <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-gray-50">
-            {messages.map((message,index  ) => (
+            {messages.map((message, index) => (
               <div key={index} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"} items-end space-x-2`}>
-              {/* Bot Avatar - Only show for bot messages on the left */}
               {message.sender === "bot" && (
                 <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0 mb-1">
                   <Bot className="w-4 h-4 text-gray-600" />
                 </div>
               )}
             
-              {/* Message Container */}
               <div className={`max-w-xs lg:max-w-sm ${message.sender === "user" ? "order-2" : "order-1"}`}>
-                {/* Message content */}
                 {renderMessage(message)}
                 
-                {/* Timestamp */}
                 <p className={`text-xs mt-2 ${message.sender === "user" ? "text-right" : "text-left"} text-gray-400`}>
                   {formatTime(message.timestamp)}
                 </p>
               </div>
-            
-              {/* User Avatar - Only show for user messages on the right */}
-              {/* {message.sender === "user" && (
-                <div className={`w-8 h-8 rounded-full ${colors.userBubble} flex items-center justify-center flex-shrink-0 mb-1 order-3`}>
-                  <User className="w-4 h-4 text-white" />
-                </div>
-              )} */}
             </div>
             ))}
 

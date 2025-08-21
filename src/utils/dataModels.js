@@ -229,7 +229,7 @@ const inputNodes = [
     "inputParameters": [
       {
         "key": "templateContent",
-        "value": "Hello, {{ name }}! Welcome to our service. Your user ID is {{ user.id }}.",
+        "value": "",
         "type": "string"
       },
       {
@@ -239,6 +239,12 @@ const inputNodes = [
         "description": "A JSON object with the data to fill the template.",
         "key_name":"Field Name",
         "key_value":"Field Type"
+      },
+      {
+        "key": "submit",
+        "value": "",
+        "type": "string",
+        "description": "Submit URL for the form."
       }
     ],
     "outputParameters": [
