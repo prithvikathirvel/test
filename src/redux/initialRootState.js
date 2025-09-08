@@ -26,7 +26,9 @@ const initialRootState = {
     specification:{},
     flowOutput: null,
     isFlowRunning:false,
-    sessionId: null
+    sessionId: null,
+    mcpTools: [],
+    mcpToolLoader: false,
   }
 }
 

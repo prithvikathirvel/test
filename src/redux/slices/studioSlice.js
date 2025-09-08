@@ -122,6 +122,16 @@ export const deleteFlow = createAsyncThunk('studio/deleteFlow', async ({data, on
   }
 }); 
 
+export const fetchMcpTools = createAsyncThunk('studio/fetchMcpTools', async () => {
+  try {
+    const response = await axios.get(`http://127.0.0.1:8000/mcp/tools`);
+    return response.data;
+  } catch (error) {
+    showToaster('error', error);
+    throw error;
+  }
+});
+
 const studioSlice = createSlice({
   name: "studio",
   initialState,
@@ -344,6 +354,18 @@ const studioSlice = createSlice({
       });
       builder.addCase(runFlow.rejected, (state, action) => {
         state.isFlowRunning = false;
+      });
+
+      builder
+      .addCase(fetchMcpTools.pending, (state) => {
+        state.mcpToolLoader = true;
+      })
+      .addCase(fetchMcpTools.fulfilled, (state, action) => {
+        state.mcpToolLoader = false;
+        state.mcpTools = action.payload;
+      })
+      .addCase(fetchMcpTools.rejected, (state) => {
+        state.mcpToolLoader = false;
       });
 
   
