@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useSelector } from "react-redux";
 import { useMemo } from "react";
+import { Tooltip } from "@mui/material";
 
 const getNodeIcon = (type, tools, agents, models, inputs, outputs, agentflows) => {
   const item = [...tools, ...agents, ...models, ...inputs, ...outputs, ...agentflows].find((item) => item.type === type);
@@ -101,10 +102,10 @@ function CustomNode({ data, type }) {
   }, [nodeType, data.inputParameters, optionColors]);
 
   return (
-    <div className="relative min-w-[280px] bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200/60 backdrop-blur-sm">
+    <div className="relative min-w-[250px] bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200/60 backdrop-blur-sm">
       
       {/* Header */}
-      <div className={`flex items-center gap-3 px-4 py-3.5 rounded-t-xl ${accent} relative overflow-hidden`}>
+      <div className={`flex items-center gap-3 px-4 py-3.5 !rounded-md ${accent} relative overflow-hidden`}>
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-white/10 opacity-20">
           <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
@@ -127,10 +128,10 @@ function CustomNode({ data, type }) {
           </p>
         </div>
         
-        <div className="relative z-10 flex items-center gap-2">
+        {/* <div className="relative z-10 flex items-center gap-2">
           <div className="w-2 h-2 bg-white/90 rounded-full animate-pulse shadow-sm"></div>
           <span className="text-white/90 text-xs font-medium">Ready</span>
-        </div>
+        </div> */}
       </div>
 
       {/* Question Content */}
@@ -144,7 +145,7 @@ function CustomNode({ data, type }) {
           {questionData.options.length > 0 && (
             <div className="space-y-3">
               {questionData.options.map((option, index) => (
-                <div key={option.id} className="flex items-center gap-3 group relative pr-6">
+                <div key={option.id} className="flex items-center gap-3 group relative pr-6 border-1 border-gray-300 p-2 rounded-md">
                   {/* <div className={`w-2.5 h-2.5 rounded-full ${option.color.bg} shadow-sm flex-shrink-0`}></div> */}
                   <span className="text-xs text-gray-500 font-medium flex-shrink-0 min-w-[50px]">
                     Option{index + 1}:
@@ -161,8 +162,11 @@ function CustomNode({ data, type }) {
                     position={Position.Right}
                     className="!w-3 !h-3 border-2 border-white shadow-md !absolute !right-0 !top-1/2 !transform !-translate-y-1/2"
                     style={{ 
-                      background: option.color.hex,
+                      background: 'gray',
+                      width: 10,
+                      height: 10,
                       right: -6
+
                     }}
                   />
                 </div>
@@ -173,7 +177,7 @@ function CustomNode({ data, type }) {
       )}
 
       {/* Regular Node Body */}
-      {nodeType !== "question" && (
+      {/* {nodeType !== "question" && (
         <div className="px-4 py-3.5">
           {data.description && (
             <p className="text-xs text-gray-600 leading-relaxed mb-3">
@@ -188,7 +192,7 @@ function CustomNode({ data, type }) {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* --- HANDLES --- */}
 
@@ -197,8 +201,13 @@ function CustomNode({ data, type }) {
         <Handle
           type="target"
           position={Position.Left}
-          className="w-3 h-3 border-2 border-white bg-gray-400 shadow-md hover:bg-gray-500 transition-colors"
-          style={{ left: -6 }}
+          className="w-15 h-15 border-2 border-white bg-gray-400 shadow-md hover:bg-gray-500 transition-colors"
+          style={{ 
+            background: "gray",
+            width: 10,
+            height: 10,
+            left: -6
+          }}
         />
       )}
 
@@ -207,8 +216,8 @@ function CustomNode({ data, type }) {
         <Handle
           type="source"
           position={Position.Right}
-          className="w-3 h-3 border-2 border-white bg-gray-400 shadow-md hover:bg-gray-500 transition-colors"
-          style={{ right: -6 }}
+          className="w-15 h-15 border-2 border-white bg-gray-400 shadow-md hover:bg-gray-500 transition-colors"
+          style={{ right: -6,width: 10,height: 10,backgroundColor: 'gray' }}
         />
       )}
 
@@ -220,14 +229,14 @@ function CustomNode({ data, type }) {
             type="source"
             position={Position.Right}
             className="w-3 h-3 border-2 border-white bg-emerald-500 shadow-md hover:bg-emerald-600 transition-colors"
-            style={{ right: -6, top: '40%' }}
+            style={{ right: -6, top: '40%',width: 10,height: 10,backgroundColor: 'gray' }}
           />
           <Handle
             id="false"
             type="source"
             position={Position.Right}
             className="w-3 h-3 border-2 border-white bg-red-500 shadow-md hover:bg-red-600 transition-colors"
-            style={{ right: -6, top: '60%' }}
+            style={{ right: -6, top: '60%',width: 10,height: 10,backgroundColor: 'gray' }}
           />
         </>
       )}
@@ -235,19 +244,24 @@ function CustomNode({ data, type }) {
       {/* Iterator Node Handles */}
       {nodeType === "iterator" && (
         <>
-          <Handle
+         <Tooltip title="Complete">
+
+         <Handle
             id="loop"
             type="source"
             position={Position.Right}
             className="w-3 h-3 border-2 border-white bg-blue-500 shadow-md hover:bg-blue-600 transition-colors"
-            style={{ right: -6, top: '40%' }}
+            style={{ right: -6, top: '40%',width: 10,height: 10,backgroundColor: 'gray' }}
           />
+
+         </Tooltip>
           <Handle
             id="complete"
             type="source"
             position={Position.Right}
             className="w-3 h-3 border-2 border-white bg-gray-500 shadow-md hover:bg-gray-600 transition-colors"
-            style={{ right: -6, top: '60%' }}
+            style={{ right: -6, top: '70%',width: 10,height: 10,backgroundColor: 'gray' }}
+            focusable={true}
           />
         </>
       )}

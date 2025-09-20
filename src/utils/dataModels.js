@@ -117,23 +117,29 @@ const inputNodes = [
   //       "type": "text"
   //     },
   //     {
-  //       "key": "condition",
-  //       "value": "greater_than",      
-  //       "type": "dropdown", 
-  //       "dropdownOptions": [
-  //        "greater_than",
-  //        "less_than",
-  //        "equal_to", 
-  //        "not_equal_to", 
-  //        "greater_than_or_equal_to", 
-  //        "less_than_or_equal_to",
-  //        "contains",
-  //        "not_contains",
-  //        "is_empty",
-  //        "is_not_empty",
-  //        "starts_with",
-  //        "ends_with"
-  //       ]
+  //       "key":"decision",
+  //       "value":[
+  //         {
+  //           "key": "condition",
+  //           "value": "",      
+  //           "type": "dropdown", 
+  //           "dropdownOptions": [
+  //            "greater_than",
+  //            "less_than",
+  //            "equal_to", 
+  //            "not_equal_to", 
+  //            "greater_than_or_equal_to", 
+  //            "less_than_or_equal_to",
+  //            "contains",
+  //            "not_contains",
+  //            "is_empty",
+  //            "is_not_empty",
+  //            "starts_with",
+  //            "ends_with"
+  //           ]
+  //         }
+  //       ],
+  //       "type":"array"
   //     },
   //     {
   //       "key": "comparisonValue",
@@ -152,68 +158,180 @@ const inputNodes = [
   // }, 
 
   {
-    "id": "decision_1",
-    "key": "Decision",
+    "node_id": "decision_node",
     "name": "Decision Node",
+    "displayName": "Evaluate Choice",
     "type": "decision",
-    "status": "active",
-    "description": "Decision node that can handle conditions or option branching",
-    "tags": ["decision", "control"],
+    "description": "Route flow based on selected choice",
+    "next": [
+      "end_node_option1",
+      "email_node",
+      "end_node_option3",
+      "end_node_option4"
+    ],
     "inputParameters": [
       {
         "key": "inputValue",
-        "value": "{{question_node.selected_choice}}",
+        "value": "{{selected_choice}}",
         "type": "text"
       },
       {
-        "key": "mode",
-        "value": "options",      
-        "type": "dropdown",
-        "dropdownOptions": ["condition", "options"]
-      },
-      {
-        "key": "condition",
-        "value": "equal_to",
-        "type": "dropdown",
-        "dropdownOptions": [
-          "greater_than",
-          "less_than",
-          "equal_to",
-          "not_equal_to",
-          "greater_than_or_equal_to",
-          "less_than_or_equal_to",
-          "contains",
-          "not_contains",
-          "is_empty",
-          "is_not_empty",
-          "starts_with",
-          "ends_with"
-        ]
-      },
-      {
-        "key": "comparisonValue",
-        "value": "",
-        "type": "text"
-      },
-      {
-        "key": "optionsMapping",
-        "value": {
-          "C++": "cpp_node",
-          "Java": "java_node",
-          "default": "end_node"
-        },
-        "type": "object"
+        "key": "conditions",
+        "value": [
+          {
+            "operator": "equal_to",
+            "comparisonValue": "C++",
+            "nextNode": "end_node_option1"
+          },
+          {
+            "operator": "equal_to",
+            "comparisonValue": "Java",
+            "nextNode": "email_node"
+          },
+          {
+            "operator": "equal_to",
+            "comparisonValue": "Python",
+            "nextNode": "end_node_option3"
+          },
+          {
+            "operator": "equal_to",
+            "comparisonValue": "Go",
+            "nextNode": "end_node_option4"
+          }
+        ],
+        "type": "decision"
       }
     ],
     "outputParameters": [
       {
-        "key": "decisionResult",
+        "key": "decision_result",
         "value": "",
-        "type": "text"
+        "type": "string"
       }
-    ],
-    "next": ["cpp_node", "java_node", "end_node"]
-  },
+    ]
+  },  
+
+  // {
+  //   "node_id": "decision_node",
+  //   "name": "Decision Node",
+  //   "displayName": "Evaluate Choice",
+  //   "type": "decision",
+  //   "description": "Route flow based on selected choice",
+  //   "next": [
+  //     "end_node_option1",
+  //     "email_node",
+  //     "end_node_option3",
+  //     "end_node_option4"
+  //   ],
+  //   "inputParameters": [
+  //     {
+  //       "key": "inputValue",
+  //       "value": "{{selected_choice}}",
+  //       "type": "text"
+  //     },
+  //     {
+  //       "key": "conditions",
+  //       "value": [
+  //         {
+  //           "operator": {
+  //             "type": "dropdown",
+  //             "value": "equal_to",
+  //             "dropdownOptions": [
+  //               "equal_to",
+  //               "not_equal_to",
+  //               "greater_than",
+  //               "less_than",
+  //               "greater_than_or_equal_to",
+  //               "less_than_or_equal_to",
+  //               "contains",
+  //               "not_contains",
+  //               "is_empty",
+  //               "is_not_empty",
+  //               "starts_with",
+  //               "ends_with"
+  //             ]
+  //           },
+  //           "comparisonValue": "C++",
+  //           "nextNode": "end_node_option1"
+  //         },
+  //         {
+  //           "operator": {
+  //             "type": "dropdown",
+  //             "value": "equal_to",
+  //             "dropdownOptions": [
+  //               "equal_to",
+  //               "not_equal_to",
+  //               "greater_than",
+  //               "less_than",
+  //               "greater_than_or_equal_to",
+  //               "less_than_or_equal_to",
+  //               "contains",
+  //               "not_contains",
+  //               "is_empty",
+  //               "is_not_empty",
+  //               "starts_with",
+  //               "ends_with"
+  //             ]
+  //           },
+  //           "comparisonValue": "Java",
+  //           "nextNode": "email_node"
+  //         },
+  //         {
+  //           "operator": {
+  //             "type": "dropdown",
+  //             "value": "equal_to",
+  //             "dropdownOptions": [
+  //               "equal_to",
+  //               "not_equal_to",
+  //               "greater_than",
+  //               "less_than",
+  //               "greater_than_or_equal_to",
+  //               "less_than_or_equal_to",
+  //               "contains",
+  //               "not_contains",
+  //               "is_empty",
+  //               "is_not_empty",
+  //               "starts_with",
+  //               "ends_with"
+  //             ]
+  //           },
+  //           "comparisonValue": "Python",
+  //           "nextNode": "end_node_option3"
+  //         },
+  //         {
+  //           "operator": {
+  //             "type": "dropdown",
+  //             "value": "equal_to",
+  //             "dropdownOptions": [
+  //               "equal_to",
+  //               "not_equal_to",
+  //               "greater_than",
+  //               "less_than",
+  //               "greater_than_or_equal_to",
+  //               "less_than_or_equal_to",
+  //               "contains",
+  //               "not_contains",
+  //               "is_empty",
+  //               "is_not_empty",
+  //               "starts_with",
+  //               "ends_with"
+  //             ]
+  //           },
+  //           "comparisonValue": "Go",
+  //           "nextNode": "end_node_option4"
+  //         }
+  //       ],
+  //       "type": "list"
+  //     }
+  //   ],
+  //   "outputParameters": [
+  //     {
+  //       "key": "decision_result",
+  //       "value": "",
+  //       "type": "string"
+  //     }
+  //   ]
+  // },
   
 
   {
