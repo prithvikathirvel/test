@@ -1,25 +1,26 @@
 "use client";
-import React, { useState } from 'react';
-import { Box, Typography, IconButton, Button, Switch } from '@mui/material';
-import { Trash2 } from 'lucide-react';
-import ParameterHeader from './common/ParameterHeader';
-import DashedBox from '@/components/Common/DashedBox';
-import { Code, Plus } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Box, Typography, IconButton, Button, Switch } from "@mui/material";
+import { Trash2, Code, Plus } from "lucide-react";
+import ParameterHeader from "./common/ParameterHeader";
+import DashedBox from "@/components/Common/DashedBox";
+import { getParameterComponent } from "../InputParameterComponents";
+import InputBox from "@/components/Common/InputBox";
 
 const ArrayParameter = ({ param, color, onUpdate, parameters, parameter }) => {
-  // Check if the value is a string (indicating it was edited in text mode)
-  const isStringValue = typeof param.value === 'string';
-  const [arrayItems, setArrayItems] = useState(isStringValue ? [] : param.value || []);
+  const isStringValue = typeof param.value === "string";
+  const [arrayItems, setArrayItems] = useState(
+    isStringValue ? [] : param.value || []
+  );
   const [useTextInput, setUseTextInput] = useState(isStringValue);
-  const [selectedType, setSelectedType] = useState('string');
-  const [textInputValue, setTextInputValue] = useState('');
+  const [selectedType, setSelectedType] = useState("string");
+  const [textInputValue, setTextInputValue] = useState("");
   const [error, setError] = useState(null);
 
-  // Initialize component based on input type
   useEffect(() => {
-    const isString = typeof param.value === 'string';
+    const isString = typeof param.value === "string";
     setUseTextInput(isString);
-    
+
     if (isString) {
       setTextInputValue(param.value);
     } else {
@@ -29,19 +30,68 @@ const ArrayParameter = ({ param, color, onUpdate, parameters, parameter }) => {
   }, [param.value]);
 
   const fieldTypes = [
-    { value: 'string', label: 'Text' },
-    { value: 'number', label: 'Number' },
-    { value: 'boolean', label: 'Boolean' },
-    { value: 'object', label: 'Object' },
-    { value: 'file', label: 'File' }
+    { value: "string", label: "Text" },
+    { value: "number", label: "Number" },
+    { value: "boolean", label: "Boolean" },
+    { value: "object", label: "Object" }
   ];
 
+  // Helper function to get default value for each type
+  const getDefaultValueForType = (type) => {
+    switch (type) {
+      case "string":
+        return "";
+      case "number":
+        return 0;
+      case "boolean":
+        return false;
+      case "object":
+        return {};
+      default:
+        return "";
+    }
+  };
+
+  // Helper function to detect item type
+  const getItemType = (item) => {
+    if (item === null) return "object";
+    if (typeof item === "boolean") return "boolean";
+    if (typeof item === "number") return "number";
+    if (typeof item === "object") return "object";
+    return "string";
+  };
+
+  // Helper function to parse value based on input
+  const parseInputValue = (value) => {
+    // If it's already not a string, return as is
+    if (typeof value !== "string") return value;
+
+    // Try to parse as number first
+    if (/^\d+(\.\d+)?$/.test(value.trim())) {
+      const num = Number(value);
+      if (!isNaN(num)) return num;
+    }
+
+    // Try to parse as boolean
+    if (value.toLowerCase() === "true") return true;
+    if (value.toLowerCase() === "false") return false;
+
+    // Try to parse as JSON object/array
+    if ((value.startsWith("{") && value.endsWith("}")) || 
+        (value.startsWith("[") && value.endsWith("]"))) {
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        // If parsing fails, return as string
+      }
+    }
+
+    // Return as string if nothing else matches
+    return value;
+  };
+
   const handleAddItem = () => {
-    const newItem = {
-      id: Date.now(),
-      type: selectedType,
-      value: selectedType === 'boolean' ? false : selectedType === 'object' ? {} : ''
-    };
+    const newItem = getDefaultValueForType(selectedType);
     const updatedItems = [...arrayItems, newItem];
     setArrayItems(updatedItems);
     updateParentValue(updatedItems);
@@ -54,41 +104,120 @@ const ArrayParameter = ({ param, color, onUpdate, parameters, parameter }) => {
   };
 
   const handleItemUpdate = (index, value) => {
-    const updatedItems = arrayItems.map((item, idx) =>
-      idx === index ? { ...item, value } : item
-    );
+    const updatedItems = arrayItems.map((item, idx) => {
+      if (idx !== index) return item;
+      
+      // Parse the input value to determine its type
+      return parseInputValue(value);
+    });
+
     setArrayItems(updatedItems);
     updateParentValue(updatedItems);
   };
 
-  const updateParentValue = (items) => {
-    if (onUpdate) {
-      const updatedParams = parameters.map(p =>
-        p.key === param.key ? { ...p, value: items } : p
-      );
-      onUpdate(updatedParams, parameter);
+  const handleTextInputChange = (value) => {
+    setTextInputValue(value);
+
+    try {
+      const parsed = JSON.parse(value);
+      if (!Array.isArray(parsed)) {
+        throw new Error("Value must be an array");
+      }
+      setError(null);
+      setArrayItems(parsed);
+      updateParentValue(parsed);
+    } catch (err) {
+      setError("Invalid JSON array");
     }
   };
 
-  const handleTextInputChange = (value) => {
-    setTextInputValue(value);
+  const updateParentValue = (items) => {
     if (onUpdate && parameters) {
-      const updatedParams = parameters.map(p => 
-        p.key === param.key ? { ...p, value } : p
+      const updatedParams = parameters.map((p) =>
+        p.key === param.key ? { ...p, type: "array", value: items } : p
       );
-      onUpdate(updatedParams, parameter);
+      onUpdate(updatedParams, parameter, true);
     }
   };
 
   const toggleInputMode = () => {
     if (!useTextInput) {
-      setTextInputValue(
-        typeof arrayItems === 'string' 
-          ? arrayItems 
-          : JSON.stringify(arrayItems || [], null, 2)
-      );
+      setTextInputValue(JSON.stringify(arrayItems || [], null, 2));
     }
     setUseTextInput(!useTextInput);
+  };
+
+  const renderArrayItem = (item, index) => {
+    const itemType = getItemType(item);
+    
+    // Create a mock parameter for the item
+    const itemParam = {
+      key: `Item ${index+1}`,
+      type: itemType,
+      value: item,
+      description: `Item ${index + 1} `
+    };
+
+    // Create a mock parameters array for this item
+    const itemParameters = [itemParam];
+
+    // Handle the update for this specific item
+    const handleItemOnUpdate = (updatedParams, parameterInfo, shouldUpdate) => {
+      if (updatedParams && updatedParams.length > 0) {
+        const newValue = updatedParams[0].value;
+        handleItemUpdate(index, newValue);
+      }
+    };
+
+    // Get the component for this item type
+    const Component = getParameterComponent(
+      itemParam,
+      color,
+      handleItemOnUpdate,
+      itemParameters,
+      itemParam
+    );
+
+    if (!Component) {
+      return (
+        <Box key={index} className="flex items-center gap-2 p-2 border rounded">
+          <InputBox
+            value={typeof item === "object" ? JSON.stringify(item) : String(item)}
+            onChange={(value) => handleItemUpdate(index, value)}
+            placeholder={`Item ${index + 1}`}
+            color={color}
+            isShowLabel={false}
+          />
+          <IconButton
+            size="small"
+            onClick={() => handleRemoveItem(index)}
+            className="ml-auto text-gray-500 hover:text-red-500"
+          >
+            <Trash2 size={16} />
+          </IconButton>
+        </Box>
+      );
+    }
+
+    return (
+      <Box key={index} className="mb-2">
+        <Box className="flex items-center gap-2">
+          <Box className="flex-1">
+            {Component}
+          </Box>
+          <IconButton
+            size="small"
+            onClick={() => handleRemoveItem(index)}
+            className="text-gray-500 hover:text-red-500"
+          >
+            <Trash2 size={16} />
+          </IconButton>
+        </Box>
+        <Typography variant="caption" className="text-gray-500 ml-2">
+          Type: {itemType}
+        </Typography>
+      </Box>
+    );
   };
 
   return (
@@ -111,6 +240,7 @@ const ArrayParameter = ({ param, color, onUpdate, parameters, parameter }) => {
           />
         </Box>
       </Box>
+
       <DashedBox className="!p-4">
         {useTextInput ? (
           <Box className="space-y-2">
@@ -122,43 +252,28 @@ const ArrayParameter = ({ param, color, onUpdate, parameters, parameter }) => {
               rows={6}
               className="font-mono text-sm"
               color={color}
-              placeholder='Enter JSON array (e.g., ["item1", "item2"])'
+              placeholder='Enter JSON array (e.g., ["item1", "item2", 5, true, {}])'
             />
             {error && (
-              <Typography color="error" variant="caption" className="text-red-600 text-xs">
+              <Typography
+                color="error"
+                variant="caption"
+                className="text-red-600 text-xs"
+              >
                 {error}
               </Typography>
             )}
           </Box>
-        ) : arrayItems.length === 0 ? (
-          <Typography variant="body2" className="text-gray-500 p-2">
-            {param.description}
-          </Typography>
         ) : (
           <Box className="space-y-4">
-            {arrayItems.map((item, index) => (
-              <Box key={item.id} className="relative p-3 bg-gray-50 rounded-lg">
-                <Box className="absolute right-2 top-2">
-                  <IconButton
-                    onClick={() => handleRemoveItem(index)}
-                    size="small"
-                    className="text-gray-500 hover:text-red-500"
-                  >
-                    <Trash2 size={16} />
-                  </IconButton>
-                </Box>
-                <Typography variant="caption" className="text-gray-500 mb-2 block">
-                  Item {index + 1}
-                </Typography>
-                {getParameterComponent(
-                  { ...param, type: item.type, value: item.value, key: `${param.key}[${index}]` },
-                  color,
-                  (_, __, value) => handleItemUpdate(index, value),
-                  parameters,
-                  parameter
-                )}
-              </Box>
-            ))}
+            {arrayItems.length === 0 ? (
+              <Typography variant="body2" className="text-gray-500 p-2">
+                {param.description || "No items in array. Add items below."}
+              </Typography>
+            ) : (
+              arrayItems.map((item, index) => renderArrayItem(item, index))
+            )}
+
             <Box className="flex items-center gap-4 mt-4">
               <Box className="w-40">
                 <select
@@ -166,7 +281,7 @@ const ArrayParameter = ({ param, color, onUpdate, parameters, parameter }) => {
                   onChange={(e) => setSelectedType(e.target.value)}
                   className="w-full px-3 py-2 border rounded-md text-sm"
                 >
-                  {fieldTypes.map(type => (
+                  {fieldTypes.map((type) => (
                     <option key={type.value} value={type.value}>
                       {type.label}
                     </option>

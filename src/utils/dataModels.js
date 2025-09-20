@@ -3,7 +3,7 @@ const inputNodes = [
     id: "input_0",
     key: "Start",
     name: "Start Node",
-    type: "input",
+    type: "inputs",
     status: "active",
     description: "Start Node",
     tags: ["start"],
@@ -102,54 +102,119 @@ const inputNodes = [
     createdAt: "2025-03-20T10:34:07.825Z",
     updatedAt: "2025-03-20T10:34:07.825Z"
   }, 
+  // {
+  //   "id": "decision_0",
+  //   "key": "Decision",
+  //   "name": "Decision Node",
+  //   "type": "decision",
+  //   "status": "active",
+  //   "description": "Decision Node with two output paths",
+  //   "tags": ["decision", "control"],
+  //   "inputParameters": [
+  //     {
+  //       "key": "inputValue",
+  //       "value": "",  
+  //       "type": "text"
+  //     },
+  //     {
+  //       "key": "condition",
+  //       "value": "greater_than",      
+  //       "type": "dropdown", 
+  //       "dropdownOptions": [
+  //        "greater_than",
+  //        "less_than",
+  //        "equal_to", 
+  //        "not_equal_to", 
+  //        "greater_than_or_equal_to", 
+  //        "less_than_or_equal_to",
+  //        "contains",
+  //        "not_contains",
+  //        "is_empty",
+  //        "is_not_empty",
+  //        "starts_with",
+  //        "ends_with"
+  //       ]
+  //     },
+  //     {
+  //       "key": "comparisonValue",
+  //       "value": "",       
+  //       "type": "text"
+  //     }
+  //   ],
+  //   "outputParameters": [
+  //     {
+  //       "key": "output",
+  //       "value": "", 
+  //       "type": "text"
+  //     }
+  //   ],
+  //   "next": ["node_if_true", "node_if_false"]  
+  // }, 
+
   {
-    "id": "decision_0",
+    "id": "decision_1",
     "key": "Decision",
     "name": "Decision Node",
     "type": "decision",
     "status": "active",
-    "description": "Decision Node with two output paths",
+    "description": "Decision node that can handle conditions or option branching",
     "tags": ["decision", "control"],
     "inputParameters": [
       {
         "key": "inputValue",
-        "value": "",  
+        "value": "{{question_node.selected_choice}}",
         "type": "text"
       },
       {
+        "key": "mode",
+        "value": "options",      
+        "type": "dropdown",
+        "dropdownOptions": ["condition", "options"]
+      },
+      {
         "key": "condition",
-        "value": "greater_than",      
-        "type": "dropdown", 
+        "value": "equal_to",
+        "type": "dropdown",
         "dropdownOptions": [
-         "greater_than",
-         "less_than",
-         "equal_to", 
-         "not_equal_to", 
-         "greater_than_or_equal_to", 
-         "less_than_or_equal_to",
-         "contains",
-         "not_contains",
-         "is_empty",
-         "is_not_empty",
-         "starts_with",
-         "ends_with"
+          "greater_than",
+          "less_than",
+          "equal_to",
+          "not_equal_to",
+          "greater_than_or_equal_to",
+          "less_than_or_equal_to",
+          "contains",
+          "not_contains",
+          "is_empty",
+          "is_not_empty",
+          "starts_with",
+          "ends_with"
         ]
       },
       {
         "key": "comparisonValue",
-        "value": "",       
+        "value": "",
         "type": "text"
+      },
+      {
+        "key": "optionsMapping",
+        "value": {
+          "C++": "cpp_node",
+          "Java": "java_node",
+          "default": "end_node"
+        },
+        "type": "object"
       }
     ],
     "outputParameters": [
       {
-        "key": "output",
-        "value": "", 
+        "key": "decisionResult",
+        "value": "",
         "type": "text"
       }
     ],
-    "next": ["node_if_true", "node_if_false"]  
-  }, 
+    "next": ["cpp_node", "java_node", "end_node"]
+  },
+  
 
   {
     id: "67dbef1fba68eac0121fad7034",
@@ -220,6 +285,37 @@ const inputNodes = [
     ]
   },
   {
+    "node_id": "question_node",
+    "name": "Question Node",
+    "displayName": "Technology Stack Question",
+    "type": "question",
+    "description": "Ask user about technology stack",
+    "next": [],
+    "inputParameters": [
+      {
+        "key": "question_text",
+        "value": "Question",
+        "type": "string"
+      },
+      {
+        "key": "options",
+        "value":
+          {
+            "Option1": "C++",
+            "Option2": "Java"
+          },
+        "type": "object"
+      }
+    ],
+    "outputParameters": [
+      {
+        "key": "selected_choice",
+        "value": "",
+        "type": "string"
+      }
+    ]
+  },
+  {
     "node_id": "Template Renderer_node-1753342600958-defgh456",
     "name": "Template Renderer",
     "displayName": "Template Renderer",
@@ -254,7 +350,9 @@ const inputNodes = [
         "type": "string"
       }
     ]
-  }
+  }, 
+
+  
 
 
   

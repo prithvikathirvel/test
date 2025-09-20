@@ -14,6 +14,7 @@ const KeyValueInput = ({newKey,newValue,onKeyChange,onValueChange,onAdd,color,on
       onChange={onKeyChange}
       icon=''
       color={color}
+      isShowLabel={false}
       onKeyDown={onKeyPress}
       disabled={disabled}
     />
@@ -21,7 +22,7 @@ const KeyValueInput = ({newKey,newValue,onKeyChange,onValueChange,onAdd,color,on
       placeholder={newValueLabel}
       label={newValueLabel}
       value={newValue}
-      // isShowLabel={false}
+      isShowLabel={false}
       height="30px"
       onChange={onValueChange}
       color={color}
