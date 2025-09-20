@@ -24,6 +24,8 @@ const getNodeIcon = (type, tools, agents, models, inputs, outputs, agentflows) =
     case "inputs": return <TextCursorInput size={16} />;
     case "output": return <CloudUpload size={16} />;
     case "question": return <HelpCircle size={16} />;
+    case "conditions": return <GitBranch size={16} />;
+    case "condition": return <GitBranch size={16} />;
   }
   
   if (!item) return <Workflow size={16} />;
@@ -50,6 +52,8 @@ const getNodeAccent = (type, tools, agents, models, inputs, outputs, agentflows)
     case "decision": return "bg-gradient-to-r from-amber-500 to-amber-600";
     case "iterator": return "bg-gradient-to-r from-indigo-500 to-indigo-600";
     case "question": return "bg-gradient-to-r from-violet-500 to-violet-600";
+    case "conditions": return "bg-gradient-to-r from-amber-500 to-amber-600";
+    case "condition": return "bg-gradient-to-r from-amber-500 to-amber-600";
     default: return "bg-gradient-to-r from-gray-400 to-gray-500";
   }
 };
@@ -78,28 +82,17 @@ function CustomNode({ data, type }) {
   const nodeType = type?.toLowerCase() || data?.type?.toLowerCase();
   const optionColors = getOptionColors();
 
-  // Extract question text and options from inputParameters for question nodes
-  const questionData = useMemo(() => {
-    if (nodeType !== "question" || !data.inputParameters) return { text: "", options: [] };
-    
-    const questionTextParam = data.inputParameters.find(param => param.key === "question_text");
-    const optionsParam = data.inputParameters.find(param => param.key === "options");
-    
-    const questionText = questionTextParam?.value || "";
-    const options = [];
-    
-    if (optionsParam?.value && typeof optionsParam.value === "object") {
-      Object.entries(optionsParam.value).forEach(([key, value], index) => {
-        options.push({
-          id: key,
-          label: value,
-          color: optionColors[index % optionColors.length]
-        });
-      });
+  // Extract condition data from inputParameters for condition nodes
+  const conditionData = useMemo(() => {
+    if ((nodeType !== "conditions" && nodeType !== "condition") || !data.inputParameters) {
+      return { conditions: [] };
     }
-    
-    return { text: questionText, options };
-  }, [nodeType, data.inputParameters, optionColors]);
+
+    const conditionParam = data.inputParameters.find(param => param.type === 'condition');
+    const conditions = conditionParam?.value || [];
+
+    return { conditions };
+  }, [nodeType, data.inputParameters]);
 
   return (
     <div className="relative min-w-[250px] bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200/60 backdrop-blur-sm">
@@ -134,46 +127,42 @@ function CustomNode({ data, type }) {
         </div> */}
       </div>
 
-      {/* Question Content */}
-      {nodeType === "question" && questionData.text && (
+      {/* Condition Content */}
+      {(nodeType === "conditions" || nodeType === "condition") && conditionData.conditions.length > 0 && (
         <div className="px-4 py-4 border-b border-gray-100">
           <p className="text-sm text-gray-700 font-medium leading-relaxed mb-4">
-            {questionData.text}
+            {conditionData.conditions.length} condition{conditionData.conditions.length !== 1 ? 's' : ''}
           </p>
-          
-          {/* Options List with inline handles */}
-          {questionData.options.length > 0 && (
-            <div className="space-y-3">
-              {questionData.options.map((option, index) => (
-                <div key={option.id} className="flex items-center gap-3 group relative pr-6 border-1 border-gray-300 p-2 rounded-md">
-                  {/* <div className={`w-2.5 h-2.5 rounded-full ${option.color.bg} shadow-sm flex-shrink-0`}></div> */}
-                  <span className="text-xs text-gray-500 font-medium flex-shrink-0 min-w-[50px]">
-                    Option{index + 1}:
-                  </span>
-                  <span className="text-sm text-gray-800 font-medium truncate flex-1">
-                    {option.label}
-                  </span>
-                  
-                  {/* Handle positioned right next to this specific option */}
-                  <Handle
-                    key={option.id}
-                    id={option.id}
-                    type="source"
-                    position={Position.Right}
-                    className="!w-3 !h-3 border-2 border-white shadow-md !absolute !right-0 !top-1/2 !transform !-translate-y-1/2"
-                    style={{ 
-                      background: 'gray',
-                      width: 10,
-                      height: 10,
-                      right: -6
 
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div> 
+          {/* Conditions List with inline handles */}
+          <div className="space-y-3">
+            {conditionData.conditions.map((condition, index) => (
+              <div key={index} className="flex items-center gap-3 group relative pr-6 border-1 border-gray-300 p-2 rounded-md">
+                <span className="text-xs text-gray-500 font-medium flex-shrink-0 min-w-[60px]">
+                  Condition {index + 1}:
+                </span>
+                <span className="text-sm text-gray-800 font-medium truncate flex-1">
+                  {condition.operator} {condition.comparisonValue || '(no value)'}
+                </span>
+
+                {/* Handle positioned right next to this specific condition */}
+                <Handle
+                  key={index}
+                  id={index.toString()}
+                  type="source"
+                  position={Position.Right}
+                  className="!w-3 !h-3 border-2 border-white shadow-md !absolute !right-0 !top-1/2 !transform !-translate-y-1/2"
+                  style={{
+                    background: 'gray',
+                    width: 10,
+                    height: 10,
+                    right: -6
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Regular Node Body */}
@@ -212,7 +201,7 @@ function CustomNode({ data, type }) {
       )}
 
       {/* Regular Output Handle */}
-      {nodeType !== "output" && nodeType !== "decision" && nodeType !== "iterator" && nodeType !== "question" && (
+      {nodeType !== "output" && nodeType !== "decision" && nodeType !== "iterator" && nodeType !== "question" && nodeType !== "conditions" && nodeType !== "condition" && (
         <Handle
           type="source"
           position={Position.Right}
@@ -282,6 +271,8 @@ export const useNodeTypes = () => {
       decision: CustomNode,
       iterator: CustomNode,
       question: CustomNode,
+      conditions: CustomNode,
+      condition: CustomNode,
     };
         
     [...tools, ...agents, ...models, ...inputs, ...outputs].forEach(item => {

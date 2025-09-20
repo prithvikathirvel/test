@@ -204,7 +204,30 @@ const studioSlice = createSlice({
               // Keep the original next array for backward compatibility
               next: [...(node.next || []), target].filter(Boolean)
             };
-          } else {
+          }
+          // For condition nodes, update the specific condition's nextNode
+          else if (node.type === 'conditions' || node.type === 'condition' || node.data?.type === 'conditions' || node.data?.type === 'condition') {
+            const updatedNode = { ...node };
+            const conditionIndex = parseInt(sourceHandle);
+
+            if (!isNaN(conditionIndex) && updatedNode.data?.inputParameters) {
+              const conditionParam = updatedNode.data.inputParameters.find(param => param.type === 'condition');
+              if (conditionParam && conditionParam.value && Array.isArray(conditionParam.value)) {
+                conditionParam.value = conditionParam.value.map((condition, index) => {
+                  if (index === conditionIndex) {
+                    return { ...condition, nextNode: target };
+                  }
+                  return condition;
+                });
+              }
+            }
+
+            return {
+              ...updatedNode,
+              next: [...(node.next || []), target].filter(Boolean)
+            };
+          }
+          else {
             // For regular nodes, just add to the next array
             const nextArray = node.next || [];
             if (!nextArray.includes(target)) {

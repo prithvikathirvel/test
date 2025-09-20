@@ -158,11 +158,13 @@ const inputNodes = [
   // }, 
 
   {
-    "node_id": "decision_node",
-    "name": "Decision Node",
+    "id": "decision_0",
+    "key": "Decision",
+    "name": "Decisionn Node",
     "displayName": "Evaluate Choice",
-    "type": "decision",
+    "type": "conditions",
     "description": "Route flow based on selected choice",
+    "tags": ["decision", "control"],
     "next": [
       "end_node_option1",
       "email_node",
@@ -199,7 +201,7 @@ const inputNodes = [
             "nextNode": "end_node_option4"
           }
         ],
-        "type": "decision"
+        "type": "condition"
       }
     ],
     "outputParameters": [

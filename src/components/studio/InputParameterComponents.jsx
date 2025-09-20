@@ -8,6 +8,7 @@ import FileParameter from './parameters/FileParameter';
 import ArrayParameter from './parameters/ArrayParameter';
 import DropdownParameter from './parameters/DropdownParameter';
 import CodeParameter from './parameters/CodeParameter';
+import ConditionParameter from './parameters/ConditionParameter';
 
 export const getParameterComponent = (param, color, onUpdate, parameters, parameter) => {
   const props = { param, color, onUpdate, parameters, parameter };
@@ -37,6 +38,8 @@ export const getParameterComponent = (param, color, onUpdate, parameters, parame
       return <DropdownParameter {...props} />;
     case 'code':
       return <CodeParameter {...props} />;
+    case 'condition':
+      return <ConditionParameter {...props} />;
     default:
       return <StringParameter {...props} />;
   }
