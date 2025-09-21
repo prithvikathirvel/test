@@ -1,13 +1,11 @@
-"use client";
 import React, { useState, useEffect } from "react";
-import { Box, Typography, IconButton, Button, Select, MenuItem, FormControl, InputLabel } from "@mui/material";
-import { Trash2, Plus, GitBranch } from "lucide-react";
-import ParameterHeader from "./common/ParameterHeader";
-import DashedBox from "@/components/Common/DashedBox";
-import InputBox from "@/components/Common/InputBox";
+import { GitBranch } from "lucide-react";
+import ConditionContainer from "./common/ConditionContainer";
+import ConditionItem from "./common/ConditionItem";
 
 const ConditionParameter = ({ param, color, onUpdate, parameters, parameter }) => {
   const [conditions, setConditions] = useState(param.value || []);
+  const [openDropdowns, setOpenDropdowns] = useState({});
 
   useEffect(() => {
     setConditions(param.value || []);
@@ -41,7 +39,7 @@ const ConditionParameter = ({ param, color, onUpdate, parameters, parameter }) =
     const newCondition = {
       operator: "equal_to",
       comparisonValue: "",
-      nextNode: "" // Internal field, not visible in UI
+      nextNode: ""
     };
     const updatedConditions = [...conditions, newCondition];
     setConditions(updatedConditions);
@@ -63,83 +61,50 @@ const ConditionParameter = ({ param, color, onUpdate, parameters, parameter }) =
     updateParentValue(updatedConditions);
   };
 
+  const toggleDropdown = (index) => {
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+
+  const selectOperator = (index, operator) => {
+    handleConditionUpdate(index, 'operator', operator);
+    setOpenDropdowns(prev => ({
+      ...prev,
+      [index]: false
+    }));
+  };
+
   const renderCondition = (condition, index) => {
     return (
-      <Box key={index} className="flex items-center gap-3 p-3 border rounded-lg bg-gray-50 mb-2">
-        <Box className="flex items-center gap-2 flex-1">
-          <Typography variant="body2" className="text-gray-600 min-w-[60px]">
-            Condition {index + 1}:
-          </Typography>
-
-          <FormControl size="small" className="min-w-[180px]">
-            <InputLabel>Operator</InputLabel>
-            <Select
-              value={condition.operator}
-              onChange={(e) => handleConditionUpdate(index, 'operator', e.target.value)}
-              label="Operator"
-            >
-              {operators.map((op) => (
-                <MenuItem key={op.value} value={op.value}>
-                  {op.label}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {condition.operator !== 'is_empty' && condition.operator !== 'is_not_empty' && (
-            <InputBox
-              value={condition.comparisonValue}
-              onChange={(value) => handleConditionUpdate(index, 'comparisonValue', value)}
-              placeholder="Comparison value"
-              color={color}
-              isShowLabel={false}
-              className="flex-1"
-            />
-          )}
-        </Box>
-
-        <IconButton
-          size="small"
-          onClick={() => handleRemoveCondition(index)}
-          className="text-gray-500 hover:text-red-500"
-        >
-          <Trash2 size={16} />
-        </IconButton>
-      </Box>
+      <ConditionItem
+        key={index}
+        condition={condition}
+        index={index}
+        operators={operators}
+        isDropdownOpen={openDropdowns[index]}
+        onToggleDropdown={() => toggleDropdown(index)}
+        onSelectOperator={(operator) => selectOperator(index, operator)}
+        onUpdateCondition={(field, value) => handleConditionUpdate(index, field, value)}
+        onRemoveCondition={() => handleRemoveCondition(index)}
+      />
     );
   };
 
   return (
-    <Box className="space-y-3">
-      <ParameterHeader
-        title={param.key}
-        icon={<GitBranch size={18} />}
-        description={param.description}
-      />
-
-      <DashedBox className="!p-4">
-        {conditions.length === 0 ? (
-          <Typography variant="body2" className="text-gray-500 p-2">
-            {param.description || "No conditions defined. Add conditions below."}
-          </Typography>
-        ) : (
-          <Box className="space-y-2">
-            {conditions.map((condition, index) => renderCondition(condition, index))}
-          </Box>
-        )}
-
-        <Box className="flex justify-center mt-4">
-          <Button
-            variant="outlined"
-            onClick={handleAddCondition}
-            startIcon={<Plus size={16} />}
-            size="small"
-          >
-            Add Condition
-          </Button>
-        </Box>
-      </DashedBox>
-    </Box>
+    <ConditionContainer
+      title={param.key}
+      description={param.description}
+      icon={<GitBranch size={18} className="text-blue-600" />}
+      hasConditions={conditions.length > 0}
+      onAddCondition={handleAddCondition}
+      emptyStateMessage="No conditions defined"
+      emptyStateDescription={param.description || "Add conditions to get started"}
+      addButtonText="Add Condition"
+    >
+      {conditions.map((condition, index) => renderCondition(condition, index))}
+    </ConditionContainer>
   );
 };
 

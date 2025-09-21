@@ -147,9 +147,23 @@ const studioSlice = createSlice({
         const { nodes, flow } = action.payload;
         state.nodes = nodes?.map(newNode => {
           const existingNode = state.nodes ? state.nodes.find(node => node.id === newNode.id) : null;
+          if (existingNode) {
+            // Preserve all existing data when updating nodes (e.g., position changes)
+            return {
+              ...newNode,
+              data: {
+                ...existingNode.data,
+                ...newNode.data,
+                // Ensure inputParameters are preserved, especially for condition nodes
+                inputParameters: existingNode.data?.inputParameters || newNode.data?.inputParameters || [],
+                outputParameters: existingNode.data?.outputParameters || newNode.data?.outputParameters || []
+              },
+              next: existingNode?.next || newNode.next || []
+            };
+          }
           return {
             ...newNode,
-            next: existingNode?.next || newNode.next || []
+            next: newNode.next || []
           };
         });
         if (Array.isArray(state.nodes) && Array.isArray(state.edges)) {
@@ -184,10 +198,34 @@ const studioSlice = createSlice({
       state.edges = state.edges.filter(
         edge => edge.source !== nodeId && edge.target !== nodeId
       );
-      state.nodes = state.nodes.map(node => ({
-        ...node,
-        next: node.next.filter(nextId => nextId !== nodeId)
-      }));
+      state.nodes = state.nodes.map(node => {
+        const updatedNode = {
+          ...node,
+          next: node.next.filter(nextId => nextId !== nodeId)
+        };
+
+        // Clean up condition nextNode references for condition/conditions nodes
+        if ((node.type === 'conditions' || node.type === 'condition' || node.data?.type === 'conditions' || node.data?.type === 'condition') 
+            && node.data?.inputParameters) {
+          updatedNode.data = {
+            ...node.data,
+            inputParameters: node.data.inputParameters.map(param => {
+              if (param.type === 'condition' && param.value && Array.isArray(param.value)) {
+                return {
+                  ...param,
+                  value: param.value.map(condition => ({
+                    ...condition,
+                    nextNode: condition.nextNode === nodeId ? '' : condition.nextNode
+                  }))
+                };
+              }
+              return param;
+            })
+          };
+        }
+
+        return updatedNode;
+      });
       state.specification = generateSpecification(flow, state.nodes, state.edges);
     },
     updateNodeConnections: (state, action) => {
@@ -207,23 +245,41 @@ const studioSlice = createSlice({
           }
           // For condition nodes, update the specific condition's nextNode
           else if (node.type === 'conditions' || node.type === 'condition' || node.data?.type === 'conditions' || node.data?.type === 'condition') {
-            const updatedNode = { ...node };
             const conditionIndex = parseInt(sourceHandle);
 
-            if (!isNaN(conditionIndex) && updatedNode.data?.inputParameters) {
-              const conditionParam = updatedNode.data.inputParameters.find(param => param.type === 'condition');
-              if (conditionParam && conditionParam.value && Array.isArray(conditionParam.value)) {
-                conditionParam.value = conditionParam.value.map((condition, index) => {
-                  if (index === conditionIndex) {
-                    return { ...condition, nextNode: target };
-                  }
-                  return condition;
-                });
-              }
+            if (!isNaN(conditionIndex) && node.data?.inputParameters) {
+              // Create a deep copy of the node to avoid mutations
+              const updatedNode = {
+                ...node,
+                data: {
+                  ...node.data,
+                  inputParameters: node.data.inputParameters.map(param => {
+                    if (param.type === 'condition' && param.value && Array.isArray(param.value)) {
+                      return {
+                        ...param,
+                        value: param.value.map((condition, index) => {
+                          if (index === conditionIndex) {
+                            return { ...condition, nextNode: target };
+                          }
+                          // Preserve existing nextNode values for other conditions
+                          return { ...condition };
+                        })
+                      };
+                    }
+                    return { ...param };
+                  })
+                }
+              };
+
+              return {
+                ...updatedNode,
+                next: [...(node.next || []), target].filter(Boolean)
+              };
             }
 
+            // If conditionIndex is invalid, just return the node with updated next array
             return {
-              ...updatedNode,
+              ...node,
               next: [...(node.next || []), target].filter(Boolean)
             };
           }

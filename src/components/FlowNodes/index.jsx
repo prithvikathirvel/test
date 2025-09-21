@@ -195,7 +195,8 @@ function CustomNode({ data, type }) {
             background: "gray",
             width: 10,
             height: 10,
-            left: -6
+            left: -6,
+            zIndex: 10
           }}
         />
       )}
@@ -206,7 +207,7 @@ function CustomNode({ data, type }) {
           type="source"
           position={Position.Right}
           className="w-15 h-15 border-2 border-white bg-gray-400 shadow-md hover:bg-gray-500 transition-colors"
-          style={{ right: -6,width: 10,height: 10,backgroundColor: 'gray' }}
+          style={{ right: -6,width: 10,height: 10,backgroundColor: 'gray',zIndex: 1000 }}
         />
       )}
 
