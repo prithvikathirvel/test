@@ -509,6 +509,7 @@ const generateSpecification = (flow, nodes, edges) => {
           displayName: node.data?.displayName || node.name,
           type: node.data?.type || node.type,
           description: node.data?.description || node.description,
+          interrupt: node.data?.interrupt || node.interrupt || false,
           next: (isDecisionNode || isIteratorNode) ? [] : (node.data?.next || node.next || []),
           ...(isDecisionNode && { 
             conditionMetPath,

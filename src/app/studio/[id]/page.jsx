@@ -91,8 +91,74 @@ const Studio = () => {
             .map(node => node.node_id);
 
         const horizontalSpacing = 300;
-        const verticalSpacing = 200;
-        const nodeHeight = 75;
+        const baseVerticalSpacing = 280;
+        const baseNodeHeight = 75;
+
+        // Function to calculate dynamic node height based on type and content
+        const calculateNodeHeight = (node) => {
+            const nodeType = node.type?.toLowerCase();
+            let height = baseNodeHeight;
+
+            // Question nodes have additional content
+            if (nodeType === 'question') {
+                // Base height + question content + options
+                height = 140; // Header + question text (increased from 120)
+                const optionsParam = node.inputParameters?.find(param => param.key === 'options');
+                const optionsCount = optionsParam?.value ? Object.keys(optionsParam.value).length : 0;
+                height += Math.max(optionsCount * 45, 70); // Each option adds ~45px, minimum 70px for options section
+            }
+            // Decision/Condition nodes have additional content
+            else if (nodeType === 'decision' || nodeType === 'conditions' || nodeType === 'condition') {
+                height = 140; // Header + condition content (increased from 120)
+                const conditionParam = node.inputParameters?.find(param => param.type === 'condition');
+                const conditionsCount = conditionParam?.value ? conditionParam.value.length : 0;
+                height += Math.max(conditionsCount * 50, 70); // Each condition adds ~50px, minimum 70px for conditions section
+            }
+            // Iterator nodes are slightly taller due to multiple handles
+            else if (nodeType === 'iterator') {
+                height = 110; // Increased from 95
+            }
+            // Tool nodes
+            else if (nodeType === 'tool') {
+                height = 100; // Increased from base 75
+            }
+            // Agent nodes
+            else if (nodeType === 'agent') {
+                height = 105; // Increased from base 75
+            }
+            // Model nodes
+            else if (nodeType === 'model') {
+                height = 95; // Increased from base 75
+            }
+            // Input nodes
+            else if (nodeType === 'inputs' || nodeType === 'input') {
+                height = 90; // Increased from base 75
+            }
+            // Output nodes
+            else if (nodeType === 'output') {
+                height = 90; // Increased from base 75
+            }
+            // AgentFlow nodes
+            else if (nodeType === 'agentflow') {
+                height = 100; // Increased from base 75
+            }
+            // All other nodes get increased base height
+            else {
+                height = 85; // Increased from base 75
+            }
+
+            return height;
+        };
+
+        // Function to calculate dynamic vertical spacing between nodes
+        const calculateVerticalSpacing = (node1, node2) => {
+            const height1 = calculateNodeHeight(node1);
+            const height2 = calculateNodeHeight(node2);
+            const maxHeight = Math.max(height1, height2);
+            
+            // Ensure minimum spacing based on the taller node
+            return Math.max(baseVerticalSpacing, maxHeight + 120); // 120px buffer between nodes (increased from 80px)
+        };
 
 
         const calculatePositions = () => {
@@ -106,6 +172,7 @@ const Studio = () => {
 
                 if (!levelSpaceUsed[level]) levelSpaceUsed[level] = 0;
 
+                const currentNode = nodeMap[nodeId];
                 const children = adjacencyList[nodeId] || [];
 
                 positions[nodeId] = {
@@ -117,20 +184,33 @@ const Studio = () => {
                     const nextLevel = level + 1;
                     if (!levelSpaceUsed[nextLevel]) levelSpaceUsed[nextLevel] = 0;
 
-                    const totalStackHeight = (children.length - 1) * verticalSpacing;
+                    // Calculate dynamic spacing for each child
+                    let childrenSpacing = [];
+                    children.forEach((childId) => {
+                        const childNode = nodeMap[childId];
+                        const spacing = calculateVerticalSpacing(currentNode, childNode);
+                        childrenSpacing.push(spacing);
+                    });
+
+                    // Use the maximum spacing needed
+                    const maxSpacing = Math.max(...childrenSpacing, baseVerticalSpacing);
+                    const totalStackHeight = (children.length - 1) * maxSpacing;
                     const startY = verticalPosition - totalStackHeight / 2;
 
                     children.forEach((childId, index) => {
-                        const childY = startY + index * verticalSpacing;
+                        const childY = startY + index * maxSpacing;
                         processNode(childId, nextLevel, childY);
                     });
                 }
             };
 
             rootNodes.forEach((rootId, index) => {
-                const rootY = index * (verticalSpacing * 2);
+                const rootNode = nodeMap[rootId];
+                const rootNodeHeight = calculateNodeHeight(rootNode);
+                const rootSpacing = Math.max(baseVerticalSpacing * 2, rootNodeHeight + 160); // Extra spacing for root nodes (increased from 120)
+                const rootY = index * rootSpacing;
                 processNode(rootId, 0, rootY);
-                levelSpaceUsed[0] = rootY + verticalSpacing;
+                levelSpaceUsed[0] = rootY + rootSpacing;
             });
 
 
@@ -145,13 +225,24 @@ const Studio = () => {
                         y: verticalPos
                     };
 
-                    levelSpaceUsed[disconnectedLevel] += verticalSpacing;
+                    const nodeHeight = calculateNodeHeight(node);
+                    const nodeSpacing = Math.max(baseVerticalSpacing, nodeHeight + 120); // Increased from 80px to 120px
+                    levelSpaceUsed[disconnectedLevel] += nodeSpacing;
                     processedNodes.add(node.node_id);
 
                     const children = adjacencyList[node.node_id] || [];
                     if (children.length > 0) {
+                        // Calculate dynamic spacing for disconnected node children
+                        let childrenSpacing = [];
+                        children.forEach((childId) => {
+                            const childNode = nodeMap[childId];
+                            const spacing = calculateVerticalSpacing(node, childNode);
+                            childrenSpacing.push(spacing);
+                        });
+
+                        const maxSpacing = Math.max(...childrenSpacing, baseVerticalSpacing);
                         children.forEach((childId, index) => {
-                            const childY = verticalPos - (children.length - 1) * verticalSpacing / 2 + index * verticalSpacing;
+                            const childY = verticalPos - (children.length - 1) * maxSpacing / 2 + index * maxSpacing;
                             processNode(childId, disconnectedLevel + 1, childY);
                         });
                     }
@@ -190,6 +281,11 @@ const Studio = () => {
                 nodeData.conditionNotMetPath = node.conditionNotMetPath || null;
                 nodeData.data.conditionMetPath = node.conditionMetPath || null;
                 nodeData.data.conditionNotMetPath = node.conditionNotMetPath || null;
+            }
+
+            if(node.type === 'question' || node.data?.type === 'question') {
+                nodeData.interrupt = node.interrupt || false;
+                nodeData.data.interrupt = node.interrupt || false;
             }
 
             return nodeData;
@@ -316,6 +412,7 @@ const Studio = () => {
                     key: newNodeId,
                     type: spec.type,
                     description: spec.description,
+                    interrupt: spec.interrupt || false,
                     next: [],
                     position,
                     data: {

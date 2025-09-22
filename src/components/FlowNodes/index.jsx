@@ -94,6 +94,21 @@ function CustomNode({ data, type }) {
     return { conditions };
   }, [nodeType, data.inputParameters]);
 
+  // Extract options data from inputParameters for question nodes
+  const questionData = useMemo(() => {
+    if (nodeType !== "question" || !data.inputParameters) {
+      return { questionText: '', options: {} };
+    }
+
+    const questionTextParam = data.inputParameters.find(param => param.key === 'question_text');
+    const optionsParam = data.inputParameters.find(param => param.key === 'options');
+    
+    return {
+      questionText: questionTextParam?.value || '',
+      options: optionsParam?.value || {}
+    };
+  }, [nodeType, data.inputParameters]);
+
   return (
     <div className="relative min-w-[250px] bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200/60 backdrop-blur-sm">
       
@@ -127,6 +142,46 @@ function CustomNode({ data, type }) {
         </div> */}
       </div>
 
+      {/* Question Content */}
+      {nodeType === "question" && (
+        <div className="px-4 py-4 border-b border-gray-100">
+          {questionData.questionText && (
+            <p className="text-sm text-gray-700 font-medium leading-relaxed mb-4 break-words">
+              {questionData.questionText.length > 40 
+                ? `${questionData.questionText.substring(0, 40)}...` 
+                : questionData.questionText}
+            </p>
+          )}
+
+          {/* Options List */}
+          {Object.keys(questionData.options).length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs text-gray-500 font-medium mb-3">
+                {Object.keys(questionData.options).length} option{Object.keys(questionData.options).length !== 1 ? 's' : ''}:
+              </p>
+              
+              {Object.entries(questionData.options).map(([key, value], index) => {
+                const colorIndex = index % optionColors.length;
+                const color = optionColors[colorIndex];
+                
+                return (
+                  <div key={key} className="flex justify-between gap-3 group bg-gray-100 p-2 px-4 rounded-lg">
+                  <div 
+                    // className={`w-3 h-3 rounded-full ${color.bg} flex-shrink-0 shadow-sm`}
+                    // style={{ backgroundColor: color.hex }}
+                  >Option {index + 1}</div>
+                  
+                  <span className="text-sm text-gray-800 font-medium truncate">
+                    {value}
+                  </span>
+                </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Condition Content */}
       {(nodeType === "conditions" || nodeType === "condition") && conditionData.conditions.length > 0 && (
         <div className="px-4 py-4 border-b border-gray-100">
@@ -138,11 +193,12 @@ function CustomNode({ data, type }) {
           <div className="space-y-3">
             {conditionData.conditions.map((condition, index) => (
               <div key={index} className="flex items-center gap-3 group relative pr-6 border-1 border-gray-300 p-2 rounded-md">
-                <span className="text-xs text-gray-500 font-medium flex-shrink-0 min-w-[60px]">
+               {/* <span className="text-xs text-gray-500 font-medium flex-shrink-0">
                   Condition {index + 1}:
-                </span>
-                <span className="text-sm text-gray-800 font-medium truncate flex-1">
-                  {condition.operator} {condition.comparisonValue || '(no value)'}
+                </span> */}
+              <span className="text-sm text-gray-800 font-medium truncate flex gap-3 items-center">
+                  <span className="text-xs text-gray-500 font-medium bg-gray-100 border-1 border-gray-300 px-2 py-1 rounded">{condition.operator}</span>
+                  <span className="text-xs text-gray-500 font-medium">{condition.comparisonValue || '(no value)'}</span>
                 </span>
 
                 {/* Handle positioned right next to this specific condition */}
@@ -202,7 +258,7 @@ function CustomNode({ data, type }) {
       )}
 
       {/* Regular Output Handle */}
-      {nodeType !== "output" && nodeType !== "decision" && nodeType !== "iterator" && nodeType !== "question" && nodeType !== "conditions" && nodeType !== "condition" && (
+      {nodeType !== "output" && nodeType !== "decision" && nodeType !== "iterator" && nodeType !== "conditions" && nodeType !== "condition" && (
         <Handle
           type="source"
           position={Position.Right}

@@ -17,6 +17,7 @@ const inputNodes = [
     key: "Text",
     name: "Text Node",
     type: "node",
+    // interrupt: true,
     status: "active",
     description: "Get Text from user",
     tags: ["text", "input"],
@@ -34,133 +35,11 @@ const inputNodes = [
     updatedAt: '',
     createdBy: "System",
     updatedBy: "System"
-  },
-  {
-    key: "file",
-    name: "File Node",
-    type: "input",
-    status: "active",
-    description: "Get File from user",
-    tags: ["file", "input"],
-    createdAt: '',
-    updatedAt: '',
-    createdBy: "System",
-    updatedBy: "System",
-    id: "input_2",
-    inputParameters: [{
-      key: "file",
-      value: "",
-      type: "text"
-    }], 
-    outputParameters:[{
-      key:"output",
-      value:"",
-      type:"string"
-    }],
-  },
-  {
-    id: "67dbef1fba68eac0121fad7034",
-    name: "Ingestion Node",
-    type: "agent",
-    tags: [
-      "Ingestion Node",
-      "Ingestion Node"
-    ],
-    description: "Ingestion Node",
-    tools: [],
-    agents: [],
-    inputParameters: [
-      {
-        key: "file name",
-        value: "",
-        type: "text"
-      },
-      {
-        key: "file content",
-        value: "",
-        type: "string"
-      },
-      {
-        key: "ingest url",
-        value: "",
-        type: "string"
-      }
-    ],
-    outputParameters: [
-      {
-        key: "ingestionResponse",
-        value: "",
-        type: "string"
-      }
-    ],
-    status: true,
-    version: 1,
-    isPublic: true,
-    isActive: true,
-    createdBy: "Sunitha",
-    updatedBy: "Sunitha",
-    createdAt: "2025-03-20T10:34:07.825Z",
-    updatedAt: "2025-03-20T10:34:07.825Z"
   }, 
-  // {
-  //   "id": "decision_0",
-  //   "key": "Decision",
-  //   "name": "Decision Node",
-  //   "type": "decision",
-  //   "status": "active",
-  //   "description": "Decision Node with two output paths",
-  //   "tags": ["decision", "control"],
-  //   "inputParameters": [
-  //     {
-  //       "key": "inputValue",
-  //       "value": "",  
-  //       "type": "text"
-  //     },
-  //     {
-  //       "key":"decision",
-  //       "value":[
-  //         {
-  //           "key": "condition",
-  //           "value": "",      
-  //           "type": "dropdown", 
-  //           "dropdownOptions": [
-  //            "greater_than",
-  //            "less_than",
-  //            "equal_to", 
-  //            "not_equal_to", 
-  //            "greater_than_or_equal_to", 
-  //            "less_than_or_equal_to",
-  //            "contains",
-  //            "not_contains",
-  //            "is_empty",
-  //            "is_not_empty",
-  //            "starts_with",
-  //            "ends_with"
-  //           ]
-  //         }
-  //       ],
-  //       "type":"array"
-  //     },
-  //     {
-  //       "key": "comparisonValue",
-  //       "value": "",       
-  //       "type": "text"
-  //     }
-  //   ],
-  //   "outputParameters": [
-  //     {
-  //       "key": "output",
-  //       "value": "", 
-  //       "type": "text"
-  //     }
-  //   ],
-  //   "next": ["node_if_true", "node_if_false"]  
-  // }, 
-
   {
     "id": "decision_0",
     "key": "Decision",
-    "name": "Decisionn Node",
+    "name": "Decision Node",
     "displayName": "Evaluate Choice",
     "type": "conditions",
     "description": "Route flow based on selected choice",
@@ -181,24 +60,9 @@ const inputNodes = [
         "key": "conditions",
         "value": [
           {
-            "operator": "equal_to",
-            "comparisonValue": "C++",
-            "nextNode": "end_node_option1"
-          },
-          {
-            "operator": "equal_to",
-            "comparisonValue": "Java",
-            "nextNode": "email_node"
-          },
-          {
-            "operator": "equal_to",
-            "comparisonValue": "Python",
-            "nextNode": "end_node_option3"
-          },
-          {
-            "operator": "equal_to",
-            "comparisonValue": "Go",
-            "nextNode": "end_node_option4"
+            "operator": "",
+            "comparisonValue": "",
+            "nextNode": ""
           }
         ],
         "type": "condition"
@@ -206,204 +70,12 @@ const inputNodes = [
     ],
     "outputParameters": [
       {
-        "key": "decision_result",
-        "value": "",
+        "key": "output",
+        "value": "decision_result",
         "type": "string"
       }
     ]
   },  
-
-  // {
-  //   "node_id": "decision_node",
-  //   "name": "Decision Node",
-  //   "displayName": "Evaluate Choice",
-  //   "type": "decision",
-  //   "description": "Route flow based on selected choice",
-  //   "next": [
-  //     "end_node_option1",
-  //     "email_node",
-  //     "end_node_option3",
-  //     "end_node_option4"
-  //   ],
-  //   "inputParameters": [
-  //     {
-  //       "key": "inputValue",
-  //       "value": "{{selected_choice}}",
-  //       "type": "text"
-  //     },
-  //     {
-  //       "key": "conditions",
-  //       "value": [
-  //         {
-  //           "operator": {
-  //             "type": "dropdown",
-  //             "value": "equal_to",
-  //             "dropdownOptions": [
-  //               "equal_to",
-  //               "not_equal_to",
-  //               "greater_than",
-  //               "less_than",
-  //               "greater_than_or_equal_to",
-  //               "less_than_or_equal_to",
-  //               "contains",
-  //               "not_contains",
-  //               "is_empty",
-  //               "is_not_empty",
-  //               "starts_with",
-  //               "ends_with"
-  //             ]
-  //           },
-  //           "comparisonValue": "C++",
-  //           "nextNode": "end_node_option1"
-  //         },
-  //         {
-  //           "operator": {
-  //             "type": "dropdown",
-  //             "value": "equal_to",
-  //             "dropdownOptions": [
-  //               "equal_to",
-  //               "not_equal_to",
-  //               "greater_than",
-  //               "less_than",
-  //               "greater_than_or_equal_to",
-  //               "less_than_or_equal_to",
-  //               "contains",
-  //               "not_contains",
-  //               "is_empty",
-  //               "is_not_empty",
-  //               "starts_with",
-  //               "ends_with"
-  //             ]
-  //           },
-  //           "comparisonValue": "Java",
-  //           "nextNode": "email_node"
-  //         },
-  //         {
-  //           "operator": {
-  //             "type": "dropdown",
-  //             "value": "equal_to",
-  //             "dropdownOptions": [
-  //               "equal_to",
-  //               "not_equal_to",
-  //               "greater_than",
-  //               "less_than",
-  //               "greater_than_or_equal_to",
-  //               "less_than_or_equal_to",
-  //               "contains",
-  //               "not_contains",
-  //               "is_empty",
-  //               "is_not_empty",
-  //               "starts_with",
-  //               "ends_with"
-  //             ]
-  //           },
-  //           "comparisonValue": "Python",
-  //           "nextNode": "end_node_option3"
-  //         },
-  //         {
-  //           "operator": {
-  //             "type": "dropdown",
-  //             "value": "equal_to",
-  //             "dropdownOptions": [
-  //               "equal_to",
-  //               "not_equal_to",
-  //               "greater_than",
-  //               "less_than",
-  //               "greater_than_or_equal_to",
-  //               "less_than_or_equal_to",
-  //               "contains",
-  //               "not_contains",
-  //               "is_empty",
-  //               "is_not_empty",
-  //               "starts_with",
-  //               "ends_with"
-  //             ]
-  //           },
-  //           "comparisonValue": "Go",
-  //           "nextNode": "end_node_option4"
-  //         }
-  //       ],
-  //       "type": "list"
-  //     }
-  //   ],
-  //   "outputParameters": [
-  //     {
-  //       "key": "decision_result",
-  //       "value": "",
-  //       "type": "string"
-  //     }
-  //   ]
-  // },
-  
-
-  {
-    id: "67dbef1fba68eac0121fad7034",
-    name: "Code Node",
-    type: "agent",
-    tags: [
-      "Code Node",
-      "Code Node"
-    ],
-    description: "Code Node",
-    tools: [],
-    agents: [],
-    inputParameters: [
-      {
-        key: "code",
-        value: "",
-        type: "code"
-      },
-    ],
-    outputParameters: [
-      {
-        key: "response",
-        value: "codeResponse",
-        type: "string"
-      }
-    ],
-    status: true,
-    version: 1,
-    isPublic: true,
-    isActive: true,
-    createdBy: "Sunitha",
-    updatedBy: "Sunitha",
-    createdAt: "2025-03-20T10:34:07.825Z",
-    updatedAt: "2025-03-20T10:34:07.825Z"
-  }, 
-  {
-    "node_id": "Iterator Node_node-1753342600957-xyzabcd123",
-    "name": "Iterator Node",
-    "displayName": "Iterator Node",
-    "type": "iterator",
-    "description": "Iterator Node that loops through each item in a list",
-    "next": [],
-    "loopPath": null,
-    "completionPath": null,
-    "inputParameters": [
-      {
-        "key": "array",
-        "value": "",
-        "type": "text"  
-      },
-      {
-        "key": "iterationSteps",
-        "value": 1,
-        "type": "number"  
-      },
-      {
-        "key": "iterationVariable",
-        "value": "item",
-        "type": "text"  
-      }
-    ],
-    "outputParameters": [
-      {
-        "key": "output",
-        "value": "currentItem",
-        "type": "text"  
-      }
-    ]
-  },
   {
     "node_id": "question_node",
     "name": "Question Node",
@@ -411,6 +83,7 @@ const inputNodes = [
     "type": "question",
     "description": "Ask user about technology stack",
     "next": [],
+    "interrupt": true,
     "inputParameters": [
       {
         "key": "question_text",
@@ -429,48 +102,12 @@ const inputNodes = [
     ],
     "outputParameters": [
       {
-        "key": "selected_choice",
-        "value": "",
-        "type": "string"
-      }
-    ]
-  },
-  {
-    "node_id": "Template Renderer_node-1753342600958-defgh456",
-    "name": "Template Renderer",
-    "displayName": "Template Renderer",
-    "type": "tool",
-    "description": "Renders a template with provided data. Uses Jinja2 syntax like {{ variable_name }}.",
-    "next": [],
-    "inputParameters": [
-      {
-        "key": "templateContent",
-        "value": "",
-        "type": "string"
-      },
-      {
-        "key": "templateData",
-        "value": {},
-        "type": "object",
-        "description": "A JSON object with the data to fill the template.",
-        "key_name":"Field Name",
-        "key_value":"Field Type"
-      },
-      {
-        "key": "submit",
-        "value": "",
-        "type": "string",
-        "description": "Submit URL for the form."
-      }
-    ],
-    "outputParameters": [
-      {
         "key": "output",
-        "value": "renderedOutput",
+        "value": "selected_choice",
         "type": "string"
       }
     ]
-  }, 
+  }
 
   
 
