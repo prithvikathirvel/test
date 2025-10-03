@@ -26,6 +26,7 @@ const getNodeIcon = (type, tools, agents, models, inputs, outputs, agentflows) =
     case "question": return <HelpCircle size={16} />;
     case "conditions": return <GitBranch size={16} />;
     case "condition": return <GitBranch size={16} />;
+    case "start": return <Circle size={16} />;
   }
   
   if (!item) return <Workflow size={16} />;
@@ -54,6 +55,7 @@ const getNodeAccent = (type, tools, agents, models, inputs, outputs, agentflows)
     case "question": return "bg-gradient-to-r from-violet-500 to-violet-600";
     case "conditions": return "bg-gradient-to-r from-amber-500 to-amber-600";
     case "condition": return "bg-gradient-to-r from-amber-500 to-amber-600";
+    case "start": return "bg-gradient-to-r from-green-500 to-green-600";
     default: return "bg-gradient-to-r from-gray-400 to-gray-500";
   }
 };
@@ -94,9 +96,13 @@ function CustomNode({ data, type }) {
     return { conditions };
   }, [nodeType, data.inputParameters]);
 
-  // Extract options data from inputParameters for question nodes
+  // Extract options data from inputParameters for question and inputs nodes
   const questionData = useMemo(() => {
-    if (nodeType !== "question" || !data.inputParameters) {
+    // Show options for question type OR inputs type with Question Node name
+    const shouldShowOptions = nodeType === "question" || 
+                             (nodeType === "inputs" && (data.name === "Question Node" || data.displayName === "Question Node"));
+    
+    if (!shouldShowOptions || !data.inputParameters) {
       return { questionText: '', options: {} };
     }
 
@@ -107,7 +113,11 @@ function CustomNode({ data, type }) {
       questionText: questionTextParam?.value || '',
       options: optionsParam?.value || {}
     };
-  }, [nodeType, data.inputParameters]);
+  }, [nodeType, data.inputParameters, data.name, data.displayName]);
+
+  // Check if should show options based on node type and name
+  const shouldShowOptionsUI = nodeType === "question" || 
+                             (nodeType === "inputs" && (data.name === "Question Node" || data.displayName === "Question Node"));
 
   return (
     <div className="relative min-w-[250px] bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200/60 backdrop-blur-sm">
@@ -142,8 +152,8 @@ function CustomNode({ data, type }) {
         </div> */}
       </div>
 
-      {/* Question Content */}
-      {nodeType === "question" && (
+      {/* Question/Options Content */}
+      {shouldShowOptionsUI && (
         <div className="px-4 py-4 border-b border-gray-100">
           {questionData.questionText && (
             <p className="text-sm text-gray-700 font-medium leading-relaxed mb-4 break-words">
@@ -222,7 +232,7 @@ function CustomNode({ data, type }) {
       )}
 
       {/* Regular Node Body */}
-      {/* {nodeType !== "question" && (
+      {/* {!shouldShowOptionsUI && (
         <div className="px-4 py-3.5">
           {data.description && (
             <p className="text-xs text-gray-600 leading-relaxed mb-3">
@@ -241,8 +251,8 @@ function CustomNode({ data, type }) {
 
       {/* --- HANDLES --- */}
 
-      {/* Input Handle */}
-      {(nodeType !== "inputs") && (
+      {/* Input Handle - exclude start node type */}
+      {nodeType !== "start" && (
         <Handle
           type="target"
           position={Position.Left}
@@ -330,6 +340,8 @@ export const useNodeTypes = () => {
       question: CustomNode,
       conditions: CustomNode,
       condition: CustomNode,
+      inputs: CustomNode,
+      start: CustomNode,
     };
         
     [...tools, ...agents, ...models, ...inputs, ...outputs].forEach(item => {
