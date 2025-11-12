@@ -107,6 +107,76 @@ const inputNodes = [
         "type": "string"
       }
     ]
+  }, 
+
+  {
+    "node_id": "classifier_node",
+    "name": "Question Classifier",
+    "displayName": "Question Classifier",
+    "type": "classifier",
+    "description": "Classify customer query",
+    "interrupt": false,
+    "next": [],
+    "inputParameters": [
+      {
+        "key": "input_text",
+        "value": "{{user_enquiry}}",
+        "type": "string"
+      },
+      {
+        "key": "classifications",
+        "value": [
+          {
+            "label": "After-sales service",
+            "description": "Questions about warranty, returns, repairs, refunds, AppleCare",
+            "keywords": ["warranty", "return", "refund", "repair", "broken", "AppleCare", "replace"]
+          },
+          {
+            "label": "Product usage",
+            "description": "How to use iPhone features, setup, configuration, troubleshooting",
+            "keywords": ["how to", "setup", "configure", "use", "settings", "feature", "install"]
+          },
+          {
+            "label": "Purchase inquiry",
+            "description": "Questions about pricing, models, availability, specifications",
+            "keywords": ["price", "cost", "buy", "purchase", "model", "specs", "available"]
+          },
+          {
+            "label": "Other questions",
+            "description": "General inquiries or unrelated questions",
+            "keywords": ["general", "other", "feedback"]
+          }
+        ],
+        "type": "array"
+      },
+      {
+        "key": "model",
+        "value": "Gemini",
+        "type": "string"
+      },
+      {
+        "key": "enable_memory",
+        "value": true,
+        "type": "boolean"
+      },
+      {
+        "key": "memory_window",
+        "value": 3,
+        "type": "number"
+      },
+      {
+        "key": "instructions",
+        "value": "Focus on the primary intent. If question mentions multiple topics, classify by the main concern.",
+        "type": "string"
+      }
+    ],
+    "outputParameters": [
+      {
+        "key": "output",
+        "value": "question_category",
+        "type": "string"
+      }
+    ]
   }
 
   
