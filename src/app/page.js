@@ -84,7 +84,7 @@ export default function Home() {
                 <button className="text-left px-2 py-2 rounded hover:bg-slate-100">Blogs</button>
                 <button className="text-left px-2 py-2 rounded hover:bg-slate-100">Community</button>
                 <div className="pt-2">
-                  <GradientButton
+                  <CustomGradientButton
                     text="Sign in"
                     onClick={() => {
                       setMobileOpen(false)

@@ -314,6 +314,7 @@ const StudioChatBot = ({
           if (handleRenderFlow && typeof handleRenderFlow === 'function') {
             handleRenderFlow();
           }
+<<<<<<< HEAD
         }  else {
   const respType = response?.response_type;
   const botResponse = response?.bot_response;
@@ -338,6 +339,16 @@ const StudioChatBot = ({
         handleRenderFlow();
       }
         }
+=======
+        } else {
+          const botResponse = response?.bot_response || "Something went wrong";
+          addMessage(botResponse, "bot", "text");
+          
+          if (handleRenderFlow && typeof handleRenderFlow === 'function') {
+            handleRenderFlow();
+          }
+        } 
+>>>>>>> 3cec79d728242931284cfa0b275623fe8351d710
   
       } catch (error) {
         console.error('Error in handleSendMessage -> runFlow:', error);
@@ -454,6 +465,7 @@ const StudioChatBot = ({
             resultActionbmit={onFormSubmit}
             colors={colors}
          />
+<<<<<<< HEAD
       ) : message.messageType === "file" ? (
 
       
@@ -488,6 +500,8 @@ const StudioChatBot = ({
       </button>
     </div>
 
+=======
+>>>>>>> 3cec79d728242931284cfa0b275623fe8351d710
       ) : (
         <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 px-4 py-3">
           <div 
