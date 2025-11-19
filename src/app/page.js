@@ -25,7 +25,7 @@ export default function Home() {
 
   const handleLogin = (username, password) => {
     if (username === "admin" && password === "admin") {
-      window.location.href = "/studio"
+      window.location.href = "agent-studio/studio"
     } else {
       alert("Invalid credentials")
     }

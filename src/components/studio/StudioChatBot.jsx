@@ -3,14 +3,15 @@
 import { useState, useRef, useEffect } from "react"
 import { MessageCircle, X, Send, User, Bot, CheckCircle, Loader2 ,XCircle, Paperclip, FileText, Trash2 } from "lucide-react"
 import { useDispatch, useSelector } from "react-redux"
-import { runFlow } from "@/redux/slices/studioSlice"
 import { parseAndNormalizeFormData } from "@/utils/commonFunction"
 
+// ==============================================================================
+// DYNAMIC FORM COMPONENT (unchanged)
+// ==============================================================================
 const DynamicFormComponent = ({ formData, resultActionbmit, colors }) => {
   const [formValues, setFormValues] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize form state when component mounts or formData changes
   useEffect(() => {
     const initialValues = Object.keys(formData.formValues).reduce((acc, key) => {
       acc[key] = '';
@@ -27,15 +28,14 @@ const DynamicFormComponent = ({ formData, resultActionbmit, colors }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    // The submitInfo contains metadata about the form being submitted
     const submitInfo = {
-        templateName: formData['template Name'],
-        submitUrl: formData.submit // Pass the URL to the handler
+      templateName: formData['template Name'],
+      submitUrl: formData.submit
     };
     await resultActionbmit(formValues, submitInfo);
-    // No need to set isSubmitting to false, as the parent component will take over
+    // parent handles further state changes
   };
-  
+
   const renderInput = (key, type) => {
     const inputType = {
       'string': 'text',
@@ -73,7 +73,7 @@ const DynamicFormComponent = ({ formData, resultActionbmit, colors }) => {
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`w-full text-white font-semibold py-2 px-4 rounded-md transition-all duration-200 ${colors.primary} disabled:bg-gray-400 disabled:cursor-not-allowed`}
+          className={`w-full text-white font-semibold py-2 px-4 rounded-md transition-all duration-200 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed`}
         >
           {isSubmitting ? (
              <div className="flex items-center justify-center">
@@ -89,7 +89,9 @@ const DynamicFormComponent = ({ formData, resultActionbmit, colors }) => {
   );
 };
 
-
+// ==============================================================================
+// MAIN CHATBOT COMPONENT (FILE A, modified to use runFlow-style payload for execute-graph)
+// ==============================================================================
 const StudioChatBot = ({
   primaryColor = "primary",
   botName = "Sify Aurora Assistant",
@@ -106,20 +108,23 @@ const StudioChatBot = ({
   onOptionClicked = null,
   onApiCall = null,
   handleRenderFlow = null,
-
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState(messagesData)
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState([])
+  const [threadId, setThreadId] = useState(null)
+  const [pausedContext, setPausedContext] = useState(null)
+
   const fileInputRef = useRef(null)
-  const messagesEndRef = useRef(null); 
-  const flowOutput = useSelector((state) => state.studio.flowOutput);
-  const sessionId = useSelector((state) => state.studio.sessionId); 
-  
-  const dispatch = useDispatch();
+  const messagesEndRef = useRef(null)
   const messageIdCounter = useRef(0)
+  const flowStartedRef = useRef(false)
+
+  const dispatch = useDispatch() // kept if you use redux elsewhere; not required for execute-graph here
+  const flowOutput = useSelector((state) => state?.studio?.flowOutput)
+  const sessionId = useSelector((state) => state?.studio?.sessionId)
 
   const generateUniqueId = () => {
     messageIdCounter.current += 1
@@ -135,7 +140,6 @@ const StudioChatBot = ({
       bg: "bg-blue-50",
       userBubble: "bg-blue-600",
     },
-    // ... other colors
     primary: {
       primary: "bg-[var(--primary-color)] hover:bg-[var(--primary-color)]",
       gradient: "from-[var(--primary-color)] to-[var(--primary-color)]",
@@ -162,6 +166,9 @@ const StudioChatBot = ({
     scrollToBottom()
   }, [messages])
 
+  // ---------------------------
+  // File upload helpers
+  // ---------------------------
   const convertFileToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
@@ -182,7 +189,7 @@ const StudioChatBot = ({
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'text/csv'
     ]
-    
+
     const validFiles = files.filter((file) => allowedTypes.includes(file.type))
 
     if (validFiles.length === 0) {
@@ -196,7 +203,7 @@ const StudioChatBot = ({
         return {
           id: generateUniqueId(),
           name: file.name,
-          base64: base64,
+          base64,
           size: file.size,
           formattedData: `${file.name};${base64}`,
         }
@@ -205,18 +212,15 @@ const StudioChatBot = ({
       const processedFiles = await Promise.all(filePromises)
       setUploadedFiles((prev) => [...prev, ...processedFiles])
 
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
+      if (fileInputRef.current) fileInputRef.current.value = ""
     } catch (error) {
       console.error("Error processing files:", error)
-      alert("Error processing files. Please try again.")
+      addMessage("Error processing files. Please try again.", "bot", "error")
     }
   }
 
-  const removeFile = (fileId) => {
-    setUploadedFiles((prev) => prev.filter((file) => file.id !== fileId))
-  }
+  const removeFile = (fileId) => setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId))
+
   const formatFileSize = (bytes) => {
     if (bytes === 0) return "0 Bytes"
     const k = 1024
@@ -225,9 +229,11 @@ const StudioChatBot = ({
     return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
   }
 
+  // ---------------------------
+  // Message helpers
+  // ---------------------------
   const addMessage = (text, sender, messageType = "text", customId = null, customData = null, apiResponse = null) => {
     const messageId = customId || generateUniqueId()
-
     const newMessage = {
       id: messageId,
       text,
@@ -237,134 +243,246 @@ const StudioChatBot = ({
       apiResponse,
       timestamp: new Date(),
     }
-
     setMessages((prev) => [...prev, newMessage])
-
-    if (onMessageSent) {
-      onMessageSent(newMessage)
-    }
-
+    if (onMessageSent) onMessageSent(newMessage)
     return newMessage
   }
 
-  const removeMessageById = (messageId) => {
-    setMessages((prev) => prev.filter((msg) => msg.id !== messageId))
-  }
+  const removeMessageById = (messageId) => setMessages((prev) => prev.filter((m) => m.id !== messageId))
 
-  const handleSendMessage = async () => {
-    if (inputValue.trim() || uploadedFiles.length > 0) {
-      let userMessage = inputValue.trim();
-  
-      let fileData = [];
-      if (uploadedFiles.length > 0) {
-        fileData = uploadedFiles.map(file => file.base64);
-        if (!userMessage) {
-          userMessage = `Uploaded ${uploadedFiles.length} file(s): ${uploadedFiles.map(f => f.name).join(", ")}`;
-        }
-      }
-  
-      setIsLoading(true);
-      addMessage(userMessage, "user");
-  
-      const payload = {
-        agent_id: flow?.id,
-        userInput: {
-          message: userMessage,
-          uploadedFiles: fileData, 
-          ...(sessionId && { session_id: sessionId })
-        }
-      };
-      
-      const loadingId = generateUniqueId();
-      addMessage("Processing...", "bot", "loading", loadingId);
-  
-      try {
-        const response = await dispatch(runFlow({ data: payload, onSuccess: () => {
-          console.log('Flow executed successfully');
-        }, })).unwrap();
-        removeMessageById(loadingId);
-        
-        if (response?.type === 'form' && response.bot_response) {
-            try {
-                const parsedFormData = parseAndNormalizeFormData(response.bot_response)|| {};
-                if (parsedFormData.formValues && parsedFormData.submit) {
-                    addMessage(
-                        parsedFormData['template Name'] || 'Please fill out this form',
-                        "bot",
-                        "form",
-                        null,
-                        { formData: parsedFormData }
-                    );
-                } else {
-                    throw new Error("Parsed form data is missing required 'formValues' or 'submit' keys.");
-                }
-            } catch (e) {
-                console.error("Failed to parse form JSON from bot_response:", e);
-                addMessage("Sorry, I received a form but couldn't display it correctly.", "bot", "error");
-            }
-        } else if (response?.input) {
-          addMessage(
-            "",
-            "bot",
-            "input-forms",
-            null,
-            { flow: flow }
-          );
-  
-          if (handleRenderFlow && typeof handleRenderFlow === 'function') {
-            handleRenderFlow();
-          }
-<<<<<<< HEAD
-        }  else {
-  const respType = response?.response_type;
-  const botResponse = response?.bot_response;
+  // ---------------------------
+  // processApiResponse: central response handler
+  // ---------------------------
+  const processApiResponse = (data) => {
+    if (!data) {
+      addMessage("Empty response from server.", "bot", "error")
+      return
+    }
 
-  if (respType === "pdf" || respType === "doc") {
-    addMessage(
-      `File received`,
-      "bot",
-      "file",
-      null,
-      {
-        base64: botResponse,
-        fileType: respType,
-        fileName: respType === "pdf" ? "document.pdf" : "document.docx"
-      }
-    );
-      } else {
-        addMessage(botResponse || "Something went wrong", "bot", "text");
-      }
+    // Save thread id if returned
+    if (data.thread_id) setThreadId(data.thread_id)
 
-      if (handleRenderFlow && typeof handleRenderFlow === 'function') {
-        handleRenderFlow();
-      }
-        }
-=======
-        } else {
-          const botResponse = response?.bot_response || "Something went wrong";
-          addMessage(botResponse, "bot", "text");
-          
-          if (handleRenderFlow && typeof handleRenderFlow === 'function') {
-            handleRenderFlow();
-          }
-        } 
->>>>>>> 3cec79d728242931284cfa0b275623fe8351d710
-  
-      } catch (error) {
-        console.error('Error in handleSendMessage -> runFlow:', error);
-        removeMessageById(loadingId);
-        addMessage("Sorry, something went wrong. Please try again.", "bot", "error");
-      } finally {
-        setIsLoading(false);
-        setInputValue("");
-        setUploadedFiles([]);
+    // Handle PAUSED status: capture context needed to resume
+    if (data.status && data.status.toString().toUpperCase() === "PAUSED") {
+      setPausedContext({
+        agent_id: flow?.id || null,
+        user_id: data?.user_id || null,
+        session_id: data?.session_id || null,
+        thread_id: data?.thread_id || null,
+        node_id: data?.payload?.node_id || null,
+        input_type: data?.payload?.input_type || null
+      })
+      // if paused, still show bot message if any
+    } else {
+      // clear paused context when not paused
+      setPausedContext(null)
+    }
+
+    // File responses: pdf/doc (base64)
+    if (data.response_type === "pdf" || data.response_type === "doc" || data.type === "file") {
+      const base64 = data.bot_response || data.payload?.base64 || null
+      const respType = data.response_type || data.payload?.fileType || (data.type === "file" && data.payload?.fileType) || "pdf"
+      const fileName = respType === "pdf" ? (data.payload?.fileName || "document.pdf") : (data.payload?.fileName || "document.docx")
+
+      if (base64) {
+        addMessage("File received", "bot", "file", null, { base64, fileType: respType, fileName })
+        return
       }
     }
-  };
 
-  // =================================================================
-  // START: UPDATED function to handle form submission via URL
-  // =================================================================
+    // If flow returns a 'form' structure (handle older runFlow-style responses)
+    if (data.type === "form" || data.response_type === "form") {
+      try {
+        const parsed = typeof data.bot_response === "string" ? parseAndNormalizeFormData(data.bot_response) : data.payload || {}
+        if (parsed && parsed.formValues && parsed.submit) {
+          addMessage(parsed['template Name'] || 'Please fill out this form', "bot", "form", null, { formData: parsed })
+          return
+        }
+      } catch (e) {
+        console.error("Form parse error:", e)
+        addMessage("Received a form but couldn't display it.", "bot", "error")
+        return
+      }
+    }
+
+    // Map typical response types used in File A
+    const respTypeUpper = (data.response_type || "").toString().toUpperCase()
+
+    switch (respTypeUpper) {
+      case "QUESTION":
+        {
+          const questionText = data.payload?.question_text || data.payload?.question || data.bot_response || "Question"
+          addMessage(questionText, "bot", "question", null, { payload: data.payload || {} })
+        }
+        break
+
+      case "END_OF_FLOW":
+        {
+          const msg = data.payload?.message || data.bot_response || "The flow has completed."
+          addMessage(msg, "bot", "text")
+          setThreadId(null)
+          flowStartedRef.current = false
+          setPausedContext(null)
+        }
+        break
+
+      case "MESSAGE":
+      case "TEXT":
+        {
+          const msg = data.payload?.text || data.bot_response || data.message || "Message from bot."
+          addMessage(msg, "bot", "text")
+        }
+        break
+
+      default:
+        // If response has bot_response string, show it
+        if (data.bot_response) {
+          const botResp = data.bot_response
+          addMessage(botResp, "bot", "text")
+        } else {
+          // If we have payload with options/questions, surface them
+          if (data.payload && data.payload.options) {
+            addMessage(data.payload.question_text || data.payload.question || "Choose an option", "bot", "question", null, { payload: data.payload })
+          } else {
+            addMessage("Sorry, I'm not sure how to handle that response.", "bot", "error")
+          }
+        }
+        break
+    }
+  }
+
+  // ---------------------------
+  // startNewFlow: called only when first user message sent
+  // Uses runFlow-style payload for execute-graph
+  // ---------------------------
+  const startNewFlow = async (firstUserMessage, fileBase64Array = []) => {
+    setIsLoading(true)
+    const loadingMsg = addMessage("Processing...", "bot", "loading")
+    try {
+      const payload = {
+        agent_id: flow?.id || apiConfig?.agent_id,
+        userInput: {
+          message: firstUserMessage,
+          uploadedFiles: fileBase64Array,
+          ...(sessionId && { session_id: sessionId })
+        }
+      }
+
+      // execute-graph endpoint (keeps same as FILE A but payload shape adjusted)
+      const res = await fetch("http://localhost:8000/execute-graph", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      })
+
+      removeMessageById(loadingMsg.id)
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+
+      const data = await res.json()
+      processApiResponse(data)
+      flowStartedRef.current = true
+    } catch (error) {
+      console.error("Error starting flow:", error)
+      removeMessageById(loadingMsg.id)
+      addMessage("Sorry, I couldn't start the conversation. Please try again.", "bot", "error")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // ---------------------------
+  // handleResumeFlow: remains as FILE A (unchanged behavior)
+  // ---------------------------
+  const handleResumeFlow = async (resumeValue) => {
+    // resumeValue is user's selected option or typed value
+    addMessage(resumeValue, "user")
+    setIsLoading(true)
+    const loadingMsg = addMessage("Thinking...", "bot", "loading")
+    try {
+      let body
+      if (pausedContext) {
+        // when paused, send full resume payload (preserve original format)
+        body = {
+          agent_id: pausedContext.agent_id,
+          user_id: pausedContext.user_id,
+          session_id: pausedContext.session_id,
+          thread_id: pausedContext.thread_id,
+          node_id: pausedContext.node_id,
+          user_response: resumeValue,
+          input_type: pausedContext.input_type
+        }
+      } else {
+        // fallback to thread-based resume
+        body = {
+          agent_id: flow?.id || apiConfig?.agent_id,
+          thread_id: threadId,
+          user_response: resumeValue
+        }
+      }
+
+      const res = await fetch("http://localhost:8000/resume-flow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      })
+
+      removeMessageById(loadingMsg.id)
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+
+      const data = await res.json()
+      processApiResponse(data)
+    } catch (error) {
+      console.error("Error resuming flow:", error)
+      removeMessageById(loadingMsg.id)
+      addMessage("Sorry, something went wrong. Please try again.", "bot", "error")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // ---------------------------
+  // handleSendMessage: first message triggers startNewFlow, subsequent input triggers resumeFlow
+  // ---------------------------
+  const handleSendMessage = async () => {
+    if (!(inputValue.trim()) && uploadedFiles.length === 0) return
+
+    // prepare message text and files
+    let userMessage = inputValue.trim()
+    let fileData = []
+    if (uploadedFiles.length > 0) {
+      fileData = uploadedFiles.map(f => f.base64)
+      if (!userMessage) {
+        userMessage = `Uploaded ${uploadedFiles.length} file(s): ${uploadedFiles.map(f => f.name).join(", ")}`
+      }
+    }
+
+    // Show user's message in chat
+    addMessage(userMessage, "user")
+    setInputValue("")
+
+    // If flow not started yet -> start new flow using runFlow-style payload
+    if (!flowStartedRef.current) {
+      await startNewFlow(userMessage, fileData)
+      // reset uploaded files after sending
+      setUploadedFiles([])
+      return
+    }
+
+    // If flow already started, use resume flow logic (existing behavior)
+    // We call handleResumeFlow with userMessage as response
+    await handleResumeFlow(userMessage)
+    setUploadedFiles([])
+  }
+
+  // ---------------------------
+  // handleFormSubmit (unchanged)
+  // ---------------------------
   const handleFormSubmit = async (formData, submitInfo) => {
     addMessage(`Submitted: ${submitInfo.templateName}`, 'user');
     setIsLoading(true);
@@ -373,28 +491,19 @@ const StudioChatBot = ({
     addMessage("Processing your submission...", "bot", "loading", loadingId);
 
     try {
-      console.log(`Submitting form data to URL: ${submitInfo.submitUrl}`);
-      console.log('Submitting data:', JSON.stringify(formData));
-
       const response = await fetch(submitInfo.submitUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
       removeMessageById(loadingId);
 
-      if (!response.ok) {
-        throw new Error(`API request failed with status: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`API request failed with status: ${response.status}`);
 
       const result = await response.json();
-
       const botResponse = result?.bot_response || "Thank you! Your submission has been received.";
       addMessage(botResponse, "bot", "text");
-
     } catch (error) {
       console.error('Error in handleFormSubmit -> fetch:', error);
       removeMessageById(loadingId);
@@ -402,28 +511,24 @@ const StudioChatBot = ({
     } finally {
       setIsLoading(false);
     }
-  };
-  // =================================================================
-  // END: UPDATED function to handle form submission
-  // =================================================================
+  }
 
+  // ---------------------------
+  // UI & message renderers
+  // ---------------------------
   const handleOptionClick = async (option, messageData) => {
+    // When option clicked, show as user message and resume the flow
     addMessage(option.text, "user")
-
+    // if option has nextMessage, show it locally
     if (option.nextMessage) {
       setTimeout(() => {
-        const nextMessage = {
-          ...option.nextMessage,
-          id: generateUniqueId(),
-          timestamp: new Date(),
-        }
+        const nextMessage = { ...option.nextMessage, id: generateUniqueId(), timestamp: new Date() }
         setMessages((prev) => [...prev, nextMessage])
-      }, 1000)
+      }, 400)
     }
-
-    if (onOptionClicked) {
-      onOptionClicked(option, messageData)
-    }
+    // call resume with selected option
+    await handleResumeFlow(option.text)
+    if (onOptionClicked) onOptionClicked(option, messageData)
   }
 
   const handleKeyPress = (e) => {
@@ -433,13 +538,11 @@ const StudioChatBot = ({
     }
   }
 
-  const formatTime = (timestamp) => {
-    return timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-  }
+  const formatTime = (timestamp) => timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
 
   const DefaultUserMessage = ({ message, colors }) => (
     <div className={`px-4 py-3 rounded-2xl ${colors.userBubble} text-white rounded-br-md`}>
-      <p className="text-sm leading-relaxed">{message.text}</p>
+      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
     </div>
   )
 
@@ -460,57 +563,68 @@ const StudioChatBot = ({
           </div>
         </div>
       ) : message.messageType === "form" ? (
-         <DynamicFormComponent 
-            formData={message.customData.formData} 
+         <DynamicFormComponent
+            formData={message.customData.formData}
             resultActionbmit={onFormSubmit}
             colors={colors}
          />
-<<<<<<< HEAD
       ) : message.messageType === "file" ? (
-
-      
-    <div className="bg-white text-gray-800 rounded-xl shadow flex items-center border border-gray-200 p-4 space-x-4 hover:shadow-md transition-all">
-
-      {/* File Icon */}
-      <div className="flex-shrink-0">
-        {message.customData.fileType === "pdf" ? (
-          <FileText className="w-10 h-10 text-red-500" />
-        ) : (
-          <FileText className="w-10 h-10 text-blue-600" />
-        )}
-      </div>
-
-      {/* File Info */}
-      <div className="flex flex-col flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">{message.customData.fileName}</p>
-        <p className="text-xs text-gray-500">{Math.ceil((message.customData.base64.length * 3) / 4)} KB</p>
-      </div>
-
-      {/* Download Button */}
-      <button
-        onClick={() => {
-          const link = document.createElement("a");
-          link.href = `data:application/${message.customData.fileType};base64,${message.customData.base64}`;
-          link.download = message.customData.fileName;
-          link.click();
-        }}
-        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs transition"
-      >
-        Download
-      </button>
-    </div>
-
-=======
->>>>>>> 3cec79d728242931284cfa0b275623fe8351d710
+        // File card
+        <div className="bg-white text-gray-800 rounded-xl shadow flex items-center border border-gray-200 p-4 space-x-4 hover:shadow-md transition-all">
+          <div className="flex-shrink-0">
+            {message.customData.fileType === "pdf" ? (
+              <FileText className="w-10 h-10 text-red-500" />
+            ) : (
+              <FileText className="w-10 h-10 text-blue-600" />
+            )}
+          </div>
+          <div className="flex flex-col flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{message.customData.fileName}</p>
+            <p className="text-xs text-gray-500">{(() => {
+              const bytes = Math.ceil((message.customData.base64.length * 3) / 4)
+              const kb = (bytes / 1024)
+              return kb < 1024 ? `${kb.toFixed(1)} KB` : `${(kb/1024).toFixed(2)} MB`
+            })()}</p>
+          </div>
+          <button
+            onClick={() => {
+              const link = document.createElement("a")
+              link.href = `data:application/${message.customData.fileType};base64,${message.customData.base64}`
+              link.download = message.customData.fileName
+              link.click()
+            }}
+            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs transition"
+          >
+            Download
+          </button>
+        </div>
+      ) : message.messageType === "question" ? (
+        // question + options rendering
+        <div>
+          <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 px-4 py-3">
+            <p className="text-sm leading-relaxed">{message.text}</p>
+          </div>
+          {message.customData?.payload?.options && (
+            <div className="mt-3 space-y-2">
+              {Object.entries(message.customData.payload.options).map(([key, value]) => (
+                <button
+                  key={key}
+                  onClick={() => onOptionClick({ text: value }, message)}
+                  disabled={isLoading}
+                  className={`block w-full text-left px-4 py-2 text-sm bg-white border ${colors.border} ${colors.text} rounded-xl transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       ) : (
         <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 px-4 py-3">
-          <div 
-            className="text-sm leading-relaxed" 
-            dangerouslySetInnerHTML={{ __html: message.text }} 
-          />
+          <div className="text-sm leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: message.text }} />
         </div>
       )}
-  
+
       {message.options && (
         <div className="mt-3 space-y-2">
           {message.options.map((option, index) => (
@@ -525,24 +639,20 @@ const StudioChatBot = ({
         </div>
       )}
     </div>
-  );
+  )
 
   const renderMessage = (message) => {
+    const commonProps = { message, colors, onFormSubmit: handleFormSubmit, onOptionClick: handleOptionClick }
     if (message.sender === "user") {
-      return CustomUserMessage ? (
-        <CustomUserMessage message={message} colors={colors} />
-      ) : (
-        <DefaultUserMessage message={message} colors={colors} />
-      )
+      return CustomUserMessage ? <CustomUserMessage {...commonProps} /> : <DefaultUserMessage {...commonProps} />
     } else {
-      return CustomBotMessage ? (
-        <CustomBotMessage message={message} colors={colors} onOptionClick={handleOptionClick} onFormSubmit={handleFormSubmit} />
-      ) : (
-        <DefaultBotMessage message={message} colors={colors} onOptionClick={handleOptionClick} onFormSubmit={handleFormSubmit} />
-      )
+      return CustomBotMessage ? <CustomBotMessage {...commonProps} /> : <DefaultBotMessage {...commonProps} />
     }
   }
 
+  // ---------------------------
+  // UI - return
+  // ---------------------------
   return (
     <div className={`fixed ${positionConfig[position]} z-50`}>
       {!isOpen && (
@@ -556,10 +666,7 @@ const StudioChatBot = ({
       )}
 
       {isOpen && (
-        <div
-          className="bg-white rounded-lg shadow-2xl flex flex-col border border-gray-200 overflow-hidden"
-          style={{ width, height }}
-        >
+        <div className="bg-white rounded-lg shadow-2xl flex flex-col border border-gray-200 overflow-hidden" style={{ width, height }}>
           {/* Header */}
           <div className={`bg-gradient-to-r ${colors.gradient} text-white p-5 flex justify-between items-center`}>
             <div className="flex items-center space-x-3">
@@ -569,44 +676,36 @@ const StudioChatBot = ({
               <div>
                 <h3 className="font-semibold text-base">{botName}</h3>
                 <div className="flex items-center space-x-2">
-                <span className={`w-2 h-2 rounded-full ${botStatus === 'Online' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                <p className="text-sm opacity-90">{botStatus}</p>
+                  <span className={`w-2 h-2 rounded-full ${botStatus === 'Online' ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                  <p className="text-sm opacity-90">{botStatus}</p>
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-white cursor-pointer hover:bg-opacity-20 rounded-full p-2 transition-colors focus:outline-none"
-              aria-label="Close chat"
-            >
+            <button onClick={() => setIsOpen(false)} className="text-white cursor-pointer hover:bg-opacity-20 rounded-full p-2 transition-colors focus:outline-none" aria-label="Close chat">
               <X className="w-5 h-5" />
             </button>
           </div>
 
-          {/* Messages Container */}
+          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-gray-50">
-            {messages.map((message, index) => (
-              <div key={index} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"} items-end space-x-2`}>
-              {message.sender === "bot" && (
-                <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0 mb-1">
-                  <Bot className="w-4 h-4 text-gray-600" />
-                </div>
-              )}
-            
-              <div className={`max-w-xs lg:max-w-sm ${message.sender === "user" ? "order-2" : "order-1"}`}>
-                {renderMessage(message)}
-                
-                <p className={`text-xs mt-2 ${message.sender === "user" ? "text-right" : "text-left"} text-gray-400`}>
-                  {formatTime(message.timestamp)}
-                </p>
-              </div>
-            </div>
-            ))}
+            {messages.map((message) => (
+              <div key={message.id} className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"} items-end space-x-2`}>
+                {message.sender === "bot" && (
+                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0 mb-1">
+                    <Bot className="w-4 h-4 text-gray-600" />
+                  </div>
+                )}
 
+                <div className={`max-w-xs lg:max-w-sm ${message.sender === "user" ? "order-2" : "order-1"}`}>
+                  {renderMessage(message)}
+                  <p className={`text-xs mt-2 ${message.sender === "user" ? "text-right" : "text-left"} text-gray-400`}>{formatTime(message.timestamp)}</p>
+                </div>
+              </div>
+            ))}
             <div ref={messagesEndRef} />
           </div>
 
-          {/* File Upload Area */}
+          {/* File upload area (bottom of chat, shows uploaded files before sending) */}
           {uploadedFiles.length > 0 && (
             <div className="px-5 py-3 bg-gray-100 border-t border-gray-200">
               <div className="space-y-2 max-h-24 overflow-y-auto">
@@ -619,11 +718,7 @@ const StudioChatBot = ({
                         <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
                       </div>
                     </div>
-                    <button
-                      onClick={() => removeFile(file.id)}
-                      className="text-gray-400 hover:text-red-500 transition-colors p-1"
-                      aria-label="Remove file"
-                    >
+                    <button onClick={() => removeFile(file.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1" aria-label="Remove file">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -632,23 +727,11 @@ const StudioChatBot = ({
             </div>
           )}
 
-          {/* Input Area */}
+          {/* Input area */}
           <div className="p-5 border-t bg-white">
             <div className="flex space-x-3 items-end">
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileUpload}
-                accept=".pdf, .xls, .xlsx, .csv"
-                multiple
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-full hover:bg-gray-100"
-                aria-label="Upload PDF, XLS, XLSX, or CSV files"
-                disabled={isLoading}
-              >
+              <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf, .xls, .xlsx, .csv" multiple className="hidden" />
+              <button onClick={() => fileInputRef.current?.click()} className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-full hover:bg-gray-100" aria-label="Upload files" disabled={isLoading}>
                 <Paperclip className="w-5 h-5" />
               </button>
               <textarea
@@ -659,12 +742,7 @@ const StudioChatBot = ({
                 className="custom-scroll flex-1 border border-gray-300 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all resize-none overflow-y-auto h-15"
                 disabled={isLoading}
               />
-              <button
-                onClick={handleSendMessage}
-                disabled={(!inputValue.trim() && uploadedFiles.length === 0) || isLoading}
-                className={`${colors.primary} disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50`}
-                aria-label="Send message"
-              >
+              <button onClick={handleSendMessage} disabled={(!inputValue.trim() && uploadedFiles.length === 0) || isLoading} className={`${colors.primary} disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full p-3 transition-all duration-200 focus:outline-none`}>
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </button>
             </div>
