@@ -280,7 +280,7 @@ const StudioChatBot = ({
 
     // File responses: pdf/doc (base64)
     if (data.response_type === "pdf" || data.response_type === "doc" || data.type === "file") {
-      const base64 = data.bot_response || data.payload?.base64 || null
+      const base64 = data.agent_response || data.payload?.base64 || null
       const respType = data.response_type || data.payload?.fileType || (data.type === "file" && data.payload?.fileType) || "pdf"
       const fileName = respType === "pdf" ? (data.payload?.fileName || "document.pdf") : (data.payload?.fileName || "document.docx")
 
@@ -293,7 +293,7 @@ const StudioChatBot = ({
     // If flow returns a 'form' structure (handle older runFlow-style responses)
     if (data.type === "form" || data.response_type === "form") {
       try {
-        const parsed = typeof data.bot_response === "string" ? parseAndNormalizeFormData(data.bot_response) : data.payload || {}
+        const parsed = typeof data.agent_response === "string" ? parseAndNormalizeFormData(data.agent_response) : data.payload || {}
         if (parsed && parsed.formValues && parsed.submit) {
           addMessage(parsed['template Name'] || 'Please fill out this form', "bot", "form", null, { formData: parsed })
           return
@@ -311,14 +311,14 @@ const StudioChatBot = ({
     switch (respTypeUpper) {
       case "QUESTION":
         {
-          const questionText = data.payload?.question_text || data.payload?.question || data.bot_response || "Question"
+          const questionText = data.payload?.question_text || data.payload?.question || data.agent_response || "Question"
           addMessage(questionText, "bot", "question", null, { payload: data.payload || {} })
         }
         break
 
       case "END_OF_FLOW":
         {
-          const msg = data.payload?.message || data.bot_response || "The flow has completed."
+          const msg = data.payload?.message || data.agent_response || "The flow has completed."
           addMessage(msg, "bot", "text")
           setThreadId(null)
           flowStartedRef.current = false
@@ -329,15 +329,15 @@ const StudioChatBot = ({
       case "MESSAGE":
       case "TEXT":
         {
-          const msg = data.payload?.text || data.bot_response || data.message || "Message from bot."
+          const msg = data.payload?.text || data.agent_response || data.message || "Message from bot."
           addMessage(msg, "bot", "text")
         }
         break
 
       default:
-        // If response has bot_response string, show it
-        if (data.bot_response) {
-          const botResp = data.bot_response
+        // If response has agent_response string, show it
+        if (data.agent_response) {
+          const botResp = data.agent_response
           addMessage(botResp, "bot", "text")
         } else {
           // If we have payload with options/questions, surface them
@@ -367,11 +367,12 @@ const StudioChatBot = ({
           ...(sessionId && { session_id: sessionId })
         }
       }
+      const token = localStorage.getItem("token") || "";
 
       // execute-graph endpoint (keeps same as FILE A but payload shape adjusted)
-      const res = await fetch("http://localhost:8000/execute-graph", {
+      const res = await fetch(`http://1.6.37.35/engine/agents/invoke/${flow?.id}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" ,"Authorization": `Bearer ${token}`},
         body: JSON.stringify(payload)
       })
 
@@ -422,10 +423,10 @@ const StudioChatBot = ({
           user_response: resumeValue
         }
       }
-
-      const res = await fetch("http://localhost:8000/resume-flow", {
+      const token = localStorage.getItem("token") || "";
+      const res = await fetch(`http://1.6.37.35/engine/agents/invoke/${flow?.id}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json" ,"Authorization": `Bearer ${token}`},
         body: JSON.stringify(body)
       })
 
@@ -502,7 +503,7 @@ const StudioChatBot = ({
       if (!response.ok) throw new Error(`API request failed with status: ${response.status}`);
 
       const result = await response.json();
-      const botResponse = result?.bot_response || "Thank you! Your submission has been received.";
+      const botResponse = result?.agent_response || "Thank you! Your submission has been received.";
       addMessage(botResponse, "bot", "text");
     } catch (error) {
       console.error('Error in handleFormSubmit -> fetch:', error);

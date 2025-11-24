@@ -17,18 +17,45 @@ import {
 import LoginDrawer from "@/components/Drawer/LoginDrawer"
 import HeroSection from "@/components/Dashboard/HeroSection"
 import CustomGradientButton from "@/components/Common/CustomGradientButton"
-
+import { useDispatch } from "react-redux"
+import { loginUser } from "@/redux/slices/authSlice"
+import { useRouter } from "next/navigation"
 
 export default function Home() {
   const [open, setOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  const handleLogin = (username, password) => {
-    if (username === "admin" && password === "admin") {
-      window.location.href = "agent-studio/studio"
-    } else {
-      alert("Invalid credentials")
-    }
+  const router = useRouter()
+  const dispatch = useDispatch()  
+
+  // const handleLogin = async (username, password) => {
+  //   const loginResponse = dispatch(loginUser({ username, password }))
+  //   console.log(loginResponse,'loginResponse')
+  //   if(loginResponse?.payload){
+  //     router.push("/studio")
+  //   }
+  //   else{
+  //     alert("Invalid credentials")
+  
+  // }
+
+    const handleLogin = async (username, password) => {
+    //   const data = dispatch(loginUser({ username, password }))
+    //   console.log(data,'data')
+
+      const fetchUser = await fetch(`http://1.6.37.35/login`, { method: "POST",headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) })
+      const data = await fetchUser.json()
+      
+
+      if(!data.error){
+        localStorage.setItem("token", data.access_token)
+        router.push("/studio")
+      }
+      else{
+        alert("Invalid credentials")
+      }
+      console.log(data,'data')
+
   }
 
   const handleDrawerOpen = () => setOpen(true)
