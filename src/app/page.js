@@ -17,54 +17,46 @@ import {
 import LoginDrawer from "@/components/Drawer/LoginDrawer"
 import HeroSection from "@/components/Dashboard/HeroSection"
 import CustomGradientButton from "@/components/Common/CustomGradientButton"
-import { useDispatch } from "react-redux"
+import { useDispatch,useSelector  } from "react-redux"
 import { loginUser } from "@/redux/slices/authSlice"
 import { useRouter } from "next/navigation"
+import BlurredLoader from "@/components/Common/BlurredLoader"
 
 export default function Home() {
   const [open, setOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [error, setError] = useState(null)
 
   const router = useRouter()
   const dispatch = useDispatch()  
 
-  // const handleLogin = async (username, password) => {
-  //   const loginResponse = dispatch(loginUser({ username, password }))
-  //   console.log(loginResponse,'loginResponse')
-  //   if(loginResponse?.payload){
-  //     router.push("/studio")
-  //   }
-  //   else{
-  //     alert("Invalid credentials")
-  
-  // }
+  const { authLoader, authError } = useSelector((state) => state.auth);
 
-    const handleLogin = async (username, password) => {
-    //   const data = dispatch(loginUser({ username, password }))
-    //   console.log(data,'data')
-
-      const fetchUser = await fetch(`http://1.6.37.35/login`, { method: "POST",headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) })
-      const data = await fetchUser.json()
+  const handleLogin = async (username, password) => {
+    try {
+      console.log('Attempting login...');
+      const result = await dispatch(loginUser({ username, password })).unwrap();
+      console.log('Login successful:', result);
+      router.push("/studio");
+    } catch (error) {
       
+      setError(error.message || "Login failed");
+      console.log('Error state after setting:', error);
+    }
+  };
 
-      if(!data.error){
-        localStorage.setItem("token", data.access_token)
-        router.push("/studio")
-      }
-      else{
-        alert("Invalid credentials")
-      }
-      console.log(data,'data')
-
+  const handleDrawerOpen = () => {
+    setOpen(true)
+    setError(null)
   }
 
-  const handleDrawerOpen = () => setOpen(true)
-
   return (
-    <div className="min-h-screen bg-[#f5f8fb] flex flex-col">
+    <>
+    {authLoader ? <BlurredLoader title="Logging in..." /> : (
+     <div className="min-h-screen bg-[#f5f8fb] flex flex-col">
       <div className="pointer-events-none absolute -top-16 -left-16 w-72 h-72 rounded-full bg-[var(--primary-color)]/10 blur-3xl" />
       <div className="pointer-events-none absolute -right-16 w-72 h-72 rounded-full bg-[var(--primary-color)]/10 blur-3xl" />
-      <LoginDrawer open={open} setOpen={setOpen} handleLogin={handleLogin} />
+      <LoginDrawer open={open} setOpen={setOpen} handleLogin={handleLogin} error ={error}/>
 
 
       <header className="sticky top-0 z-50 bg-transparent">
@@ -91,6 +83,8 @@ export default function Home() {
             <Box className="hidden md:flex">
               <CustomGradientButton text="Sign in" onClick={handleDrawerOpen} />
             </Box>
+
+           
 
 
             <button
@@ -128,5 +122,8 @@ export default function Home() {
 
       <HeroSection handleDrawerOpen={handleDrawerOpen} />
     </div>
+    )}
+    </>
+   
   )
 }

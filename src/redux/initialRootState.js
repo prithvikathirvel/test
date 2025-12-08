@@ -4,6 +4,8 @@ const initialRootState = {
   auth: {
     isAuthenticated: false,
     user: null,
+    authLoader: false, 
+    authError: null
   },
   studio: {
     tools: [],

@@ -19,20 +19,22 @@ export const fetchCurrentUser = createAsyncThunk('auth/fetchCurrentUser', async 
 
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
-  async ({ email, password }, { rejectWithValue }) => {
+  async ({ username, password }, { rejectWithValue }) => {
     try {
-      const { data } = await axios.post(`http://1.6.37.35/login`, { email, password }, {
+      const { data } = await axios.post(`http://1.6.37.35/login`, { username, password }, {
         headers: {
           "Content-Type": "application/json",
         },
-        
       });
       const { access_token, ...user } = data;
       localStorage.setItem("token", access_token);
       return user;
     } catch (error) {
-      showToaster('error', error);
-      return rejectWithValue(error.response?.data ?? { message: "Login failed" });
+      const errorMessage = error.response?.data?.error || "Login failed";
+      console.log(errorMessage,'errorMessage');
+      console.log(error,'INSIDE thiss');
+      showToaster('error', errorMessage);
+      return rejectWithValue({ message: errorMessage });
     }
   }
 );
@@ -54,15 +56,20 @@ const authSlice = createSlice({
       }
     },
   },
-  extraReducers: (builder) => {
+extraReducers: (builder) => {
   builder
+    .addCase(loginUser.pending, (state) => {
+      state.authLoader = true;
+      state.authError = null;
+    })
     .addCase(loginUser.fulfilled, (state, action) => {
+      state.authLoader = false;
       state.isAuthenticated = true;
       state.user = action.payload;
     })
-    .addCase(loginUser.rejected, (state) => {
-      state.isAuthenticated = false;
-      state.user = null;
+    .addCase(loginUser.rejected, (state, action) => {
+      state.authLoader = false;
+      state.authError = action.payload?.message || 'Login failed';
     });
 }
 });

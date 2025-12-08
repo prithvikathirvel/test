@@ -12,8 +12,9 @@ import {
 } from "lucide-react";
 import CustomButton from "../Common/CustomButton";
 import InputBox from "../Common/InputBox";
+import { showToaster } from "@/utils/commonFunction";
 
-export default function LoginDrawer({ open, setOpen, handleLogin }) {
+export default function LoginDrawer({ open, setOpen, handleLogin,error=null }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -72,6 +73,12 @@ export default function LoginDrawer({ open, setOpen, handleLogin }) {
        <CustomButton onClick={handleLoginClick}>
         Sign In
        </CustomButton>
+
+       {error && (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                {error}
+              </div>
+            )}
 
         <div className="flex justify-between text-sm text-gray-500 mt-4">
           <button
