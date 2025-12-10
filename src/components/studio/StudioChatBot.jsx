@@ -329,7 +329,10 @@ const StudioChatBot = ({
       case "MESSAGE":
       case "TEXT":
         {
-          const msg = data.payload?.text || data.agent_response || data.message || "Message from bot."
+          let msg = data.payload?.text || data.agent_response || data.message || "Message from bot."
+          if (typeof msg === "object") {
+            msg = `<pre>${JSON.stringify(msg, null, 2)}</pre>`;
+          }
           addMessage(msg, "bot", "text")
         }
         break
@@ -337,8 +340,16 @@ const StudioChatBot = ({
       default:
         // If response has agent_response string, show it
         if (data.agent_response) {
-          const botResp = data.agent_response
-          addMessage(botResp, "bot", "text")
+          let botResp = data.agent_response;
+          console.log("BOT RESSSS",botResp);
+          console.log(typeof botResp ,"typeof botResp");
+
+          // 👉 FIX: Convert objects/arrays to pretty JSON
+          if (typeof botResp === "object") {
+            botResp = `<pre>${JSON.stringify(botResp, null, 2)}</pre>`;
+          }
+
+          addMessage(botResp, "bot", "text");
         } else {
           // If we have payload with options/questions, surface them
           if (data.payload && data.payload.options) {
@@ -416,6 +427,7 @@ const StudioChatBot = ({
         body = {
           agent_id: flow?.id || apiConfig?.agent_id,
           thread_id: threadId,
+          ...(sessionId && { session_id: sessionId }),
           user_response: resumeValue
         }
       }
