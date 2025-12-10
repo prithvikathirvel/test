@@ -28,6 +28,7 @@ export const loginUser = createAsyncThunk(
       });
       const { access_token, ...user } = data;
       localStorage.setItem("token", access_token);
+      document.cookie = `token=${access_token}; path=/; max-age=86400`;
       return user;
     } catch (error) {
       const errorMessage = error.response?.data?.error || "Login failed";

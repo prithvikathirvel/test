@@ -10,7 +10,7 @@ import { usePathname } from 'next/navigation'
 import './globals.css'
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-
+import ProtectedRoute from "@/components/Routes/ProtectedRoute";
 const inter = Geist({ 
   subsets: ["latin"],
   weight: ['400'],
@@ -65,7 +65,7 @@ export default function RootLayout({ children }) {
             <Box className="flex-1 flex flex-col h-full">
               {shouldShowHeader && <Header title="Sify Aurora" />}
               <Box className="flex-1 overflow-y-auto">
-                {children}
+                <ProtectedRoute>{children}</ProtectedRoute>
               </Box>
             </Box>
           </Box>
