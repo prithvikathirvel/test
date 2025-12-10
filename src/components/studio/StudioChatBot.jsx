@@ -394,12 +394,8 @@ const StudioChatBot = ({
     }
   }
 
-  // ---------------------------
-  // handleResumeFlow: remains as FILE A (unchanged behavior)
-  // ---------------------------
   const handleResumeFlow = async (resumeValue) => {
-    // resumeValue is user's selected option or typed value
-    addMessage(resumeValue, "user")
+    // addMessage(resumeValue, "user")
     setIsLoading(true)
     const loadingMsg = addMessage("Thinking...", "bot", "loading")
     try {
