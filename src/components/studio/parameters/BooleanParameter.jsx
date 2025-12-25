@@ -18,7 +18,7 @@ const BooleanParameter = ({ param = {}, color, onUpdate, parameters, parameter }
     <Box className="w-full">
       <Box className="flex items-center justify-between">
         <ParameterHeader
-          title={param.name}
+          title={param.key}
           description={param.description}
           icon={<Code size={16} />}
         />
