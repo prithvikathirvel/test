@@ -1,5 +1,14 @@
 import {inputNodes, outputNodes, prebuiltFlows} from "@/utils/dataModels";
 
+// Initial state for knowledge slice
+const initialKnowledgeState = {
+  sources: [],
+  loading: false,
+  error: null,
+  uploadStatus: 'idle',
+  uploadProgress: 0,
+};
+
 const initialRootState = {
   auth: {
     isAuthenticated: false,
@@ -7,6 +16,7 @@ const initialRootState = {
     authLoader: false, 
     authError: null
   },
+  knowledge: initialKnowledgeState,
   studio: {
     tools: [],
     agents: [],

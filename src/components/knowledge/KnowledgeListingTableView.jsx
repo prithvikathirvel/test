@@ -3,12 +3,13 @@ import { Box, Typography } from "@mui/material";
 import { FileText, Link2, ArrowUpRight, Trash2,Eye } from "lucide-react";
 import CustomTable from "../Common/CustomTable";
 import { timeAgo } from "@/utils/commonFunction";
-
+import { useDispatch } from 'react-redux';
+import { deleteKnowledgeSource } from '@/redux/slices/knowledgeSlice';
 
 const KnowledgeListingTableView = ({
   filteredFlows,
   handleOpenStudio,
-  handleDeleteFlow
+  handleDeleteKnowledge
 }) => {
 
 const columns = [
@@ -96,7 +97,7 @@ const columns = [
   {
     icon: <Trash2 size={18} />,
     color: "error",
-    onClick: (row) => handleDeleteFlow(row.id)
+    onClick: (row) => handleDeleteKnowledge(row.id)
   }
 ];
 

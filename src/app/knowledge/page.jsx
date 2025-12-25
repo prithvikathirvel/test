@@ -1,18 +1,51 @@
 "use client"
-import { useCallback, useState, useEffect, useMemo, useRef } from "react";
-import { Box, Button, Typography } from "@mui/material";
-import { CloudUpload, Search, Trash2,FileText} from "lucide-react";
+import { useCallback, useState, useEffect, useRef, useMemo } from "react";
+import { Box, Typography, CircularProgress } from "@mui/material";
+import { CloudUpload, Search, Trash2, FileText } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
 import CustomButton from "@/components/Common/CustomButton";
 import InputBox from "@/components/Common/InputBox";
 import KnowledgeListingTableView from "@/components/knowledge/KnowledgeListingTableView";
 import DashedBox from "@/components/Common/DashedBox";
 import { bytesToSize } from "@/utils/commonFunction";
+import {
+    fetchKnowledgeSources,
+    uploadKnowledgeSource,
+    selectKnowledgeSources,
+    selectKnowledgeLoading,
+    selectKnowledgeError,
+    selectUploadStatus,
+    selectUploadProgress,
+    resetUploadStatus
+} from "@/redux/slices/knowledgeSlice";
+
+import {deleteKnowledgeSource} from "@/redux/slices/knowledgeSlice";
 
 const KnowledgePage = () => {
+    const dispatch = useDispatch();
     const [searchKnowledge, setSearchKnowledge] = useState("");
     const [isDragging, setIsDragging] = useState(false);
-    const [selectedFiles,setSelectedFiles] = useState([]);
+    const [selectedFiles, setSelectedFiles] = useState([]);
     const fileInputRef = useRef(null);
+
+    // Selectors
+    const sources = useSelector(selectKnowledgeSources);
+    const loading = useSelector(selectKnowledgeLoading);
+    const error = useSelector(selectKnowledgeError);
+    const uploadStatus = useSelector(selectUploadStatus);
+    const uploadProgress = useSelector(selectUploadProgress);
+
+    // Fetch knowledge sources on component mount
+    useEffect(() => {
+        dispatch(fetchKnowledgeSources());
+    }, [dispatch]);
+
+    // Reset upload status when component unmounts
+    useEffect(() => {
+        return () => {
+            dispatch(resetUploadStatus());
+        };
+    }, [dispatch]);
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -32,57 +65,67 @@ const KnowledgePage = () => {
         setIsDragging(false);
         const files = e.dataTransfer.files;
         if (files.length > 0) {
-            console.log("Dropped files:", Array.from(files));
-            setSelectedFiles([...selectedFiles,...files])
+            setSelectedFiles(prevFiles => [...prevFiles, ...Array.from(files)]);
         }
     };
 
     const handleFileInput = (e) => {
         const files = e.target.files;
-        if (files && files.length > 0) {
-            console.log("Selected files:", Array.from(files));
-            setSelectedFiles([...selectedFiles,...files])
+        if (!files || files.length === 0) return;
+
+        const newFiles = Array.from(files).map(file => {
+            return new File([file], file.name, {
+                type: file.type || 'application/octet-stream',
+                lastModified: file.lastModified
+            });
+        });
+        setSelectedFiles(prevFiles => [...prevFiles, ...newFiles]);
+    };
+
+    const handleUpload = async () => {
+        if (selectedFiles.length === 0) return;
+        try {
+            console.log("Selected files:", selectedFiles);
+            console.log("Current file",fileInputRef.current);
+
+            const result = await dispatch(uploadKnowledgeSource({
+                files: selectedFiles,
+                knowledgeBaseName: "telecom_industry_sop"
+            })).unwrap();
+
+            setSelectedFiles([]);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
+
+            console.log('Upload successful:', result.message);
+
+        } catch (error) {
+            console.error('Upload failed:', error);
         }
     };
 
-    const filteredFlows = [
-        {
-            id: 1,
-            filename: "Product_Manual_v2.pdf",
-            type: "pdf",
-            size: "2.4 MB",
-            createdAt: "2023-10-24T10:00:00Z",
-            status: "Indexed"
-        },
-        {
-            id: 2,
-            filename: "Q3_Financial_Report.docx",
-            type: "docx",
-            size: "845 KB",
-            createdAt: "2023-10-23T10:00:00Z",
-            status: "Processing"
-        },
-        {
-            id: 3,
-            filename: "API_Documentation.txt",
-            type: "txt",
-            size: "12 KB",
-            createdAt: "2023-10-20T10:00:00Z",
-            status: "Indexed"
-        },
-        {
-            id: 4,
-            filename: "Competitor_Analysis_Site",
-            type: "url",
-            size: "--",
-            createdAt: "2023-10-18T10:00:00Z",
-            status: "Failed"
-        }
-    ];
+    const handleRemoveFile = (index) => {
+        const newFiles = [...selectedFiles];
+        newFiles.splice(index, 1);
+        setSelectedFiles(newFiles);
+    };
+
+    const filteredSources = useMemo(() => {
+        if (!searchKnowledge) return sources;
+        return sources.filter(source =>
+            source.filename.toLowerCase().includes(searchKnowledge.toLowerCase())
+        );
+    }, [sources, searchKnowledge]);
+
+    
+    const handleDeleteKnowledge = (id) => {
+        dispatch(deleteKnowledgeSource(id));
+    };
 
     return (
         <Box className="px-4 sm:px-6 lg:px-8 py-10 bg-slate-50">
-            <Box >
+            <Box>
                 <Box className="flex items-center justify-between mb-10">
                     <Box>
                         <Typography variant="h4" className="!font-bold">Manage Knowledge Resources</Typography>
@@ -101,8 +144,7 @@ const KnowledgePage = () => {
                     className={`transition-colors duration-200 !bg-white ${isDragging ? 'bg-blue-100' : ''}`}
                 >
                     <Box className="flex justify-between items-center p-10">
-
-                        <Box 
+                        <Box
                             className="flex gap-5 items-center cursor-pointer"
                             onClick={() => fileInputRef.current?.click()}
                         >
@@ -145,9 +187,30 @@ const KnowledgePage = () => {
                 </DashedBox>
             </Box>
 
+            {uploadStatus === 'loading' && (
+                <Box className="mt-4 p-4 bg-blue-50 rounded-md">
+                    <Box className="flex items-center gap-3">
+                        <CircularProgress size={20} />
+                        <Typography>Uploading...</Typography>
+                    </Box>
+                </Box>
+            )}
+
+            {uploadStatus === 'succeeded' && (
+                <Box className="mt-4 p-4 bg-green-50 text-green-700 rounded-md">
+                    <Typography>Files uploaded successfully!</Typography>
+                </Box>
+            )}
+
+            {uploadStatus === 'failed' && (
+                <Box className="mt-4 p-4 bg-red-50 text-red-700 rounded-md">
+                    <Typography>Upload failed. Please try again.</Typography>
+                </Box>
+            )}
+
             {selectedFiles.length > 0 && (
                 <Box className="bg-white mt-5 !border-1 rounded-md border-gray-300">
-                    <Box className="flex justify-between p-3 border-b-1 border-gray-300 bg-white rounded-t-md">
+                    <Box className="flex h-15 justify-between items-center p-3 border-b-1 border-gray-200 bg-white rounded-t-md">
                         <Typography variant="body2" className="!font-bold">Ready for Upload</Typography>
                         <Typography variant="caption" className="text-slate-500">
                             {selectedFiles.length} {selectedFiles.length === 1 ? 'File' : 'Files'} selected
@@ -155,46 +218,46 @@ const KnowledgePage = () => {
                     </Box>
 
                     {selectedFiles.map((file, index) => (
-                        <Box key={index} className="flex justify-between items-center p-3 px-4 border-b-1 !border-gray-300">
+                        <Box key={index} className="flex justify-between items-center p-3 px-4 border-b-1 !border-gray-200 hover:bg-[var(--primary-color)]/5 cursor-pointer">
                             <Box className="flex justify-center items-center gap-4">
                                 <Box className="p-2 rounded-lg bg-[var(--primary-color)]/10">
                                     <FileText size={20} className="text-red-500" />
                                 </Box>
                                 <Box>
                                     <Typography variant="body2" className="!font-bold">{file?.name}</Typography>
-                                    <Typography variant="caption" className="text-slate-500">{bytesToSize(file?.size)}</Typography>
+                                    <Typography variant="caption" className="text-slate-500">
+                                        {file?.size ? bytesToSize(file.size) : '--'}
+                                    </Typography>
                                 </Box>
                             </Box>
-                            <Trash2 
-                                size={16} 
-                                color="red" 
+                            <Trash2
+                                size={16}
+                                color="red"
                                 className="cursor-pointer"
-                                onClick={() => {
-                                    const newFiles = [...selectedFiles];
-                                    newFiles.splice(index, 1);
-                                    setSelectedFiles(newFiles);
-                                }}
+                                onClick={() => handleRemoveFile(index)}
                             />
                         </Box>
                     ))}
 
                     <Box className="flex flex-row-reverse gap-5 p-3 border-b-1 border-gray-300 bg-white rounded-md">
-                        <CustomButton 
-                            variant="contained" 
-                            color="primary" 
+                        <CustomButton
+                            variant="contained"
+                            color="primary"
                             startIcon={<CloudUpload size={16} />}
-                            onClick={() => {
-                                // Handle file upload logic here
-                                console.log('Uploading files:', selectedFiles);
-                                // After successful upload, you might want to clear the selection:
-                                // setSelectedFiles([]);
-                            }}
+                            onClick={handleUpload}
+                            disabled={uploadStatus === 'loading'}
                         >
-                            Upload
+                            {uploadStatus === 'loading' ? 'Uploading...' : 'Upload'}
                         </CustomButton>
-                        <CustomButton 
+                        <CustomButton
                             variant="outlined"
-                            onClick={() => setSelectedFiles([])}
+                            onClick={() => {
+                                setSelectedFiles([]);
+                                if (fileInputRef.current) {
+                                    fileInputRef.current.value = '';
+                                }
+                            }}
+                            disabled={uploadStatus === 'loading'}
                         >
                             Cancel
                         </CustomButton>
@@ -203,31 +266,54 @@ const KnowledgePage = () => {
             )}
 
             <Box className="mt-10">
-                <Typography variant="h6" className="!font-bold" >Sources</Typography>
-                <Box className="flex gap-2 mt-2 rounded-md m-2">
-                    <InputBox
-                        placeholder="Search by Source..."
-                        value={searchKnowledge}
-                        isShowLabel={false}
-                        height="40px"
-                        width="50%"
-                        onChange={setSearchKnowledge}
-                        className="basis-2/3"
-                        icon={<Search className='text-gray-400' size={18} />}
-                    />
-                    {/* <CustomButton variant="outlined" color="black" className="basis-1/3">Filter</CustomButton>
-                     <CustomButton  className="basis-1/3">Filter</CustomButton> */}
-                </Box>
+                <Typography variant="h6" className="!font-bold">Sources</Typography>
+                {loading ? (
+                    <Box className="flex justify-center items-center p-10">
+                        <CircularProgress />
+                    </Box>
+                ) : error ? (
+                    <Box className="p-4 bg-red-50 text-red-700 rounded-md mt-2">
+                        <Typography>Error loading sources: {error}</Typography>
+                    </Box>
+                ) : (
+                    <>
+                        <Box className="flex gap-2 mt-2 rounded-md m-2">
+                            <InputBox
+                                placeholder="Search by Source..."
+                                value={searchKnowledge}
+                                isShowLabel={false}
+                                height="40px"
+                                width="50%"
+                                onChange={setSearchKnowledge}
+                                className="basis-2/3"
+                                icon={<Search className='text-gray-400' size={18} />}
+                            />
+                        </Box>
 
-                <KnowledgeListingTableView
-                    filteredFlows={filteredFlows}
-                    handleOpenStudio={(id) => console.log("Open flow:", id)}
-                    handleDeleteFlow={(id) => console.log("Delete flow:", id)}
-                />
+                        {filteredSources.length>0 ? 
 
+                          <KnowledgeListingTableView
+                            filteredFlows={filteredSources}
+                            handleOpenStudio={(id)=> console.log("Open")}
+                            handleDeleteKnowledge={handleDeleteKnowledge}
+                        />
+                        :
+
+                        <Box className="flex !items-center !justify-center p-5">
+                        <Typography variant="body2" className="!font-bold">No sources found</Typography>   
+
+                        </Box>
+
+                        
+                    
+                    }
+
+                      
+                    </>
+                )}
             </Box>
         </Box>
-    )
-}
+    );
+};
 
 export default KnowledgePage;
