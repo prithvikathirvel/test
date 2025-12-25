@@ -6,14 +6,13 @@ import { List, ListItem, ListItemIcon, ListItemText, Box, Drawer } from "@mui/ma
 import {
   LayoutDashboard,
   Settings,
-  Package,
-  AlignJustify
+  BookOpen,
 } from "lucide-react";
 
 const Menus = [
   // { title: "Home", icon: <LayoutDashboard size={18} />, path: "/dashboard" },
   { title: "Flow Listing", icon: <LayoutDashboard size={18} />, path: "/studio" },
-  { title: "LLM", icon: <Package size={18} />, path: "/llm" },
+  { title: "LLM", icon: <BookOpen size={18} />, path: "/knowledge" },
   { title: "Settings", icon: <Settings size={18} />, path: "/settings" },
 ];
 
