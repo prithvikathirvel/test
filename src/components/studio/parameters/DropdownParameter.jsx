@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box,Typography } from '@mui/material';
+import {convertToTitleCase} from '@/utils/commonFunction'; 
 
 
 const DropdownParameter = ({
@@ -21,6 +22,9 @@ const DropdownParameter = ({
 
   return (
     <Box className="w-full">
+      <Typography className='!mb-2 !font-bold  !text-[13px] '>
+                {convertToTitleCase(param?.key)}
+      </Typography>
       <select
         value={value}
         onChange={(e) => handleChange(e.target.value)}
