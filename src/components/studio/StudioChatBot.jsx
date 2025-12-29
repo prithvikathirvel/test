@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { MessageCircle, X, Send, User, Bot, CheckCircle, Loader2, XCircle, Paperclip, FileText, Trash2 } from "lucide-react"
+import { MessageCircle, X, Send, User, Bot, CheckCircle, Loader2, XCircle, Paperclip, FileText, Trash2, Mic, Square, Play, Pause, Volume2, VolumeX } from "lucide-react"
 import { useDispatch, useSelector } from "react-redux"
 import { parseAndNormalizeFormData } from "@/utils/commonFunction"
 
@@ -33,7 +33,6 @@ const DynamicFormComponent = ({ formData, resultActionbmit, colors }) => {
       submitUrl: formData.submit
     };
     await resultActionbmit(formValues, submitInfo);
-    // parent handles further state changes
   };
 
   const renderInput = (key, type) => {
@@ -90,7 +89,7 @@ const DynamicFormComponent = ({ formData, resultActionbmit, colors }) => {
 };
 
 // ============================================================================
-// MAIN CHATBOT COMPONENT (updated with flow state management)
+// MAIN CHATBOT COMPONENT
 // ============================================================================
 const StudioChatBot = ({
   primaryColor = "primary",
@@ -115,9 +114,19 @@ const StudioChatBot = ({
   const [isLoading, setIsLoading] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState([])
   
+  // Voice Recording State
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordedAudio, setRecordedAudio] = useState(null) // { blob: Blob, url: string }
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef = useRef([])
+
+  // Audio Playback & Mute State
+  const [isMuted, setIsMuted] = useState(false)
+  const currentAudioRef = useRef(null)
+
   // State for IDs
   const [threadId, setThreadId] = useState(null)
-  const [localSessionId, setLocalSessionId] = useState(null) // NEW: Store session_id locally
+  const [localSessionId, setLocalSessionId] = useState(null) 
   
   const [pausedContext, setPausedContext] = useState(null)
 
@@ -125,7 +134,7 @@ const StudioChatBot = ({
   const messagesEndRef = useRef(null)
   const messageIdCounter = useRef(0)
   const flowStartedRef = useRef(false)
-  const flowStateRef = useRef("idle") // "idle" | "started" | "paused" | "completed"
+  const flowStateRef = useRef("idle") 
 
   const dispatch = useDispatch()
   const flowOutput = useSelector((state) => state?.studio?.flowOutput)
@@ -170,6 +179,145 @@ const StudioChatBot = ({
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  // ---------------------------
+  // Mute / Unmute Logic
+  // ---------------------------
+  const toggleMute = () => {
+    setIsMuted((prev) => {
+      const newState = !prev;
+      // If user is muting now, and audio is currently playing, stop it.
+      if (newState && currentAudioRef.current) {
+        currentAudioRef.current.pause();
+        currentAudioRef.current = null;
+      }
+      return newState;
+    });
+  }
+
+  // ---------------------------
+  // Audio Playback Helper (Background)
+  // ---------------------------
+  const playBackgroundAudio = (base64Content) => {
+    // 1. Check if Muted
+    if (isMuted) return;
+    if (!base64Content) return;
+
+    try {
+      // 2. Stop any previously playing audio to prevent overlap
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause();
+      }
+
+      // Detect MIME Type
+      const mimeType = base64Content.startsWith("UklGR") ? "audio/wav" : "audio/mp3";
+      const src = `data:${mimeType};base64,${base64Content}`;
+      
+      const audio = new Audio(src);
+      currentAudioRef.current = audio; // Store ref
+      
+      audio.play().catch(err => {
+        console.error("Auto-play blocked or failed:", err);
+      });
+
+      // Cleanup ref when done
+      audio.onended = () => {
+        if (currentAudioRef.current === audio) {
+          currentAudioRef.current = null;
+        }
+      }
+
+    } catch (e) {
+      console.error("Error playing background audio:", e);
+    }
+  }
+
+  // ---------------------------
+  // Voice Recording Helpers
+  // ---------------------------
+  
+  const blobToBase64 = (blob) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result.split(',')[1];
+        resolve(base64String);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+        
+        // Save to state for review instead of sending immediately
+        setRecordedAudio({ blob: audioBlob, url: audioUrl });
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordedAudio(null); // Clear previous recording
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      addMessage("Could not access microphone. Please check permissions.", "bot", "error");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const cancelRecording = () => {
+    setRecordedAudio(null);
+  };
+
+  const sendRecording = async () => {
+    if (!recordedAudio) return;
+
+    try {
+      // 1. Convert to Base64
+      const base64Audio = await blobToBase64(recordedAudio.blob);
+      
+      // 2. Add visual audio message to chat (User)
+      // We pass the local URL so the user can play it back immediately without loading base64
+      addMessage("", "user", "audio", null, { audioUrl: recordedAudio.url, base64: base64Audio });
+      
+      // 3. Clear recording state
+      setRecordedAudio(null);
+
+      // 4. Send to API
+      setPausedContext(null);
+      setThreadId(null);
+      flowStartedRef.current = false;
+      
+      await startNewFlow(null, [], base64Audio);
+
+    } catch (err) {
+      console.error("Error sending audio:", err);
+      addMessage("Error sending voice input.", "bot", "error");
+    }
+  };
 
   // ---------------------------
   // File upload helpers
@@ -243,7 +391,7 @@ const StudioChatBot = ({
       id: messageId,
       text,
       sender,
-      messageType,
+      messageType, // 'text' | 'file' | 'form' | 'question' | 'loading' | 'error' | 'audio'
       customData,
       apiResponse,
       timestamp: new Date(),
@@ -264,15 +412,11 @@ const StudioChatBot = ({
       return
     }
     console.log("LOGGGG",data)
-    // Save thread id if returned
+    
     if (data.thread_id) setThreadId(data.thread_id)
+    if (data.session_id) setLocalSessionId(data.session_id)
 
-    // UPDATE: Save session_id if returned by the response
-    if (data.session_id) {
-      setLocalSessionId(data.session_id)
-    }
-
-    // Centralized status handling (keeps flowStateRef in sync)
+    // Centralized status handling
     if (data.status) {
       const st = data.status.toString().toUpperCase()
       if (st === "PAUSED") {
@@ -296,7 +440,7 @@ const StudioChatBot = ({
       }
     }
 
-    // File responses: pdf/doc (base64)
+    // File responses
     if (data.response_type === "pdf" || data.response_type === "doc" || data.type === "file") {
       const base64 = data.agent_response || data.payload?.base64 || null
       const respType = data.response_type || data.payload?.fileType || (data.type === "file" && data.payload?.fileType) || "pdf"
@@ -308,7 +452,7 @@ const StudioChatBot = ({
       }
     }
 
-    // If flow returns a 'form' structure (handle older runFlow-style responses)
+    // Form responses
     if (data.type === "form" || data.response_type === "form") {
       try {
         const parsed = typeof data.agent_response === "string" ? parseAndNormalizeFormData(data.agent_response) : data.payload || {}
@@ -323,14 +467,30 @@ const StudioChatBot = ({
       }
     }
 
-    // Map typical response types used in File A
+    // General Response Types
     const respTypeUpper = (data.response_type || "").toString().toUpperCase()
 
     switch (respTypeUpper) {
+      case "AUDIO":
+        {
+          // Requirement 3: Handle explicit audio response (e.g. file sharing)
+          // agent_response should be base64
+          const audioBase64 = data.agent_response || data.payload?.audio || "";
+          if (audioBase64) {
+            addMessage("", "bot", "audio", null, { base64: audioBase64 });
+          } else {
+            addMessage("Received audio response but data was empty.", "bot", "error");
+          }
+        }
+        break;
+
       case "QUESTION":
         {
           const questionText = data.payload?.question_text || data.payload?.question || data.agent_response || "Question"
           addMessage(questionText, "bot", "question", null, { payload: data.payload || {} })
+          
+          // NEW: Play background audio if available
+          if (data.voiceOutput) playBackgroundAudio(data.voiceOutput);
         }
         break
 
@@ -338,6 +498,10 @@ const StudioChatBot = ({
         {
           const msg = data.payload?.message || data.agent_response || "The flow has completed."
           addMessage(msg, "bot", "text")
+          
+          // NEW: Play background audio if available
+          if (data.voiceOutput) playBackgroundAudio(data.voiceOutput);
+
           setThreadId(null)
           flowStartedRef.current = false
           setPausedContext(null)
@@ -350,18 +514,25 @@ const StudioChatBot = ({
         {
           const msg = data.payload?.text || data.agent_response || data.message || "Message from bot."
           addMessage(msg, "bot", "text")
+
+          // NEW: Play background audio if available
+          if (data.voiceOutput) playBackgroundAudio(data.voiceOutput);
         }
         break
 
       default:
-        // If response has agent_response string, show it
+        // Fallback
         if (data.agent_response) {
           const botResp = data.agent_response
           addMessage(botResp, "bot", "text")
+          // NEW: Play background audio if available
+          if (data.voiceOutput) playBackgroundAudio(data.voiceOutput);
+
         } else {
-          // If we have payload with options/questions, surface them
           if (data.payload && data.payload.options) {
             addMessage(data.payload.question_text || data.payload.question || "Choose an option", "bot", "question", null, { payload: data.payload })
+            // NEW: Play background audio if available
+            if (data.voiceOutput) playBackgroundAudio(data.voiceOutput);
           } else {
             addMessage("Sorry, I'm not sure how to handle that response.", "bot", "error")
           }
@@ -371,29 +542,36 @@ const StudioChatBot = ({
   }
 
   // ---------------------------
-  // startNewFlow: called only when first user message sent
-  // Uses runFlow-style payload for execute-graph
+  // startNewFlow: handles Text, Files, and Voice inputs
   // ---------------------------
-  const startNewFlow = async (firstUserMessage, fileBase64Array = []) => {
+  const startNewFlow = async (firstUserMessage, fileBase64Array = [], voiceBase64 = null) => {
     setIsLoading(true)
     const loadingMsg = addMessage("Processing...", "bot", "loading")
     try {
-      // UPDATE: Check localSessionId first, fallback to Redux sessionId
       const activeSessionId = localSessionId || sessionId;
 
-      const payload = {
+      let payload = {
         agent_id: flow?.id || apiConfig?.agent_id,
-        userInput: {
+      }
+
+      if (activeSessionId) {
+        payload.session_id = activeSessionId
+      }
+
+      if (voiceBase64) {
+        payload.voice_enabled = true;
+        payload.userInput = {
+          voiceInput: voiceBase64
+        };
+      } else {
+        payload.userInput = {
           message: firstUserMessage,
           uploadedFiles: fileBase64Array
         }
       }
-      if(activeSessionId){
-        payload.session_id = activeSessionId
-      }
+
       const token = localStorage.getItem("token") || "";
 
-      // execute-graph endpoint
       const res = await fetch(`http://1.6.37.35/engine/agents/invoke/${flow?.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
@@ -410,7 +588,6 @@ const StudioChatBot = ({
       console.log("LOGGGGG",data);
       processApiResponse(data)
       flowStartedRef.current = true
-      // flowStateRef will be set by processApiResponse based on response.status
     } catch (error) {
       console.error("Error starting flow:", error)
       removeMessageById(loadingMsg.id)
@@ -421,17 +598,14 @@ const StudioChatBot = ({
   }
 
   // ---------------------------
-  // handleResumeFlow: unchanged behavior but updates flow state based on response
+  // handleResumeFlow (unchanged)
   // ---------------------------
   const handleResumeFlow = async (resumeValue) => {
-    // resumeValue is user's selected option or typed value
-    // addMessage(resumeValue, "user")
     setIsLoading(true)
     const loadingMsg = addMessage("Thinking...", "bot", "loading")
     try {
       let body
       if (pausedContext) {
-        // when paused, send full resume payload (preserve original format)
         body = {
           agent_id: pausedContext.agent_id,
           user_id: pausedContext.user_id,
@@ -442,7 +616,6 @@ const StudioChatBot = ({
           input_type: pausedContext.input_type
         }
       } else {
-        // fallback to thread-based resume
         body = {
           agent_id: flow?.id || apiConfig?.agent_id,
           thread_id: threadId,
@@ -464,7 +637,6 @@ const StudioChatBot = ({
 
       const data = await res.json()
       processApiResponse(data)
-      // If resume succeeded and response didn't set paused/completed, mark flow started or completed
       if (!data?.status || data.status.toString().toUpperCase() !== "PAUSED") {
         flowStateRef.current = data?.status && data.status.toString().toUpperCase() === "COMPLETED" ? "completed" : "started"
       }
@@ -478,14 +650,11 @@ const StudioChatBot = ({
   }
 
   // ---------------------------
-  // handleSendMessage: adjusted so that when flow is COMPLETED it will call startNewFlow again
-  // - If flow is PAUSED -> resumeFlow
-  // - Else -> always call startNewFlow (so the API call is always made when not paused)
+  // handleSendMessage
   // ---------------------------
   const handleSendMessage = async () => {
     if (!(inputValue.trim()) && uploadedFiles.length === 0) return
 
-    // prepare message text and files
     let userMessage = inputValue.trim()
     let fileData = []
     if (uploadedFiles.length > 0) {
@@ -495,23 +664,18 @@ const StudioChatBot = ({
       }
     }
 
-    // Show user's message in chat
     addMessage(userMessage, "user")
     setInputValue("")
 
     const currentState = flowStateRef.current
 
-    // CASE: Flow is PAUSED -> resume
     if (currentState === "paused" && pausedContext) {
       await handleResumeFlow(userMessage)
       setUploadedFiles([])
       return
     }
 
-    // For all other states (idle, completed, started but not paused) we make an API call via startNewFlow.
-    // This ensures API call is always made except when resuming a paused flow.
     setPausedContext(null)
-    // reset thread info for a fresh invocation
     setThreadId(null)
     flowStartedRef.current = false
     await startNewFlow(userMessage, fileData)
@@ -555,10 +719,8 @@ const StudioChatBot = ({
   // UI & message renderers
   // ---------------------------
   const handleOptionClick = async (option, messageData) => {
-    // When option clicked, show as user message
     addMessage(option.text, "user")
 
-    // if option has nextMessage, show it locally
     if (option.nextMessage) {
       setTimeout(() => {
         const nextMessage = { ...option.nextMessage, id: generateUniqueId(), timestamp: new Date() }
@@ -566,11 +728,8 @@ const StudioChatBot = ({
       }, 400)
     }
 
-    // Only resume flow if paused (ensures we don't accidentally call resume when not in paused state)
     if (flowStateRef.current === "paused") {
       await handleResumeFlow(option.text)
-    } else {
-      // If not paused, optionally handle as normal chat or ignore (we currently ignore backend call)
     }
 
     if (onOptionClicked) onOptionClicked(option, messageData)
@@ -585,106 +744,130 @@ const StudioChatBot = ({
 
   const formatTime = (timestamp) => timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
 
-  const DefaultUserMessage = ({ message, colors }) => (
-    <div className={`px-4 py-3 rounded-2xl ${colors.userBubble} text-white rounded-br-md`}>
-      <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
-    </div>
-  )
+  const DefaultUserMessage = ({ message, colors }) => {
+    if (message.messageType === "audio") {
+      // Requirement 2: Render User Audio
+      const src = message.customData.audioUrl || `data:audio/webm;base64,${message.customData.base64}`;
+      return (
+        <div className={`px-4 py-3 rounded-2xl ${colors.userBubble} text-white rounded-br-md flex items-center min-w-[200px]`}>
+          <audio controls src={src} className="w-full h-8 max-w-[240px]" />
+        </div>
+      );
+    }
+    return (
+      <div className={`px-4 py-3 rounded-2xl ${colors.userBubble} text-white rounded-br-md`}>
+        <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+      </div>
+    );
+  }
 
-  const DefaultBotMessage = ({ message, colors, onOptionClick, onFormSubmit }) => (
-    <div>
-      {message.messageType === "loading" ? (
-        <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 px-4 py-3">
-          <div className="flex items-center space-x-2">
-            <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-            <p className="text-sm leading-relaxed">{message.text}</p>
+  const DefaultBotMessage = ({ message, colors, onOptionClick, onFormSubmit }) => {
+    if (message.messageType === "audio") {
+      // Explicit File Transfer Audio (keep player visible)
+      const src = `data:audio/mp3;base64,${message.customData.base64}`;
+      return (
+        <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 px-4 py-3 min-w-[220px]">
+          <div className="flex flex-col gap-2">
+            <p className="text-xs text-gray-500 font-semibold mb-1">Voice Response</p>
+            <audio controls src={src} className="w-full h-8" />
           </div>
         </div>
-      ) : message.messageType === "error" ? (
-        <div className="bg-red-50 text-red-800 rounded-2xl rounded-bl-md shadow-sm border border-red-200 px-4 py-3">
-          <div className="flex items-start space-x-2">
-            <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
-            <p className="text-sm leading-relaxed">{message.text}</p>
+      );
+    }
+
+    return (
+      <div>
+        {message.messageType === "loading" ? (
+          <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 px-4 py-3">
+            <div className="flex items-center space-x-2">
+              <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+              <p className="text-sm leading-relaxed">{message.text}</p>
+            </div>
           </div>
-        </div>
-      ) : message.messageType === "form" ? (
-        <DynamicFormComponent
-          formData={message.customData.formData}
-          resultActionbmit={onFormSubmit}
-          colors={colors}
-        />
-      ) : message.messageType === "file" ? (
-        // File card
-        <div className="bg-white text-gray-800 rounded-xl shadow flex items-center border border-gray-200 p-4 space-x-4 hover:shadow-md transition-all">
-          <div className="flex-shrink-0">
-            {message.customData.fileType === "pdf" ? (
-              <FileText className="w-10 h-10 text-red-500" />
-            ) : (
-              <FileText className="w-10 h-10 text-blue-600" />
+        ) : message.messageType === "error" ? (
+          <div className="bg-red-50 text-red-800 rounded-2xl rounded-bl-md shadow-sm border border-red-200 px-4 py-3">
+            <div className="flex items-start space-x-2">
+              <XCircle className="w-4 h-4 mt-0.5 flex-shrink-0 text-red-500" />
+              <p className="text-sm leading-relaxed">{message.text}</p>
+            </div>
+          </div>
+        ) : message.messageType === "form" ? (
+          <DynamicFormComponent
+            formData={message.customData.formData}
+            resultActionbmit={onFormSubmit}
+            colors={colors}
+          />
+        ) : message.messageType === "file" ? (
+          <div className="bg-white text-gray-800 rounded-xl shadow flex items-center border border-gray-200 p-4 space-x-4 hover:shadow-md transition-all">
+            <div className="flex-shrink-0">
+              {message.customData.fileType === "pdf" ? (
+                <FileText className="w-10 h-10 text-red-500" />
+              ) : (
+                <FileText className="w-10 h-10 text-blue-600" />
+              )}
+            </div>
+            <div className="flex flex-col flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">{message.customData.fileName}</p>
+              <p className="text-xs text-gray-500">{(() => {
+                const bytes = Math.ceil((message.customData.base64.length * 3) / 4)
+                const kb = (bytes / 1024)
+                return kb < 1024 ? `${kb.toFixed(1)} KB` : `${(kb / 1024).toFixed(2)} MB`
+              })()}</p>
+            </div>
+            <button
+              onClick={() => {
+                const link = document.createElement("a")
+                link.href = `data:application/${message.customData.fileType};base64,${message.customData.base64}`
+                link.download = message.customData.fileName
+                link.click()
+              }}
+              className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs transition"
+            >
+              Download
+            </button>
+          </div>
+        ) : message.messageType === "question" ? (
+          <div>
+            <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 px-4 py-3">
+              <p className="text-sm leading-relaxed">{message.text}</p>
+            </div>
+            {message.customData?.payload?.options && (
+              <div className="mt-3 space-y-2">
+                {Object.entries(message.customData.payload.options).map(([key, value]) => (
+                  <button
+                    key={key}
+                    onClick={() => onOptionClick({ text: value }, message)}
+                    disabled={isLoading}
+                    className={`block w-full text-left px-4 py-2 text-sm bg-white border ${colors.border} ${colors.text} rounded-xl transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed`}
+                  >
+                    {value}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
-          <div className="flex flex-col flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{message.customData.fileName}</p>
-            <p className="text-xs text-gray-500">{(() => {
-              const bytes = Math.ceil((message.customData.base64.length * 3) / 4)
-              const kb = (bytes / 1024)
-              return kb < 1024 ? `${kb.toFixed(1)} KB` : `${(kb / 1024).toFixed(2)} MB`
-            })()}</p>
-          </div>
-          <button
-            onClick={() => {
-              const link = document.createElement("a")
-              link.href = `data:application/${message.customData.fileType};base64,${message.customData.base64}`
-              link.download = message.customData.fileName
-              link.click()
-            }}
-            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-xs transition"
-          >
-            Download
-          </button>
-        </div>
-      ) : message.messageType === "question" ? (
-        // question + options rendering
-        <div>
+        ) : (
           <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 px-4 py-3">
-            <p className="text-sm leading-relaxed">{message.text}</p>
+            <div className="text-sm leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: message.text }} />
           </div>
-          {message.customData?.payload?.options && (
-            <div className="mt-3 space-y-2">
-              {Object.entries(message.customData.payload.options).map(([key, value]) => (
-                <button
-                  key={key}
-                  onClick={() => onOptionClick({ text: value }, message)}
-                  disabled={isLoading}
-                  className={`block w-full text-left px-4 py-2 text-sm bg-white border ${colors.border} ${colors.text} rounded-xl transform hover:scale-[1.02] transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 disabled:opacity-50 disabled:cursor-not-allowed`}
-                >
-                  {value}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 px-4 py-3">
-          <div className="text-sm leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: message.text }} />
-        </div>
-      )}
+        )}
 
-      {message.options && (
-        <div className="mt-3 space-y-2">
-          {message.options.map((option, index) => (
-            <button
-              key={`${message.id}-option-${index}`}
-              onClick={() => onOptionClick(option, message)}
-              className={`block w-full text-left px-4 py-2 text-sm bg-white border ${colors.border} ${colors.text} rounded-xl hover:${colors.bg} transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50`}
-            >
-              {option.text}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  )
+        {message.options && (
+          <div className="mt-3 space-y-2">
+            {message.options.map((option, index) => (
+              <button
+                key={`${message.id}-option-${index}`}
+                onClick={() => onOptionClick(option, message)}
+                className={`block w-full text-left px-4 py-2 text-sm bg-white border ${colors.border} ${colors.text} rounded-xl hover:${colors.bg} transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-opacity-50`}
+              >
+                {option.text}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
 
   const renderMessage = (message) => {
     const commonProps = { message, colors, onFormSubmit: handleFormSubmit, onOptionClick: handleOptionClick }
@@ -726,9 +909,21 @@ const StudioChatBot = ({
                 </div>
               </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="text-white cursor-pointer hover:bg-opacity-20 rounded-full p-2 transition-colors focus:outline-none" aria-label="Close chat">
-              <X className="w-5 h-5" />
-            </button>
+            
+            <div className="flex items-center space-x-2">
+                {/* Mute/Unmute Toggle Button */}
+                <button 
+                  onClick={toggleMute} 
+                  className="text-white hover:bg-white/20 p-2 rounded-full transition-colors focus:outline-none"
+                  title={isMuted ? "Unmute" : "Mute"}
+                >
+                    {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                </button>
+
+                <button onClick={() => setIsOpen(false)} className="text-white cursor-pointer hover:bg-opacity-20 rounded-full p-2 transition-colors focus:outline-none" aria-label="Close chat">
+                    <X className="w-5 h-5" />
+                </button>
+            </div>
           </div>
 
           {/* Messages */}
@@ -775,21 +970,52 @@ const StudioChatBot = ({
           {/* Input area */}
           <div className="p-5 border-t bg-white">
             <div className="flex space-x-3 items-end">
+              {/* File Attachment */}
               <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept=".pdf, .xls, .xlsx, .csv" multiple className="hidden" />
-              <button onClick={() => fileInputRef.current?.click()} className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-full hover:bg-gray-100" aria-label="Upload files" disabled={isLoading}>
+              <button onClick={() => fileInputRef.current?.click()} className="text-gray-500 hover:text-gray-700 transition-colors p-2 rounded-full hover:bg-gray-100" aria-label="Upload files" disabled={isLoading || isRecording}>
                 <Paperclip className="w-5 h-5" />
               </button>
-              <textarea
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type your message..."
-                className="custom-scroll flex-1 border border-gray-300 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all resize-none overflow-y-auto h-15"
+
+              {/* Voice Button */}
+              <button 
+                onClick={isRecording ? stopRecording : startRecording}
+                className={`${isRecording ? "text-red-500 bg-red-50 animate-pulse" : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"} transition-colors p-2 rounded-full`}
+                aria-label={isRecording ? "Stop recording" : "Start recording"}
                 disabled={isLoading}
-              />
-              <button onClick={handleSendMessage} disabled={(!inputValue.trim() && uploadedFiles.length === 0) || isLoading} className={`${colors.primary} disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full p-3 transition-all duration-200 focus:outline-none`}>
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              >
+                {isRecording ? <Square className="w-5 h-5 fill-current" /> : <Mic className="w-5 h-5" />}
               </button>
+
+              {/* Text Input */}
+              {recordedAudio ? (
+                // REVIEW MODE UI
+                <div className="flex flex-1 items-center gap-2 bg-gray-50 rounded-md px-2 py-1">
+                   <audio controls src={recordedAudio.url} className="h-8 flex-1 w-full" />
+                   <button onClick={cancelRecording} className="text-red-500 p-1 hover:bg-gray-200 rounded-full">
+                     <Trash2 className="w-4 h-4" />
+                   </button>
+                </div>
+              ) : (
+                <textarea
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder={isRecording ? "Recording..." : "Type your message..."}
+                  className="custom-scroll flex-1 border border-gray-300 rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all resize-none overflow-y-auto h-15 disabled:bg-gray-50 disabled:text-gray-400"
+                  disabled={isLoading || isRecording}
+                />
+              )}
+              
+              {/* Send Button */}
+              {recordedAudio ? (
+                 <button onClick={sendRecording} disabled={isLoading} className={`${colors.primary} text-white rounded-full p-3 transition-all duration-200 focus:outline-none`}>
+                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                 </button>
+              ) : (
+                <button onClick={handleSendMessage} disabled={(!inputValue.trim() && uploadedFiles.length === 0) || isLoading || isRecording} className={`${colors.primary} disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full p-3 transition-all duration-200 focus:outline-none`}>
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </button>
+              )}
             </div>
           </div>
         </div>
