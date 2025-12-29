@@ -1,14 +1,52 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { bytesToSize,showToaster } from '@/utils/commonFunction';
+import { bytesToSize, showToaster } from '@/utils/commonFunction';
 
-const API_BASE_URL = 'https://api.yourdomain.com/api';
+// Get token from localStorage
+const getAuthToken = () => {
+  return localStorage.getItem('token');
+};
+
+// Create axios instance with default headers
+const api = axios.create({
+  baseURL: 'http://1.6.37.35/engine',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add request interceptor to include token
+api.interceptors.request.use(
+  (config) => {
+    const token = getAuthToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      showToaster('error', 'Session Expired. Please login again.');
+      // Optional: You can add a redirect to login page here if needed
+      // window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const fetchKnowledgeSources = createAsyncThunk(
   'knowledge/fetchSources',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/knowledge-base');
+      const response = await api.get('/knowledge-base');
       return response.data.knowledge_bases.map(item => ({
         id: item.id,
         filename: item.file_name,
@@ -18,7 +56,18 @@ export const fetchKnowledgeSources = createAsyncThunk(
         knowledgeBase: item.knowledge_base
       }));
     } catch (error) {
-      return rejectWithValue(error.response?.data || 'Failed to fetch knowledge bases');
+      if (error.response?.status === 401) {
+        showToaster('error', 'Session Expired. Please login again.');
+        // Optional: You can add a redirect to login page here if needed
+        // window.location.href = '/login';
+        return rejectWithValue('Session Expired');
+      }
+      // Handle HTML error responses
+      const errorMessage = typeof error.response?.data === 'string' && error.response.data.startsWith('<')
+        ? 'Authentication failed. Please check your credentials.'
+        : error.response?.data?.message || 'Failed to fetch knowledge bases';
+      
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -35,11 +84,11 @@ export const uploadKnowledgeSource = createAsyncThunk(
       formData.append('file', file, file.name);  // field name MUST be "file"
       formData.append('knowledge_base_name', name);
 
-      await axios.post(
-        'http://127.0.0.1:8000/knowledge-base/ingest',
-        formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } }
-      );
+      await api.post('/knowledge-base/ingest', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       // Refresh list
       await dispatch(fetchKnowledgeSources());
@@ -60,7 +109,7 @@ export const deleteKnowledgeSource = createAsyncThunk(
   'knowledge/deleteSource',
   async (sourceId, { rejectWithValue, dispatch }) => {
     try {
-      const response = await axios.delete(`http://127.0.0.1:8000/knowledge-base/${sourceId}`);
+      const response = await api.delete(`/knowledge-base/${sourceId}`);
       // Refresh the list after successful deletion
       await dispatch(fetchKnowledgeSources());
       console.log(response,"Response from Knowledge Delete")
