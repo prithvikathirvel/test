@@ -13,7 +13,7 @@ const ConditionParameter = ({ param, color, onUpdate, parameters, parameter }) =
 
   const operators = [
     { value: "equal_to", label: "Equal To" },
-    { value: "not_equal_to", label: "Not Equal To" },
+    { value: "not_equals", label: "Not Equals" },
     { value: "greater_than", label: "Greater Than" },
     { value: "less_than", label: "Less Than" },
     { value: "greater_than_or_equal_to", label: "Greater Than or Equal To" },

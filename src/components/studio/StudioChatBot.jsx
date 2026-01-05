@@ -512,7 +512,7 @@ const StudioChatBot = ({
       case "MESSAGE":
       case "TEXT":
         {
-          const msg = data.payload?.text || data.agent_response || data.message || "Message from bot."
+          const msg = data.agent_response || data.message || "Message from bot."
           addMessage(msg, "bot", "text")
 
           // NEW: Play background audio if available
