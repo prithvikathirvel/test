@@ -72,30 +72,49 @@ export const fetchKnowledgeSources = createAsyncThunk(
   }
 );
 
-// Upload only the last selected file
 export const uploadKnowledgeSource = createAsyncThunk(
   'knowledge/uploadSource',
-  async ({ files, knowledgeBaseName = 'telecom_industry_sop' }, { rejectWithValue, dispatch }) => {
+  async (payload, { rejectWithValue, dispatch }) => {
+    const { files, knowledge_base_names, content_types } = payload;
+
     try {
-      const file = files[files.length - 1];   // <-- only last file
-      const name = file?.name
+      const uploadPromises = files.map((file, index) => {
+        const formData = new FormData();
 
-      const formData = new FormData();
-      formData.append('file', file, file.name);  // field name MUST be "file"
-      formData.append('knowledge_base_name', name);
+        // Append the actual file
+        formData.append('file', file); 
 
-      await api.post('/knowledge-base/ingest', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        // Append the edited name corresponding to this specific file index
+        // If for some reason the array is missing, fallback to file.name
+        const kbName = knowledge_base_names && knowledge_base_names[index] 
+          ? knowledge_base_names[index] 
+          : file.name;
+        
+        formData.append('knowledge_base_name', kbName);
+
+        // Append the content_type (extension) corresponding to this file index
+        if (content_types && content_types[index]) {
+           formData.append('content_type', content_types[index]);
+        }
+
+        // Return the API call promise
+        return api.post('/knowledge-base/ingest', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
       });
 
-      // Refresh list
+      // 3. Execute all uploads in parallel
+      await Promise.all(uploadPromises);
+
+      // 4. Refresh list after all uploads are done
       await dispatch(fetchKnowledgeSources());
 
-      return { message: 'Files uploaded successfully!', success: true };
+      return { message: 'All files uploaded successfully!', success: true };
 
     } catch (error) {
+      // If any upload fails, this catch block handles it
       return rejectWithValue(
         error.response?.data?.message ||
         error.response?.data?.detail ||

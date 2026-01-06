@@ -97,7 +97,7 @@ const columns = [
   {
     icon: <Trash2 size={18} />,
     color: "error",
-    onClick: (row) => handleDeleteKnowledge(row.id)
+    onClick: (row) => handleDeleteKnowledge(row?.knowledgeBase)
   }
 ];
 

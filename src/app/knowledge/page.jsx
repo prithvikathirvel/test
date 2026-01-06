@@ -1,7 +1,7 @@
 "use client"
 import { useCallback, useState, useEffect, useRef, useMemo } from "react";
-import { Box, Typography, CircularProgress } from "@mui/material";
-import { CloudUpload, Search, Trash2, FileText } from "lucide-react";
+import { Box, Typography, CircularProgress, TextField, IconButton, Tooltip } from "@mui/material";
+import { CloudUpload, Search, Trash2, FileText, Edit2, Check, X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import CustomButton from "@/components/Common/CustomButton";
 import InputBox from "@/components/Common/InputBox";
@@ -19,13 +19,15 @@ import {
     resetUploadStatus
 } from "@/redux/slices/knowledgeSlice";
 
-import {deleteKnowledgeSource} from "@/redux/slices/knowledgeSlice";
+import { deleteKnowledgeSource } from "@/redux/slices/knowledgeSlice";
 
 const KnowledgePage = () => {
     const dispatch = useDispatch();
     const [searchKnowledge, setSearchKnowledge] = useState("");
     const [isDragging, setIsDragging] = useState(false);
-    const [selectedFiles, setSelectedFiles] = useState([]);
+    
+    // State stores objects: { file: File, customName: string, extension: string, isEditing: boolean }
+    const [selectedFiles, setSelectedFiles] = useState([]); 
     const fileInputRef = useRef(null);
 
     // Selectors
@@ -59,39 +61,99 @@ const KnowledgePage = () => {
         setIsDragging(false);
     };
 
+    // Helper to process files into the required state structure
+    const processFiles = (files) => {
+        return Array.from(files).map(file => {
+            const name = file.name;
+            const lastDotIndex = name.lastIndexOf('.');
+            
+            // Extract extension and name without extension
+            // content_type logic: remove dot, if no extension, default to empty or octet-stream logic
+            const extension = lastDotIndex !== -1 ? name.substring(lastDotIndex + 1) : 'txt';
+            const nameWithoutExt = lastDotIndex !== -1 ? name.substring(0, lastDotIndex) : name;
+
+            return {
+                file: file,
+                customName: nameWithoutExt, 
+                extension: extension,
+                isEditing: false // Initial state is view mode
+            };
+        });
+    };
+
     const handleDrop = (e) => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
         const files = e.dataTransfer.files;
         if (files.length > 0) {
-            setSelectedFiles(prevFiles => [...prevFiles, ...Array.from(files)]);
+            const processedFiles = processFiles(files);
+            setSelectedFiles(prevFiles => [...prevFiles, ...processedFiles]);
         }
     };
 
     const handleFileInput = (e) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
+        
+        const processedFiles = processFiles(files);
+        setSelectedFiles(prevFiles => [...prevFiles, ...processedFiles]);
+    };
 
-        const newFiles = Array.from(files).map(file => {
-            return new File([file], file.name, {
-                type: file.type || 'application/octet-stream',
-                lastModified: file.lastModified
-            });
-        });
-        setSelectedFiles(prevFiles => [...prevFiles, ...newFiles]);
+    // Toggle Edit Mode
+    const toggleEditMode = (index) => {
+        const updatedFiles = [...selectedFiles];
+        // If we are saving (turning off edit mode), ensure name isn't empty
+        if (updatedFiles[index].isEditing && !updatedFiles[index].customName.trim()) {
+            return; // Prevent saving empty names
+        }
+        updatedFiles[index].isEditing = !updatedFiles[index].isEditing;
+        setSelectedFiles(updatedFiles);
+    };
+
+    // Update Name in State
+    const handleNameChange = (index, newName) => {
+        const updatedFiles = [...selectedFiles];
+        updatedFiles[index].customName = newName;
+        setSelectedFiles(updatedFiles);
+    };
+
+    // Save on Enter Key
+    const handleKeyDown = (e, index) => {
+        if (e.key === 'Enter') {
+            toggleEditMode(index);
+        }
     };
 
     const handleUpload = async () => {
         if (selectedFiles.length === 0) return;
         try {
-            console.log("Selected files:", selectedFiles);
-            console.log("Current file",fileInputRef.current);
+            console.log("Selected files data:", selectedFiles);
 
-            const result = await dispatch(uploadKnowledgeSource({
-                files: selectedFiles,
-                knowledgeBaseName: "telecom_industry_sop"
-            })).unwrap();
+            // Prepare Arrays for the payload
+            // This structure ensures that index 0 of files matches index 0 of names and content_types
+            const filesArray = selectedFiles.map(f => f.file);
+            const namesArray = selectedFiles.map(f => f.customName);
+            const typesArray = selectedFiles.map(f => f.extension);
+
+            const payload = {
+                files: filesArray,
+                // Passing metadata as arrays implies the backend/thunk will loop through them 
+                // or the thunk constructs FormData appending these keys repeatedly.
+                knowledge_base_names: namesArray,
+                content_types: typesArray,
+                
+                // Fallback: If your API expects a single object per request, you might need to loop calls,
+                // but usually for bulk upload, passing arrays corresponds to the file index.
+                uploads: selectedFiles.map(item => ({
+                    knowledge_base_name: item.customName,
+                    content_type: item.extension
+                }))
+            };
+
+            console.log("Dispatching Payload:", payload);
+
+            const result = await dispatch(uploadKnowledgeSource(payload)).unwrap();
 
             setSelectedFiles([]);
             if (fileInputRef.current) {
@@ -209,37 +271,95 @@ const KnowledgePage = () => {
             )}
 
             {selectedFiles.length > 0 && (
-                <Box className="bg-white mt-5 !border-1 rounded-md border-gray-300">
-                    <Box className="flex h-15 justify-between items-center p-3 border-b-1 border-gray-200 bg-white rounded-t-md">
+                <Box className="bg-white mt-5 !border-1 rounded-md border-gray-300 shadow-sm">
+                    <Box className="flex h-15 justify-between items-center p-3 border-b-1 border-gray-200 bg-gray-50 rounded-t-md">
                         <Typography variant="body2" className="!font-bold">Ready for Upload</Typography>
                         <Typography variant="caption" className="text-slate-500">
                             {selectedFiles.length} {selectedFiles.length === 1 ? 'File' : 'Files'} selected
                         </Typography>
                     </Box>
 
-                    {selectedFiles.map((file, index) => (
-                        <Box key={index} className="flex justify-between items-center p-3 px-4 border-b-1 !border-gray-200 hover:bg-[var(--primary-color)]/5 cursor-pointer">
-                            <Box className="flex justify-center items-center gap-4">
-                                <Box className="p-2 rounded-lg bg-[var(--primary-color)]/10">
-                                    <FileText size={20} className="text-red-500" />
+                    {selectedFiles.map((item, index) => (
+                        <Box 
+                            key={index} 
+                            className="flex justify-between items-center p-3 px-4 border-b-1 !border-gray-100 hover:bg-slate-50 transition-colors"
+                        >
+                            <Box className="flex items-center gap-4 flex-grow">
+                                <Box className="p-2 rounded-lg bg-blue-50 shrink-0">
+                                    <FileText size={20} className="text-blue-600" />
                                 </Box>
-                                <Box>
-                                    <Typography variant="body2" className="!font-bold">{file?.name}</Typography>
-                                    <Typography variant="caption" className="text-slate-500">
-                                        {file?.size ? bytesToSize(file.size) : '--'}
-                                    </Typography>
+                                
+                                <Box className="flex flex-col flex-grow max-w-2xl">
+                                    {item.isEditing ? (
+                                        <Box className="flex items-center gap-2">
+                                            <TextField 
+                                                variant="outlined" 
+                                                value={item.customName}
+                                                onChange={(e) => handleNameChange(index, e.target.value)}
+                                                onKeyDown={(e) => handleKeyDown(e, index)}
+                                                placeholder="Enter file name"
+                                                size="small"
+                                                autoFocus
+                                                fullWidth
+                                                sx={{
+                                                    '& .MuiOutlinedInput-root': {
+                                                        height: '35px',
+                                                        backgroundColor: '#fff'
+                                                    }
+                                                }}
+                                            />
+                                            <Typography variant="body2" className="text-slate-500 font-semibold shrink-0">
+                                                .{item.extension}
+                                            </Typography>
+                                            
+                                            <Tooltip title="Save Name">
+                                                <IconButton 
+                                                    size="small" 
+                                                    onClick={() => toggleEditMode(index)}
+                                                    className="bg-green-50 hover:bg-green-100 text-green-600"
+                                                >
+                                                    <Check size={16} />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
+                                    ) : (
+                                        <Box className="flex items-center gap-2 group">
+                                            <Typography variant="body2" className="!font-bold text-gray-700">
+                                                {item.customName}.{item.extension}
+                                            </Typography>
+                                            <Tooltip title="Edit Name">
+                                                <IconButton 
+                                                    size="small" 
+                                                    onClick={() => toggleEditMode(index)}
+                                                    className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-blue-600"
+                                                >
+                                                    <Edit2 size={14} />
+                                                </IconButton>
+                                            </Tooltip>
+                                        </Box>
+                                    )}
+                                    
+                                    {!item.isEditing && (
+                                        <Typography variant="caption" className="text-slate-400 mt-0.5">
+                                            {item.file?.size ? bytesToSize(item.file.size) : '--'}
+                                        </Typography>
+                                    )}
                                 </Box>
                             </Box>
-                            <Trash2
-                                size={16}
-                                color="red"
-                                className="cursor-pointer"
-                                onClick={() => handleRemoveFile(index)}
-                            />
+
+                            <Tooltip title="Remove File">
+                                <IconButton
+                                    size="small"
+                                    onClick={() => handleRemoveFile(index)}
+                                    className="text-slate-400 hover:text-red-500 hover:bg-red-50 ml-4"
+                                >
+                                    <Trash2 size={18} />
+                                </IconButton>
+                            </Tooltip>
                         </Box>
                     ))}
 
-                    <Box className="flex flex-row-reverse gap-5 p-3 border-b-1 border-gray-300 bg-white rounded-md">
+                    <Box className="flex flex-row-reverse gap-3 p-3 border-t border-gray-200 bg-gray-50 rounded-b-md">
                         <CustomButton
                             variant="contained"
                             color="primary"
@@ -247,7 +367,7 @@ const KnowledgePage = () => {
                             onClick={handleUpload}
                             disabled={uploadStatus === 'loading'}
                         >
-                            {uploadStatus === 'loading' ? 'Uploading...' : 'Upload'}
+                            {uploadStatus === 'loading' ? 'Uploading...' : 'Upload All'}
                         </CustomButton>
                         <CustomButton
                             variant="outlined"
@@ -258,6 +378,7 @@ const KnowledgePage = () => {
                                 }
                             }}
                             disabled={uploadStatus === 'loading'}
+                            className="bg-white"
                         >
                             Cancel
                         </CustomButton>
@@ -294,7 +415,7 @@ const KnowledgePage = () => {
 
                           <KnowledgeListingTableView
                             filteredFlows={filteredSources}
-                            handleOpenStudio={(id)=> console.log("Open")}
+                            handleOpenStudio={(row)=> console.log("Open", row)}
                             handleDeleteKnowledge={handleDeleteKnowledge}
                         />
                         :
