@@ -300,18 +300,24 @@ const StudioChatBot = ({
       const base64Audio = await blobToBase64(recordedAudio.blob);
       
       // 2. Add visual audio message to chat (User)
-      // We pass the local URL so the user can play it back immediately without loading base64
       addMessage("", "user", "audio", null, { audioUrl: recordedAudio.url, base64: base64Audio });
       
       // 3. Clear recording state
       setRecordedAudio(null);
 
-      // 4. Send to API
-      setPausedContext(null);
-      setThreadId(null);
-      flowStartedRef.current = false;
+      // 4. Check current flow state and handle accordingly
+      const currentState = flowStateRef.current;
       
-      await startNewFlow(null, [], base64Audio);
+      if (currentState === "paused" && pausedContext) {
+        // Resume the flow with voice
+        await handleResumeFlow(null, base64Audio);
+      } else {
+        // Start new flow with voice
+        setPausedContext(null);
+        setThreadId(null);
+        flowStartedRef.current = false;
+        await startNewFlow(null, [], base64Audio);
+      }
 
     } catch (err) {
       console.error("Error sending audio:", err);
@@ -598,9 +604,9 @@ const StudioChatBot = ({
   }
 
   // ---------------------------
-  // handleResumeFlow (unchanged)
+  // handleResumeFlow - FIXED to handle voice input
   // ---------------------------
-  const handleResumeFlow = async (resumeValue) => {
+  const handleResumeFlow = async (resumeValue, voiceBase64 = null) => {
     setIsLoading(true)
     const loadingMsg = addMessage("Thinking...", "bot", "loading")
     try {
@@ -612,16 +618,34 @@ const StudioChatBot = ({
           session_id: pausedContext.session_id,
           thread_id: pausedContext.thread_id,
           node_id: pausedContext.node_id,
-          user_response: resumeValue,
-          input_type: pausedContext.input_type
+        }
+
+        // Handle voice vs text input
+        if (voiceBase64) {
+          // For voice input, add voice fields at root level (not nested)
+          body.voice_enabled = true;
+          body.voiceInput = voiceBase64;
+          // Don't include input_type for voice as per your requirement
+        } else {
+          // For text input
+          body.user_response = resumeValue;
+          body.input_type = pausedContext.input_type;
         }
       } else {
+        // Fallback when no paused context
         body = {
           agent_id: flow?.id || apiConfig?.agent_id,
           thread_id: threadId,
-          user_response: resumeValue
+        }
+
+        if (voiceBase64) {
+          body.voice_enabled = true;
+          body.voiceInput = voiceBase64;
+        } else {
+          body.user_response = resumeValue;
         }
       }
+
       const token = localStorage.getItem("token") || "";
       const res = await fetch(`http://1.6.37.35/engine/agents/resume/${flow?.id}`, {
         method: "POST",

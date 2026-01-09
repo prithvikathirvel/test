@@ -1,12 +1,13 @@
 "use client"
 import { useCallback, useState, useEffect, useRef, useMemo } from "react";
-import { Box, Typography, CircularProgress, TextField, IconButton, Tooltip } from "@mui/material";
-import { CloudUpload, Search, Trash2, FileText, Edit2, Check, X } from "lucide-react";
+import { Box, Typography, CircularProgress, IconButton, Tooltip } from "@mui/material";
+import { CloudUpload, Search, Trash2, FileText, Settings } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import CustomButton from "@/components/Common/CustomButton";
 import InputBox from "@/components/Common/InputBox";
 import KnowledgeListingTableView from "@/components/knowledge/KnowledgeListingTableView";
 import DashedBox from "@/components/Common/DashedBox";
+import FileSettingsModal from "@/components/knowledge/FileSettingsModal";
 import { bytesToSize } from "@/utils/commonFunction";
 import {
     fetchKnowledgeSources,
@@ -15,35 +16,38 @@ import {
     selectKnowledgeLoading,
     selectKnowledgeError,
     selectUploadStatus,
-    selectUploadProgress,
-    resetUploadStatus
+    resetUploadStatus,
+    deleteKnowledgeSource
 } from "@/redux/slices/knowledgeSlice";
 
-import { deleteKnowledgeSource } from "@/redux/slices/knowledgeSlice";
+// Extensions that allow settings configuration
+const ALLOWED_SETTINGS_EXTENSIONS = ['pdf', 'docx', 'txt'];
 
 const KnowledgePage = () => {
     const dispatch = useDispatch();
     const [searchKnowledge, setSearchKnowledge] = useState("");
     const [isDragging, setIsDragging] = useState(false);
     
-    // State stores objects: { file: File, customName: string, extension: string, isEditing: boolean }
+    // File State
     const [selectedFiles, setSelectedFiles] = useState([]); 
     const fileInputRef = useRef(null);
+
+    // Modal State
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalTargetIndex, setModalTargetIndex] = useState(null);
 
     // Selectors
     const sources = useSelector(selectKnowledgeSources);
     const loading = useSelector(selectKnowledgeLoading);
     const error = useSelector(selectKnowledgeError);
     const uploadStatus = useSelector(selectUploadStatus);
-    const uploadProgress = useSelector(selectUploadProgress);
 
-    // Fetch knowledge sources on component mount
     useEffect(() => {
         dispatch(fetchKnowledgeSources());
     }, [dispatch]);
 
-    // Reset upload status when component unmounts
     useEffect(() => {
+        // Clean up status when unmounting
         return () => {
             dispatch(resetUploadStatus());
         };
@@ -61,22 +65,19 @@ const KnowledgePage = () => {
         setIsDragging(false);
     };
 
-    // Helper to process files into the required state structure
     const processFiles = (files) => {
         return Array.from(files).map(file => {
             const name = file.name;
             const lastDotIndex = name.lastIndexOf('.');
             
-            // Extract extension and name without extension
-            // content_type logic: remove dot, if no extension, default to empty or octet-stream logic
-            const extension = lastDotIndex !== -1 ? name.substring(lastDotIndex + 1) : 'txt';
+            const extension = lastDotIndex !== -1 ? name.substring(lastDotIndex + 1).toLowerCase() : 'txt';
             const nameWithoutExt = lastDotIndex !== -1 ? name.substring(0, lastDotIndex) : name;
 
             return {
                 file: file,
                 customName: nameWithoutExt, 
                 extension: extension,
-                isEditing: false // Initial state is view mode
+                chunkWord: "", 
             };
         });
     };
@@ -100,67 +101,61 @@ const KnowledgePage = () => {
         setSelectedFiles(prevFiles => [...prevFiles, ...processedFiles]);
     };
 
-    // Toggle Edit Mode
-    const toggleEditMode = (index) => {
+    // --- Modal Logic ---
+
+    const handleOpenSettings = (index) => {
+        setModalTargetIndex(index);
+        setModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setModalOpen(false);
+        setModalTargetIndex(null);
+    };
+
+    const handleSaveSettings = (newName, newChunkWord) => {
+        if (modalTargetIndex === null) return;
+
         const updatedFiles = [...selectedFiles];
-        // If we are saving (turning off edit mode), ensure name isn't empty
-        if (updatedFiles[index].isEditing && !updatedFiles[index].customName.trim()) {
-            return; // Prevent saving empty names
-        }
-        updatedFiles[index].isEditing = !updatedFiles[index].isEditing;
+        updatedFiles[modalTargetIndex] = {
+            ...updatedFiles[modalTargetIndex],
+            customName: newName,
+            chunkWord: newChunkWord 
+        };
+        
         setSelectedFiles(updatedFiles);
     };
 
-    // Update Name in State
-    const handleNameChange = (index, newName) => {
-        const updatedFiles = [...selectedFiles];
-        updatedFiles[index].customName = newName;
-        setSelectedFiles(updatedFiles);
-    };
-
-    // Save on Enter Key
-    const handleKeyDown = (e, index) => {
-        if (e.key === 'Enter') {
-            toggleEditMode(index);
-        }
-    };
+    // --- Upload Logic ---
 
     const handleUpload = async () => {
         if (selectedFiles.length === 0) return;
         try {
-            console.log("Selected files data:", selectedFiles);
-
             // Prepare Arrays for the payload
-            // This structure ensures that index 0 of files matches index 0 of names and content_types
             const filesArray = selectedFiles.map(f => f.file);
             const namesArray = selectedFiles.map(f => f.customName);
             const typesArray = selectedFiles.map(f => f.extension);
+            
+            // Map chunk words, sending specific value only for allowed extensions
+            const chunksArray = selectedFiles.map(f => 
+                ALLOWED_SETTINGS_EXTENSIONS.includes(f.extension) ? f.chunkWord : ""
+            );
 
             const payload = {
                 files: filesArray,
-                // Passing metadata as arrays implies the backend/thunk will loop through them 
-                // or the thunk constructs FormData appending these keys repeatedly.
                 knowledge_base_names: namesArray,
                 content_types: typesArray,
-                
-                // Fallback: If your API expects a single object per request, you might need to loop calls,
-                // but usually for bulk upload, passing arrays corresponds to the file index.
-                uploads: selectedFiles.map(item => ({
-                    knowledge_base_name: item.customName,
-                    content_type: item.extension
-                }))
+                chunk_words: chunksArray, // This is now correctly handled by the slice
             };
 
-            console.log("Dispatching Payload:", payload);
+            console.log("Dispatching Payload with Chunk Words:", payload);
 
-            const result = await dispatch(uploadKnowledgeSource(payload)).unwrap();
+            await dispatch(uploadKnowledgeSource(payload)).unwrap();
 
             setSelectedFiles([]);
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
             }
-
-            console.log('Upload successful:', result.message);
 
         } catch (error) {
             console.error('Upload failed:', error);
@@ -290,60 +285,37 @@ const KnowledgePage = () => {
                                 </Box>
                                 
                                 <Box className="flex flex-col flex-grow max-w-2xl">
-                                    {item.isEditing ? (
-                                        <Box className="flex items-center gap-2">
-                                            <TextField 
-                                                variant="outlined" 
-                                                value={item.customName}
-                                                onChange={(e) => handleNameChange(index, e.target.value)}
-                                                onKeyDown={(e) => handleKeyDown(e, index)}
-                                                placeholder="Enter file name"
-                                                size="small"
-                                                autoFocus
-                                                fullWidth
-                                                sx={{
-                                                    '& .MuiOutlinedInput-root': {
-                                                        height: '35px',
-                                                        backgroundColor: '#fff'
-                                                    }
-                                                }}
-                                            />
-                                            <Typography variant="body2" className="text-slate-500 font-semibold shrink-0">
-                                                .{item.extension}
-                                            </Typography>
-                                            
-                                            <Tooltip title="Save Name">
+                                    <Box className="flex items-center gap-2 group">
+                                        <Typography variant="body2" className="!font-bold text-gray-700">
+                                            {item.customName}.{item.extension}
+                                        </Typography>
+                                        
+                                        {/* Settings Icon - Only for Allowed Extensions */}
+                                        {ALLOWED_SETTINGS_EXTENSIONS.includes(item.extension) && (
+                                            <Tooltip title="Configure Settings">
                                                 <IconButton 
                                                     size="small" 
-                                                    onClick={() => toggleEditMode(index)}
-                                                    className="bg-green-50 hover:bg-green-100 text-green-600"
+                                                    onClick={() => handleOpenSettings(index)}
+                                                    className="text-slate-400 hover:text-blue-600 bg-slate-50 hover:bg-blue-50"
                                                 >
-                                                    <Check size={16} />
+                                                    <Settings size={16} />
                                                 </IconButton>
                                             </Tooltip>
-                                        </Box>
-                                    ) : (
-                                        <Box className="flex items-center gap-2 group">
-                                            <Typography variant="body2" className="!font-bold text-gray-700">
-                                                {item.customName}.{item.extension}
-                                            </Typography>
-                                            <Tooltip title="Edit Name">
-                                                <IconButton 
-                                                    size="small" 
-                                                    onClick={() => toggleEditMode(index)}
-                                                    className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-blue-600"
-                                                >
-                                                    <Edit2 size={14} />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </Box>
-                                    )}
+                                        )}
+                                    </Box>
                                     
-                                    {!item.isEditing && (
+                                    <Box className="flex gap-3">
                                         <Typography variant="caption" className="text-slate-400 mt-0.5">
                                             {item.file?.size ? bytesToSize(item.file.size) : '--'}
                                         </Typography>
-                                    )}
+                                        
+                                        {/* Display Chunk Word if set */}
+                                        {ALLOWED_SETTINGS_EXTENSIONS.includes(item.extension) && item.chunkWord && (
+                                            <Typography variant="caption" className="text-blue-500 mt-0.5 font-medium">
+                                                Chunk: {item.chunkWord}
+                                            </Typography>
+                                        )}
+                                    </Box>
                                 </Box>
                             </Box>
 
@@ -411,28 +383,30 @@ const KnowledgePage = () => {
                             />
                         </Box>
 
-                        {filteredSources.length>0 ? 
-
+                        {filteredSources.length > 0 ? 
                           <KnowledgeListingTableView
                             filteredFlows={filteredSources}
                             handleOpenStudio={(row)=> console.log("Open", row)}
                             handleDeleteKnowledge={handleDeleteKnowledge}
                         />
                         :
-
                         <Box className="flex !items-center !justify-center p-5">
-                        <Typography variant="body2" className="!font-bold">No sources found</Typography>   
-
+                            <Typography variant="body2" className="!font-bold">No sources found</Typography>   
                         </Box>
-
-                        
-                    
                     }
-
-                      
                     </>
                 )}
             </Box>
+
+            {/* Settings Modal Component */}
+            <FileSettingsModal 
+                open={modalOpen}
+                onClose={handleCloseModal}
+                onSave={handleSaveSettings}
+                initialData={modalTargetIndex !== null ? selectedFiles[modalTargetIndex] : null}
+                fileType={modalTargetIndex !== null ? selectedFiles[modalTargetIndex]?.extension : ''}
+            />
+
         </Box>
     );
 };

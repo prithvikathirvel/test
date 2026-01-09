@@ -10,9 +10,11 @@ const getAuthToken = () => {
 // Create axios instance with default headers
 const api = axios.create({
   baseURL: 'http://1.6.37.35/engine',
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  maxContentLength: 100 * 1024 * 1024, // 100MB
+  maxBodyLength: 100 * 1024 * 1024, // 100MB
+  // headers: {
+  //   'Content-Type': 'application/json',
+  // },
 });
 
 // Add request interceptor to include token
@@ -35,8 +37,6 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       showToaster('error', 'Session Expired. Please login again.');
-      // Optional: You can add a redirect to login page here if needed
-      // window.location.href = '/login';
     }
     return Promise.reject(error);
   }
@@ -57,12 +57,8 @@ export const fetchKnowledgeSources = createAsyncThunk(
       }));
     } catch (error) {
       if (error.response?.status === 401) {
-        showToaster('error', 'Session Expired. Please login again.');
-        // Optional: You can add a redirect to login page here if needed
-        // window.location.href = '/login';
         return rejectWithValue('Session Expired');
       }
-      // Handle HTML error responses
       const errorMessage = typeof error.response?.data === 'string' && error.response.data.startsWith('<')
         ? 'Authentication failed. Please check your credentials.'
         : error.response?.data?.message || 'Failed to fetch knowledge bases';
@@ -75,46 +71,50 @@ export const fetchKnowledgeSources = createAsyncThunk(
 export const uploadKnowledgeSource = createAsyncThunk(
   'knowledge/uploadSource',
   async (payload, { rejectWithValue, dispatch }) => {
-    const { files, knowledge_base_names, content_types } = payload;
+    // 1. Destructure chunk_words here
+    const { files, knowledge_base_names, content_types, chunk_words } = payload;
 
     try {
       const uploadPromises = files.map((file, index) => {
-        const formData = new FormData();
+      const formData = new FormData();
 
         // Append the actual file
         formData.append('file', file); 
 
-        // Append the edited name corresponding to this specific file index
-        // If for some reason the array is missing, fallback to file.name
+        // Append knowledge_base_name
         const kbName = knowledge_base_names && knowledge_base_names[index] 
           ? knowledge_base_names[index] 
           : file.name;
         
         formData.append('knowledge_base_name', kbName);
 
-        // Append the content_type (extension) corresponding to this file index
+        // Append content_type
         if (content_types && content_types[index]) {
            formData.append('content_type', content_types[index]);
         }
 
-        // Return the API call promise
+        // 2. Append chunk_word (THE FIX)
+        // We check if the array exists and if the specific index has a value
+        if (chunk_words && chunk_words[index]) {
+            formData.append('chunk_word', chunk_words[index]);
+        }
+
         return api.post('/knowledge-base/ingest', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+          // headers: {
+          //   'Content-Type': 'multipart/form-data',
+          // },
         });
       });
 
-      // 3. Execute all uploads in parallel
+      // Execute all uploads in parallel
       await Promise.all(uploadPromises);
 
-      // 4. Refresh list after all uploads are done
+      // Refresh list after all uploads are done
       await dispatch(fetchKnowledgeSources());
 
       return { message: 'All files uploaded successfully!', success: true };
 
     } catch (error) {
-      // If any upload fails, this catch block handles it
       return rejectWithValue(
         error.response?.data?.message ||
         error.response?.data?.detail ||
@@ -129,10 +129,9 @@ export const deleteKnowledgeSource = createAsyncThunk(
   async (sourceId, { rejectWithValue, dispatch }) => {
     try {
       const response = await api.delete(`/knowledge-base/${sourceId}`);
-      // Refresh the list after successful deletion
       await dispatch(fetchKnowledgeSources());
-      console.log(response,"Response from Knowledge Delete")
       showToaster('success', response?.data?.message || "Knowledge deleted successfully");
+      return sourceId; // Return ID to help reducer if needed
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message ||
@@ -143,12 +142,11 @@ export const deleteKnowledgeSource = createAsyncThunk(
   }
 );
 
-
 const initialState = {
   sources: [],
   loading: false,
   error: null,
-  uploadStatus: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+  uploadStatus: 'idle',
   uploadProgress: 0,
 };
 
@@ -193,20 +191,23 @@ const knowledgeSlice = createSlice({
       })
       .addCase(uploadKnowledgeSource.rejected, (state, action) => {
         state.uploadStatus = 'failed';
-        // state.error = action.payload;
+        state.error = action.payload;
       })
-    .addCase(deleteKnowledgeSource.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    })
-    .addCase(deleteKnowledgeSource.fulfilled, (state, action) => {
-      state.loading = false;
-      state.sources = state.sources.filter(source => source.id !== action.payload);
-    })
-    .addCase(deleteKnowledgeSource.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload;
-    })
+      
+      // Delete Source
+      .addCase(deleteKnowledgeSource.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deleteKnowledgeSource.fulfilled, (state, action) => {
+        state.loading = false;
+        // Optionally filter locally to prevent UI flicker before refetch finishes
+        state.sources = state.sources.filter(source => source.id !== action.payload);
+      })
+      .addCase(deleteKnowledgeSource.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 

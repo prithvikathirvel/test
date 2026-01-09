@@ -14,8 +14,8 @@ const KnowledgeListingTableView = ({
 
 const columns = [
   {
-    key: "filename",
-    label: "File Name",
+    key: "knowledgeBase",
+    label: "Knowledge Base Name",
     render: (row) => (
       <Box className="flex items-center">
         <Box className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center mr-3">
@@ -33,7 +33,7 @@ const columns = [
         </Box>
         <Box>
           <Typography className="!text-sm !font-semibold">
-            {row.filename}
+            {row.knowledgeBase}
           </Typography>
           <Typography className="!text-xs !text-slate-400 md:hidden">
             {row.size} • {timeAgo(row.createdAt)}
