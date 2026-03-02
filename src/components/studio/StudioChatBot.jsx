@@ -578,7 +578,7 @@ const StudioChatBot = ({
 
       const token = localStorage.getItem("token") || "";
 
-      const res = await fetch(`http://1.6.37.35/engine/agents/invoke/${flow?.id}`, {
+      const res = await fetch(`https://apidev.sifymodernization.digital/engine/agents/invoke/${flow?.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify(payload)
@@ -647,7 +647,7 @@ const StudioChatBot = ({
       }
 
       const token = localStorage.getItem("token") || "";
-      const res = await fetch(`http://1.6.37.35/engine/agents/resume/${flow?.id}`, {
+      const res = await fetch(`https://apidev.sifymodernization.digital/engine/agents/resume/${flow?.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
         body: JSON.stringify(body)

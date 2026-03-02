@@ -155,7 +155,7 @@ const Studio = () => {
             const height1 = calculateNodeHeight(node1);
             const height2 = calculateNodeHeight(node2);
             const maxHeight = Math.max(height1, height2);
-            
+
             // Ensure minimum spacing based on the taller node
             return Math.max(baseVerticalSpacing, maxHeight + 120); // 120px buffer between nodes (increased from 80px)
         };
@@ -283,7 +283,7 @@ const Studio = () => {
                 nodeData.data.conditionNotMetPath = node.conditionNotMetPath || null;
             }
 
-            if(node.type === 'question' || node.data?.type === 'question') {
+            if (node.type === 'question' || node.data?.type === 'question') {
                 nodeData.interrupt = node.interrupt || false;
                 nodeData.data.interrupt = node.interrupt || false;
             }

@@ -21,7 +21,7 @@ export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async ({ username, password }, { rejectWithValue }) => {
     try {
-      const { data } = await axios.post(`http://1.6.37.35/login`, { username, password }, {
+      const { data } = await axios.post(`https://apidev.sifymodernization.digital/login`, { username, password }, {
         headers: {
           "Content-Type": "application/json",
         },
