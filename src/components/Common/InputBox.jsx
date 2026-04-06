@@ -17,6 +17,7 @@ const InputBox = ({
   width = '100%',
   height = '40px',
   type = 'text',
+  error = false,
   ...props
 }) => {
   const handleChange = (event) => {
@@ -27,18 +28,19 @@ const InputBox = ({
     <Box className={className}>
       {isShowLabel && (
         <Typography
-          className='!mb-2 !font-bold  !text-[13px] '
+          className={`!mb-2 !font-bold !text-[13px] ${error ? '!text-red-500' : ''}`}
         >
           {convertToTitleCase(label)}
         </Typography>
       )}
       <Box
-        className={`flex items-center gap-2 px-3 py-1.5 border border-gray-300 rounded-md ${className} m-0`}
+        className={`flex items-center gap-2 px-2 border rounded-md ${className} m-0`}
         sx={{
+          borderColor: error ? '#f44336' : '#d1d5db',
           '&:focus-within': {
             borderWidth: 1.5,
-            borderColor: color,
-            boxShadow: '0 0 0 2px rgba(108, 92, 231, 0.1)',
+            borderColor: error ? '#f44336' : color,
+            boxShadow: error ? '0 0 0 2px rgba(244, 67, 54, 0.1)' : '0 0 0 2px rgba(108, 92, 231, 0.1)',
           },
         }}
         style={{ width, height }}
