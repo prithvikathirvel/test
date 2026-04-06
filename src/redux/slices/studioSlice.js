@@ -56,7 +56,7 @@ export const getFlowById = createAsyncThunk('flow/getFlowById', async (data) => 
 export const updateFlow = createAsyncThunk('flow/updateFlow', async (data) => {
   console.log('Updating flow data...');
   try {
-    const {id,updatedData,onSuccess}=data
+    const { id, updatedData, onSuccess } = data
     console.log('Flow ID:', id);
     console.log('Updated Data:', updatedData);
     const response = await APIKit.put(`/agent-flow/${id}`, updatedData);
@@ -81,9 +81,9 @@ export const getAllFlows = createAsyncThunk('flow/getAllFlows', async () => {
 });
 
 
-export const saveFlow = createAsyncThunk('studio/saveFlow', async ({data, onSuccess}) => {
+export const saveFlow = createAsyncThunk('studio/saveFlow', async ({ data, onSuccess }) => {
   try {
-    console.log(data,'hey222');
+    console.log(data, 'hey222');
     const response = await APIKit.post(`/agent-flow`, data);
     showToaster('success', 'Flow saved successfully');
     onSuccess();
@@ -94,24 +94,24 @@ export const saveFlow = createAsyncThunk('studio/saveFlow', async ({data, onSucc
   }
 });
 
-export const runFlow = createAsyncThunk('studio/runFlow', async ({data,onSuccess}) => {
-    try {
-      const response = await axios.post('http://127.0.0.1:8000/execute-graph', {
-        ...data
-      });
-      // showToaster('success', 'Flow Executed successfully');
-      onSuccess();
-      return response.data;
-    } catch (error) {
-       showToaster('error', error);
-      throw error;
-    }
+export const runFlow = createAsyncThunk('studio/runFlow', async ({ data, onSuccess }) => {
+  try {
+    const response = await axios.post('http://127.0.0.1:8000/execute-graph', {
+      ...data
+    });
+    // showToaster('success', 'Flow Executed successfully');
+    onSuccess();
+    return response.data;
+  } catch (error) {
+    showToaster('error', error);
+    throw error;
   }
+}
 );
 
-export const deleteFlow = createAsyncThunk('studio/deleteFlow', async ({data, onSuccess}) => {
+export const deleteFlow = createAsyncThunk('studio/deleteFlow', async ({ data, onSuccess }) => {
   try {
-    console.log(data,'hey222');
+    console.log(data, 'hey222');
     const response = await APIKit.delete(`/agent-flow/${data}`);
     showToaster('success', 'Flow Deleted successfully');
     onSuccess();
@@ -120,11 +120,11 @@ export const deleteFlow = createAsyncThunk('studio/deleteFlow', async ({data, on
     showToaster('error', error);
     throw error;
   }
-}); 
+});
 
 export const fetchMcpTools = createAsyncThunk('studio/fetchMcpTools', async () => {
   try {
-    const response = await axios.get(`http://127.0.0.1:8000/mcp/tools`);
+    const response = await axios.get(`https://apidev.sifymodernization.digital/engine/mcp/tools`);
     return response.data;
   } catch (error) {
     showToaster('error', error);
@@ -168,7 +168,7 @@ const studioSlice = createSlice({
         });
         if (Array.isArray(state.nodes) && Array.isArray(state.edges)) {
           state.specification = generateSpecification(flow, state.nodes, state.edges);
-          console.log("specification inside slice",state.specification);
+          console.log("specification inside slice", state.specification);
         } else {
           state.specification = {};
         }
@@ -184,7 +184,7 @@ const studioSlice = createSlice({
         const { edges, flow } = action.payload;
         state.edges = edges;
         if (Array.isArray(state.nodes) && Array.isArray(state.edges)) {
-          state.specification = generateSpecification(flow,state.nodes, state.edges);
+          state.specification = generateSpecification(flow, state.nodes, state.edges);
         } else {
           state.specification = {};
         }
@@ -192,9 +192,9 @@ const studioSlice = createSlice({
     },
     deleteNode: (state, action) => {
       const { flow, nodeId } = action.payload;
-    
+
       state.nodes = state.nodes.filter(node => node.id !== nodeId);
-      
+
       state.edges = state.edges.filter(
         edge => edge.source !== nodeId && edge.target !== nodeId
       );
@@ -205,8 +205,8 @@ const studioSlice = createSlice({
         };
 
         // Clean up condition nextNode references for condition/conditions nodes
-        if ((node.type === 'conditions' || node.type === 'condition' || node.data?.type === 'conditions' || node.data?.type === 'condition') 
-            && node.data?.inputParameters) {
+        if ((node.type === 'conditions' || node.type === 'condition' || node.data?.type === 'conditions' || node.data?.type === 'condition')
+          && node.data?.inputParameters) {
           updatedNode.data = {
             ...node.data,
             inputParameters: node.data.inputParameters.map(param => {
@@ -298,8 +298,8 @@ const studioSlice = createSlice({
       });
     },
     updateNode: (state, action) => {
-      const { flow, nodeId, updatedNode,parameter } = action.payload;
-    
+      const { flow, nodeId, updatedNode, parameter } = action.payload;
+
       state.nodes = state.nodes.map(node => {
         if (node.id === nodeId) {
           return {
@@ -313,9 +313,9 @@ const studioSlice = createSlice({
         }
         return node;
       });
-    
+
       state.specification = generateSpecification(flow, state.nodes, state.edges);
-      state.flow = generateSpecification(flow,state.nodes,state.edges)
+      state.flow = generateSpecification(flow, state.nodes, state.edges)
     },
     updateSpecification: (state, action) => {
       state.specification = {
@@ -327,8 +327,8 @@ const studioSlice = createSlice({
       //   ...state.specification,
       //   ...action.payload
       // };
-    }, 
-    
+    },
+
   },
   extraReducers: (builder) => {
     builder
@@ -353,7 +353,7 @@ const studioSlice = createSlice({
       })
       .addCase(fetchAgents.rejected, (state) => {
         state.studioComponentLoader = false;
-      }); 
+      });
 
 
     builder
@@ -376,66 +376,66 @@ const studioSlice = createSlice({
       .addCase(saveFlow.fulfilled, (state, action) => {
         state.studioSaveFlowLoader = false;
         // state.flow = action.payload.data;
-        state.newFlowId = action.payload.data.id; 
+        state.newFlowId = action.payload.data.id;
       })
       .addCase(saveFlow.rejected, (state) => {
         state.studioSaveFlowLoader = false;
       });
 
 
-      builder.addCase(getFlowById.fulfilled, (state, action) => {
-        state.flow = action.payload;
-        state.specification = action.payload;
-        state.studioLoader = false;
-      });
-      builder.addCase(getFlowById.pending, (state) => {
-        state.studioLoader = true;
-      });
-      builder.addCase(getFlowById.rejected, (state) => {
-        state.studioLoader = false;
-      });
+    builder.addCase(getFlowById.fulfilled, (state, action) => {
+      state.flow = action.payload;
+      state.specification = action.payload;
+      state.studioLoader = false;
+    });
+    builder.addCase(getFlowById.pending, (state) => {
+      state.studioLoader = true;
+    });
+    builder.addCase(getFlowById.rejected, (state) => {
+      state.studioLoader = false;
+    });
 
-      builder.addCase(updateFlow.pending, (state) => {
-        state.studioUpdateFlowLoader = true;
-      });
-      builder.addCase(updateFlow.fulfilled, (state, action) => {
-        // state.flow = action.payload;
-        state.studioUpdateFlowLoader = false;
-        // state.specification = action.payload;
-        // state.flow = state.specification;
-        console.log("flow after saving", state.flow);
-      });
-      builder.addCase(updateFlow.rejected, (state) => {
-        state.studioUpdateFlowLoader = false;
-      });
-  
-      
-      builder.addCase(getAllFlows.pending, (state) => {
-        state.getAllFlowsLoader = true;
-      });
-      builder.addCase(getAllFlows.fulfilled, (state, action) => {
-        state.flows = action.payload;
-        state.prebuiltFlows =action.payload;
-        state.getAllFlowsLoader = false;
-      });
-      builder.addCase(getAllFlows.rejected, (state) => {
-        state.getAllFlowsLoader = false;
-      });
+    builder.addCase(updateFlow.pending, (state) => {
+      state.studioUpdateFlowLoader = true;
+    });
+    builder.addCase(updateFlow.fulfilled, (state, action) => {
+      // state.flow = action.payload;
+      state.studioUpdateFlowLoader = false;
+      // state.specification = action.payload;
+      // state.flow = state.specification;
+      console.log("flow after saving", state.flow);
+    });
+    builder.addCase(updateFlow.rejected, (state) => {
+      state.studioUpdateFlowLoader = false;
+    });
 
-      builder.addCase(runFlow.pending, (state) => {
-        state.isFlowRunning = true;
-      });
-      builder.addCase(runFlow.fulfilled, (state, action) => {
-        state.isFlowRunning = false;
-        state.flowOutput = sanitizeOutput(action.payload); 
-        state.sessionId = action.payload.session_id;
-        console.log("flow output", state.flowOutput)
-      });
-      builder.addCase(runFlow.rejected, (state, action) => {
-        state.isFlowRunning = false;
-      });
 
-      builder
+    builder.addCase(getAllFlows.pending, (state) => {
+      state.getAllFlowsLoader = true;
+    });
+    builder.addCase(getAllFlows.fulfilled, (state, action) => {
+      state.flows = action.payload;
+      state.prebuiltFlows = action.payload;
+      state.getAllFlowsLoader = false;
+    });
+    builder.addCase(getAllFlows.rejected, (state) => {
+      state.getAllFlowsLoader = false;
+    });
+
+    builder.addCase(runFlow.pending, (state) => {
+      state.isFlowRunning = true;
+    });
+    builder.addCase(runFlow.fulfilled, (state, action) => {
+      state.isFlowRunning = false;
+      state.flowOutput = sanitizeOutput(action.payload);
+      state.sessionId = action.payload.session_id;
+      console.log("flow output", state.flowOutput)
+    });
+    builder.addCase(runFlow.rejected, (state, action) => {
+      state.isFlowRunning = false;
+    });
+
+    builder
       .addCase(fetchMcpTools.pending, (state) => {
         state.mcpToolLoader = true;
       })
@@ -447,7 +447,7 @@ const studioSlice = createSlice({
         state.mcpToolLoader = false;
       });
 
-  
+
   }
 });
 
@@ -479,12 +479,12 @@ const generateSpecification = (flow, nodes, edges) => {
         const nodeType = node.data?.type || node.type;
         const isDecisionNode = nodeType === 'decision';
         const isIteratorNode = nodeType === 'iterator';
-        
+
         let conditionMetPath = null;
         let conditionNotMetPath = null;
         let loopPath = null;
         let completePath = null;
-        
+
         if (isDecisionNode) {
           connections.forEach(conn => {
             if (conn.sourceHandle === 'true') {
@@ -511,7 +511,7 @@ const generateSpecification = (flow, nodes, edges) => {
           description: node.data?.description || node.description,
           interrupt: node.data?.interrupt || node.interrupt || false,
           next: (isDecisionNode || isIteratorNode) ? [] : (node.data?.next || node.next || []),
-          ...(isDecisionNode && { 
+          ...(isDecisionNode && {
             conditionMetPath,
             conditionNotMetPath,
             next: [...(node.next || []), conditionMetPath, conditionNotMetPath].filter(Boolean)
@@ -532,7 +532,7 @@ const generateSpecification = (flow, nodes, edges) => {
         } else if (condition === 'false') {
           condition = 'conditionNotMet';
         }
-        
+
         return {
           from: edge.source,
           to: edge.target,
@@ -545,5 +545,5 @@ const generateSpecification = (flow, nodes, edges) => {
   return specification;
 };
 
-export const {updateSpecification, setNodes, setEdges ,deleteNode, updateNodeConnections,updateNode} = studioSlice.actions;
+export const { updateSpecification, setNodes, setEdges, deleteNode, updateNodeConnections, updateNode } = studioSlice.actions;
 export default studioSlice.reducer;

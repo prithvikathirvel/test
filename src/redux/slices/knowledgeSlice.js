@@ -9,7 +9,7 @@ const getAuthToken = () => {
 
 // Create axios instance with default headers
 const api = axios.create({
-  baseURL: 'https://apidev.sifymodernization.digital/engine',
+  baseURL: 'https://apidev.sifymodernization.digital/kb/api/v1',
   maxContentLength: 100 * 1024 * 1024, // 100MB
   maxBodyLength: 100 * 1024 * 1024, // 100MB
   // headers: {
@@ -62,7 +62,7 @@ export const fetchKnowledgeSources = createAsyncThunk(
       const errorMessage = typeof error.response?.data === 'string' && error.response.data.startsWith('<')
         ? 'Authentication failed. Please check your credentials.'
         : error.response?.data?.message || 'Failed to fetch knowledge bases';
-      
+
       return rejectWithValue(errorMessage);
     }
   }
@@ -76,27 +76,27 @@ export const uploadKnowledgeSource = createAsyncThunk(
 
     try {
       const uploadPromises = files.map((file, index) => {
-      const formData = new FormData();
+        const formData = new FormData();
 
         // Append the actual file
-        formData.append('file', file); 
+        formData.append('file', file);
 
         // Append knowledge_base_name
-        const kbName = knowledge_base_names && knowledge_base_names[index] 
-          ? knowledge_base_names[index] 
+        const kbName = knowledge_base_names && knowledge_base_names[index]
+          ? knowledge_base_names[index]
           : file.name;
-        
+
         formData.append('knowledge_base_name', kbName);
 
         // Append content_type
         if (content_types && content_types[index]) {
-           formData.append('content_type', content_types[index]);
+          formData.append('content_type', content_types[index]);
         }
 
         // 2. Append chunk_word (THE FIX)
         // We check if the array exists and if the specific index has a value
         if (chunk_words && chunk_words[index]) {
-            formData.append('chunk_word', chunk_words[index]);
+          formData.append('chunk_word', chunk_words[index]);
         }
 
         return api.post('/knowledge-base/ingest', formData, {
@@ -178,7 +178,7 @@ const knowledgeSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // Upload source
       .addCase(uploadKnowledgeSource.pending, (state) => {
         state.uploadStatus = 'loading';
@@ -187,13 +187,13 @@ const knowledgeSlice = createSlice({
       })
       .addCase(uploadKnowledgeSource.fulfilled, (state, action) => {
         state.uploadStatus = 'succeeded';
-        state.uploadProgress = 100; 
+        state.uploadProgress = 100;
       })
       .addCase(uploadKnowledgeSource.rejected, (state, action) => {
         state.uploadStatus = 'failed';
         state.error = action.payload;
       })
-      
+
       // Delete Source
       .addCase(deleteKnowledgeSource.pending, (state) => {
         state.loading = true;
