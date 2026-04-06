@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { MessageCircle, X, Send, User, Bot, CheckCircle, Loader2, XCircle, Paperclip, FileText, Trash2, Mic, Square, Play, Pause, Volume2, VolumeX } from "lucide-react"
+import { MessageCircle, X, Send, User, Bot, CheckCircle, Loader2, XCircle, Paperclip, FileText, Trash2, Mic, Square, Play, Pause, Volume2, VolumeX, Settings, MicOff } from "lucide-react"
 import { useDispatch, useSelector } from "react-redux"
 import { parseAndNormalizeFormData } from "@/utils/commonFunction"
 
@@ -88,6 +88,7 @@ const DynamicFormComponent = ({ formData, resultActionbmit, colors }) => {
   );
 };
 
+
 // ============================================================================
 // MAIN CHATBOT COMPONENT
 // ============================================================================
@@ -107,13 +108,19 @@ const StudioChatBot = ({
   onOptionClicked = null,
   onApiCall = null,
   handleRenderFlow = null,
+  voiceEnabled: propsVoiceEnabled = false,
+  voiceConfig: propsVoiceConfig = {
+    tts_provider: "piper",
+    stt_provider: "whisper",
+    mode: "voice_in_voice_out"
+  }
 }) => {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState(messagesData)
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState([])
-  
+
   // Voice Recording State
   const [isRecording, setIsRecording] = useState(false)
   const [recordedAudio, setRecordedAudio] = useState(null) // { blob: Blob, url: string }
@@ -126,15 +133,15 @@ const StudioChatBot = ({
 
   // State for IDs
   const [threadId, setThreadId] = useState(null)
-  const [localSessionId, setLocalSessionId] = useState(null) 
-  
+  const [localSessionId, setLocalSessionId] = useState(null)
+
   const [pausedContext, setPausedContext] = useState(null)
 
   const fileInputRef = useRef(null)
   const messagesEndRef = useRef(null)
   const messageIdCounter = useRef(0)
   const flowStartedRef = useRef(false)
-  const flowStateRef = useRef("idle") 
+  const flowStateRef = useRef("idle")
 
   const dispatch = useDispatch()
   const flowOutput = useSelector((state) => state?.studio?.flowOutput)
@@ -212,10 +219,10 @@ const StudioChatBot = ({
       // Detect MIME Type
       const mimeType = base64Content.startsWith("UklGR") ? "audio/wav" : "audio/mp3";
       const src = `data:${mimeType};base64,${base64Content}`;
-      
+
       const audio = new Audio(src);
       currentAudioRef.current = audio; // Store ref
-      
+
       audio.play().catch(err => {
         console.error("Auto-play blocked or failed:", err);
       });
@@ -235,7 +242,7 @@ const StudioChatBot = ({
   // ---------------------------
   // Voice Recording Helpers
   // ---------------------------
-  
+
   const blobToBase64 = (blob) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -264,10 +271,10 @@ const StudioChatBot = ({
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const audioUrl = URL.createObjectURL(audioBlob);
-        
+
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => track.stop());
-        
+
         // Save to state for review instead of sending immediately
         setRecordedAudio({ blob: audioBlob, url: audioUrl });
       };
@@ -298,16 +305,16 @@ const StudioChatBot = ({
     try {
       // 1. Convert to Base64
       const base64Audio = await blobToBase64(recordedAudio.blob);
-      
+
       // 2. Add visual audio message to chat (User)
       addMessage("", "user", "audio", null, { audioUrl: recordedAudio.url, base64: base64Audio });
-      
+
       // 3. Clear recording state
       setRecordedAudio(null);
 
       // 4. Check current flow state and handle accordingly
       const currentState = flowStateRef.current;
-      
+
       if (currentState === "paused" && pausedContext) {
         // Resume the flow with voice
         await handleResumeFlow(null, base64Audio);
@@ -417,8 +424,8 @@ const StudioChatBot = ({
       addMessage("Empty response from server.", "bot", "error")
       return
     }
-    console.log("LOGGGG",data)
-    
+    console.log("LOGGGG", data)
+
     if (data.thread_id) setThreadId(data.thread_id)
     if (data.session_id) setLocalSessionId(data.session_id)
 
@@ -494,7 +501,7 @@ const StudioChatBot = ({
         {
           const questionText = data.payload?.question_text || data.payload?.question || data.agent_response || "Question"
           addMessage(questionText, "bot", "question", null, { payload: data.payload || {} })
-          
+
           // NEW: Play background audio if available
           if (data.voiceOutput) playBackgroundAudio(data.voiceOutput);
         }
@@ -504,7 +511,7 @@ const StudioChatBot = ({
         {
           const msg = data.payload?.message || data.agent_response || "The flow has completed."
           addMessage(msg, "bot", "text")
-          
+
           // NEW: Play background audio if available
           if (data.voiceOutput) playBackgroundAudio(data.voiceOutput);
 
@@ -576,6 +583,10 @@ const StudioChatBot = ({
         }
       }
 
+      if (propsVoiceEnabled) {
+        payload.voice_config = propsVoiceConfig;
+      }
+
       const token = localStorage.getItem("token") || "";
 
       const res = await fetch(`https://apidev.sifymodernization.digital/engine/agents/invoke/${flow?.id}`, {
@@ -591,7 +602,7 @@ const StudioChatBot = ({
       }
 
       const data = await res.json()
-      console.log("LOGGGGG",data);
+      console.log("LOGGGGG", data);
       processApiResponse(data)
       flowStartedRef.current = true
     } catch (error) {
@@ -644,6 +655,10 @@ const StudioChatBot = ({
         } else {
           body.user_response = resumeValue;
         }
+      }
+
+      if (propsVoiceEnabled) {
+        body.voice_config = propsVoiceConfig;
       }
 
       const token = localStorage.getItem("token") || "";
@@ -933,20 +948,20 @@ const StudioChatBot = ({
                 </div>
               </div>
             </div>
-            
-            <div className="flex items-center space-x-2">
-                {/* Mute/Unmute Toggle Button */}
-                <button 
-                  onClick={toggleMute} 
-                  className="text-white hover:bg-white/20 p-2 rounded-full transition-colors focus:outline-none"
-                  title={isMuted ? "Unmute" : "Mute"}
-                >
-                    {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                </button>
 
-                <button onClick={() => setIsOpen(false)} className="text-white cursor-pointer hover:bg-opacity-20 rounded-full p-2 transition-colors focus:outline-none" aria-label="Close chat">
-                    <X className="w-5 h-5" />
-                </button>
+            <div className="flex items-center space-x-2">
+              {/* Mute/Unmute Toggle Button */}
+              <button
+                onClick={toggleMute}
+                className="text-white hover:bg-white/20 p-2 rounded-full transition-colors focus:outline-none"
+                title={isMuted ? "Unmute" : "Mute"}
+              >
+                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              </button>
+
+              <button onClick={() => setIsOpen(false)} className="text-white cursor-pointer hover:bg-opacity-20 rounded-full p-2 transition-colors focus:outline-none" aria-label="Close chat">
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
 
@@ -1001,7 +1016,7 @@ const StudioChatBot = ({
               </button>
 
               {/* Voice Button */}
-              <button 
+              <button
                 onClick={isRecording ? stopRecording : startRecording}
                 className={`${isRecording ? "text-red-500 bg-red-50 animate-pulse" : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"} transition-colors p-2 rounded-full`}
                 aria-label={isRecording ? "Stop recording" : "Start recording"}
@@ -1014,10 +1029,10 @@ const StudioChatBot = ({
               {recordedAudio ? (
                 // REVIEW MODE UI
                 <div className="flex flex-1 items-center gap-2 bg-gray-50 rounded-md px-2 py-1">
-                   <audio controls src={recordedAudio.url} className="h-8 flex-1 w-full" />
-                   <button onClick={cancelRecording} className="text-red-500 p-1 hover:bg-gray-200 rounded-full">
-                     <Trash2 className="w-4 h-4" />
-                   </button>
+                  <audio controls src={recordedAudio.url} className="h-8 flex-1 w-full" />
+                  <button onClick={cancelRecording} className="text-red-500 p-1 hover:bg-gray-200 rounded-full">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               ) : (
                 <textarea
@@ -1029,12 +1044,12 @@ const StudioChatBot = ({
                   disabled={isLoading || isRecording}
                 />
               )}
-              
+
               {/* Send Button */}
               {recordedAudio ? (
-                 <button onClick={sendRecording} disabled={isLoading} className={`${colors.primary} text-white rounded-full p-3 transition-all duration-200 focus:outline-none`}>
-                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                 </button>
+                <button onClick={sendRecording} disabled={isLoading} className={`${colors.primary} text-white rounded-full p-3 transition-all duration-200 focus:outline-none`}>
+                  {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </button>
               ) : (
                 <button onClick={handleSendMessage} disabled={(!inputValue.trim() && uploadedFiles.length === 0) || isLoading || isRecording} className={`${colors.primary} disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-full p-3 transition-all duration-200 focus:outline-none`}>
                   {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

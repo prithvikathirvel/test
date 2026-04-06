@@ -58,6 +58,12 @@ const StudioListing = () => {
         nodes: [],
         edges: [],
       },
+      voice_enabled: false,
+      voice_config: {
+        tts_provider: "piper",
+        stt_provider: "whisper",
+        mode: "voice_in_voice_out"
+      },
       status: "active",
       version: "1.0.0",
       isPublic: true,
@@ -126,15 +132,12 @@ const StudioListing = () => {
             variant="contained"
             color="primary"
             size="medium"
-            // className={`px-5 py-2.5 !bg-[var(--primary-color)] hover:cursor-pointer text-white rounded-lg flex items-center font-medium`}
+          // className={`px-5 py-2.5 !bg-[var(--primary-color)] hover:cursor-pointer text-white rounded-lg flex items-center font-medium`}
           >
             <Plus size={18} className="mr-2" />
             Create Agentic Flow
           </CustomButton>
         </Container>
-
-
-
 
         <Grid container spacing={4} className="!flex justify-between  mb-10 ">
           <DetailsCard title="Total Flows" icon={<Network className={`h-5 w-5 !text-[${colors.primary}]`} />} flows={flows} />
@@ -189,14 +192,14 @@ const StudioListing = () => {
           )
         ) : (
           <div className="flex flex-col items-center justify-center py-16 px-4 bg-white/70 backdrop-blur-sm rounded-xl border border-dashed border-slate-200 shadow-sm">
-           
+
             <h3 className="text-xl font-bold text-slate-700 mb-2">No flows available</h3>
             <p className="text-slate-500 text-center max-w-md mb-6">
               Create your first AI flow to start building intelligent workflows that automate your tasks
             </p>
             <CustomButton
               onClick={handleCreateStudio}
-              // className={`px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-lg hover:shadow-purple-500/20 transition-all duration-300 flex items-center font-medium`}
+            // className={`px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-lg hover:shadow-purple-500/20 transition-all duration-300 flex items-center font-medium`}
             >
               <Plus size={18} className="mr-2" />
               Create New Flow

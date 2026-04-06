@@ -7,7 +7,7 @@ import "reactflow/dist/style.css";
 import { useNodeTypes } from "@/components/FlowNodes";
 import ComponentsSidebar from "@/components/studio/ComponentsSidebar";
 import JsonSpecView from "@/components/studio/JsonSpecView";
-import { Save, Rocket, Code, Workflow, Eye, Play, ChevronRight, List } from "lucide-react";
+import { Save, Rocket, Code, Workflow, Eye, Play, ChevronRight, List, Mic, MicOff, Settings } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { toggleViewMode } from "@/redux/slices/flowSlice";
 import SideDrawer from "@/components/Common/SideDrawer";
@@ -21,6 +21,7 @@ import { getLastOutputParameter } from "@/utils/commonFunction";
 import FlowOutputModal from "@/components/studio/FlowOutputModal";
 import InputFieldConfiguration from "@/components/InputFieldConfiguration";
 import CustomButton from "@/components/Common/CustomButton";
+import VoiceConfigModal from "@/components/studio/VoiceConfigModal";
 const drawerWidth = 280;
 
 const Studio = () => {
@@ -50,6 +51,14 @@ const Studio = () => {
     const isFlowRunning = useSelector(state => state.studio.isFlowRunning);
     const nodeTypes = useNodeTypes();
 
+    const [voiceEnabled, setVoiceEnabled] = useState(false);
+    const [voiceConfig, setVoiceConfig] = useState({
+        tts_provider: "piper",
+        stt_provider: "whisper",
+        mode: "voice_in_voice_out"
+    });
+    const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -68,6 +77,10 @@ const Studio = () => {
 
     useEffect(() => {
         if (!flow?.graphSpec?.nodes || !flow?.graphSpec?.edges) return;
+        
+        // Sync voice settings from flow if present
+        if (flow?.voice_enabled !== undefined) setVoiceEnabled(flow.voice_enabled);
+        if (flow?.voice_config) setVoiceConfig(flow.voice_config);
 
         console.log("Processing flow data");
         const adjacencyList = {};
@@ -522,6 +535,18 @@ const Studio = () => {
         toast.success('Input configurations saved successfully');
     };
 
+    const handleVoiceToggle = () => {
+        const newState = !voiceEnabled;
+        setVoiceEnabled(newState);
+        dispatch(updateSpecification({ voice_enabled: newState, voice_config: voiceConfig }));
+        if (newState) setIsVoiceModalOpen(true);
+    };
+
+    const handleVoiceConfigSave = (newConfig) => {
+        setVoiceConfig(newConfig);
+        dispatch(updateSpecification({ voice_enabled: voiceEnabled, voice_config: newConfig }));
+    };
+
     const reactFlowProps = useMemo(() => ({
         nodes,
         edges,
@@ -555,7 +580,20 @@ const Studio = () => {
     return (
         <>
             <div className="h-full w-full overflow-hidden">
-                <StudioChatBot className='!z-100' opened={true} flow={flow} handleRenderFlow={handleRenderFlow} />
+                <StudioChatBot 
+                    className='!z-100' 
+                    opened={true} 
+                    flow={flow} 
+                    handleRenderFlow={handleRenderFlow} 
+                    voiceEnabled={voiceEnabled}
+                    voiceConfig={voiceConfig}
+                />
+                <VoiceConfigModal 
+                    isOpen={isVoiceModalOpen}
+                    onClose={() => setIsVoiceModalOpen(false)}
+                    config={voiceConfig}
+                    onSave={handleVoiceConfigSave}
+                />
                 <Box className="h-full w-full">
                     {inputConfigOpen && (
                         <InputFieldConfiguration
@@ -579,6 +617,27 @@ const Studio = () => {
                                                 {toggleViewMode ? <Code size={18} /> : <Workflow size={18} />}
                                             </Button>
                                         </Tooltip>
+                                    </ButtonGroup>
+
+                                    <ButtonGroup variant="outlined" size="small" sx={{ mr: 2 }}>
+                                        <Tooltip title={voiceEnabled ? "Voice Enabled" : "Voice Disabled"}>
+                                            <Button 
+                                                onClick={handleVoiceToggle}
+                                                sx={{ 
+                                                    color: voiceEnabled ? '#4CAF50' : 'inherit',
+                                                    borderColor: voiceEnabled ? '#4CAF50 !important' : 'inherit'
+                                                }}
+                                            >
+                                                {voiceEnabled ? <Mic size={18} /> : <MicOff size={18} />}
+                                            </Button>
+                                        </Tooltip>
+                                        {voiceEnabled && (
+                                            <Tooltip title="Voice Settings">
+                                                <Button onClick={() => setIsVoiceModalOpen(true)}>
+                                                    <Settings size={18} />
+                                                </Button>
+                                            </Tooltip>
+                                        )}
                                     </ButtonGroup>
 
 

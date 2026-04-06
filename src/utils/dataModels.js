@@ -21,21 +21,63 @@ const inputNodes = [
     status: "active",
     description: "Get Text from user",
     tags: ["text", "input"],
-    inputParameters:[{
+    inputParameters: [{
       key: "text",
       value: "",
       type: "string"
     }],
-    outputParameters:[{
-      key:"output",
-      value:"",
-      type:"string"
+    outputParameters: [{
+      key: "output",
+      value: "",
+      type: "string"
     }],
     createdAt: '',
     updatedAt: '',
     createdBy: "System",
     updatedBy: "System"
-  }, 
+  },
+  {
+    "node_id": "Knowledge_Retrieval_1",
+    "name": "Knowledge Retrieval Node",
+    "displayName": "Knowledge Retrieval Node",
+    "type": "tool",
+    "description": "Retrieves semantic matches from the Vector DB to feed into LLMs.",
+    "interrupt": false,
+    "next": [],
+    "inputParameters": [
+      {
+        "key": "knowledge_base_name",
+        "value": "my_corporate_kb",
+        "type": "text",
+        "description": "The exact name of the ingested Knowledge Base."
+      },
+      {
+        "key": "user_prompt",
+        "value": "{{CHAT_QUERY}}",
+        "type": "text",
+        "description": "The search query (Use {{CHAT_QUERY}} to pass the user's message)."
+      },
+      {
+        "key": "limit",
+        "value": 3,
+        "type": "number",
+        "description": "Max number of chunks to retrieve (Default: 3)"
+      },
+      {
+        "key": "max_distance",
+        "value": 0.7,
+        "type": "number",
+        "description": "Similarity threshold from 0.0 to 1.0. Lower is stricter. (Default: 0.7)"
+      }
+    ],
+    "outputParameters": [
+      {
+        "key": "output",
+        "value": "kb_context",
+        "type": "string"
+      }
+    ]
+  },
   {
     "id": "decision_0",
     "key": "Decision",
@@ -75,7 +117,7 @@ const inputNodes = [
         "type": "string"
       }
     ]
-  },  
+  },
   {
     "node_id": "question_node",
     "name": "Question Node",
@@ -92,11 +134,7 @@ const inputNodes = [
       },
       {
         "key": "options",
-        "value":
-          {
-            "Option1": "C++",
-            "Option2": "Java"
-          },
+        "value": {},
         "type": "object"
       }
     ],
@@ -107,7 +145,42 @@ const inputNodes = [
         "type": "string"
       }
     ]
-  }, 
+  },
+
+  {
+    "node_id": "Iterator Node_node-1753342600957-xyzabcd123",
+    "name": "Iterator Node",
+    "displayName": "Iterator Node",
+    "type": "iterator",
+    "description": "Iterator Node that loops through each item in a list",
+    "next": [],
+    "loopPath": null,
+    "completionPath": null,
+    "inputParameters": [
+      {
+        "key": "array",
+        "value": "",
+        "type": "text"
+      },
+      {
+        "key": "iterationSteps",
+        "value": 1,
+        "type": "number"
+      },
+      {
+        "key": "iterationVariable",
+        "value": "item",
+        "type": "text"
+      }
+    ],
+    "outputParameters": [
+      {
+        "key": "output",
+        "value": "currentItem",
+        "type": "text"
+      }
+    ]
+  },
 
   {
     "node_id": "classifier_node",
@@ -179,13 +252,13 @@ const inputNodes = [
     ]
   }
 
-  
 
 
-  
- 
 
-  
+
+
+
+
 
 ]
 
@@ -197,15 +270,15 @@ const outputNodes = [
     type: "output",
     status: "active",
     description: "End Node",
-    inputParameters:[{
-      key:"final_input", 
-      value:"",
-      type:"string"
+    inputParameters: [{
+      key: "final_input",
+      value: "",
+      type: "string"
     }],
-    outputParameters:[{
-      key:"output",
-      value:"final_output", 
-      type:"string"
+    outputParameters: [{
+      key: "output",
+      value: "final_output",
+      type: "string"
     }],
     tags: ["end"],
     createdAt: '',
@@ -221,7 +294,7 @@ const outputNodes = [
     type: "outputs",
     status: "active",
     description: "Format the Output Based on User needs",
-    tags: ["text", "output","formatter"],
+    tags: ["text", "output", "formatter"],
     inputParameters: [{
       key: "template",
       value: "",
@@ -343,7 +416,7 @@ const prebuiltFlows = [
     createdAt: "2025-04-01T09:41:10.598Z",
     id: "39e2d144-aae6-4a84-98f1-06555013404c1",
     agent_id: "39e2d144-aae6-4a84-98f1-06555013404c1",
-    inputs:[{key:"check",value:"check1",type:"text"}]
+    inputs: [{ key: "check", value: "check1", type: "text" }]
   }
 ];
 
