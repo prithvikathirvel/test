@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
 import InputBox from '@/components/Common/InputBox';
+import ParameterHeader from './common/ParameterHeader';
 
 const StringParameter = ({ param = {}, color, onUpdate, parameters, parameter }) => {
   const [localValue, setLocalValue] = useState(param.value || '');
@@ -20,6 +21,10 @@ const StringParameter = ({ param = {}, color, onUpdate, parameters, parameter })
 
   return (
     <Box className="w-full">
+      <ParameterHeader
+        title={param.key}
+        description={param.description}
+      />
       <InputBox
         placeholder={`Enter ${param.key}`}
         className="mb-4"
@@ -27,7 +32,7 @@ const StringParameter = ({ param = {}, color, onUpdate, parameters, parameter })
         color={color}
         value={localValue}
         label={param.key}
-        isShowLabel={true}
+        isShowLabel={false}
         onChange={handleChange}
       />
     </Box>

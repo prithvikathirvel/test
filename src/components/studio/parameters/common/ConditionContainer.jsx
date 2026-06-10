@@ -21,6 +21,7 @@ const ConditionContainer = ({
       <ParameterHeader
         className="font-semibold"
         title={title}
+        description={description}
       />
       {/* Conditions Container */}
       <div className="border-1 border-gray-300 rounded-xl p-4 bg-gray-50/50">

@@ -195,7 +195,7 @@ const ObjectParameter = ({ param, color = "#4f46e5", isAddNew = true, initialVal
             </Box>
 
             <Box className="max-h-[300px] overflow-y-auto pr-1 space-y-3">
-              {Object.entries(objectValues).length === 0 ? (
+            {(typeof objectValues !== 'object' || objectValues === null || Object.entries(objectValues).length === 0) ? (
                 <Box className="text-center py-4 text-sm text-gray-500">
                   No properties defined. Add a new key-value pair below.
                 </Box>

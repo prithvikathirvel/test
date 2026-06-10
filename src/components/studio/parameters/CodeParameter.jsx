@@ -3,8 +3,11 @@ import CodeMirror from "@uiw/react-codemirror";
 import { javascript } from "@codemirror/lang-javascript";
 import { useState, useCallback } from "react";
 import { vscodeDark, vscodeLight } from '@uiw/codemirror-theme-vscode';
+import { Box } from '@mui/material';
+import ParameterHeader from './common/ParameterHeader';
+import { Code } from 'lucide-react';
 
-const CodeParameter = ({ parameters, param, onUpdate }) => {
+const CodeParameter = ({ parameters, param = {}, onUpdate }) => {
     const [localValue, setLocalValue] = useState(param?.value || "// Write your code here\nconsole.log('Hello, CodeMirror!');");
     
     const handleChange = useCallback((value) => {
@@ -23,9 +26,17 @@ const CodeParameter = ({ parameters, param, onUpdate }) => {
     ];
     
     return (
-        <CodeMirror
-            value={localValue}
-            height="60vh"
+        <Box className="w-full">
+            {param.key && (
+                <ParameterHeader
+                    title={param.key}
+                    description={param.description}
+                    icon={<Code size={16} />}
+                />
+            )}
+            <CodeMirror
+                value={localValue}
+                height="60vh"
             minHeight="300px"
             maxHeight="80vh"
             width="100%"
@@ -47,7 +58,8 @@ const CodeParameter = ({ parameters, param, onUpdate }) => {
             }}
             autoFocus
             indentWithTab={true}
-        />
+            />
+        </Box>
     )
 }
 
