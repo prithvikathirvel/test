@@ -146,7 +146,6 @@ const inputNodes = [
       }
     ]
   },
-
   {
     "node_id": "Iterator Node_node-1753342600957-xyzabcd123",
     "name": "Iterator Node",
@@ -181,7 +180,6 @@ const inputNodes = [
       }
     ]
   },
-
   {
     "node_id": "classifier_node",
     "name": "Question Classifier",

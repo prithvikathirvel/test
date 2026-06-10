@@ -97,7 +97,7 @@ const StudioChatBot = ({
   botName = "Sify Aurora Assistant",
   botStatus = "Online",
   width = "500px",
-  height = "520px",
+  height = "550px",
   position = "bottom-right",
   flow = {},
   messagesData = [],
@@ -115,8 +115,35 @@ const StudioChatBot = ({
     mode: "voice_in_voice_out"
   }
 }) => {
+  const sanitizeMessageText = (text) => {
+    if (typeof text !== 'string') return text;
+    
+    // Normalize line endings
+    let cleaned = text.replace(/\r\n/g, '\n').trim();
+
+    // Check if the text contains HTML tags (e.g., <div>, <br>, <b>)
+    const hasHtml = /<[a-z/][^>]*>/i.test(cleaned);
+
+    if (hasHtml) {
+      // If it contains HTML, clean it up more aggressively to prevent 
+      // whitespace-pre-wrap from rendering formatting newlines.
+      return cleaned
+        .replace(/>\s*\n\s*</g, '><') // Remove newlines/indentation between tags
+        .replace(/\n\s*</g, ' <')    // Replace newline before tag with a single space
+        .replace(/>\s*\n/g, '> ')    // Replace newline after tag with a single space
+        .replace(/\n/g, ' ')          // Replace remaining newlines with spaces
+        .replace(/\s{2,}/g, ' ')      // Collapse multiple spaces
+        .trim();
+    }
+
+    // For plain text, keep newlines but collapse excessive ones (3+ into 2)
+    return cleaned.replace(/\n{3,}/g, '\n\n');
+  };
+
   const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState(messagesData)
+  const [messages, setMessages] = useState(() =>
+    messagesData.map(m => ({ ...m, text: sanitizeMessageText(m.text) }))
+  )
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState([])
@@ -400,9 +427,12 @@ const StudioChatBot = ({
   // ---------------------------
   const addMessage = (text, sender, messageType = "text", customId = null, customData = null, apiResponse = null) => {
     const messageId = customId || generateUniqueId()
+
+    const cleanedText = sanitizeMessageText(text);
+
     const newMessage = {
       id: messageId,
-      text,
+      text: cleanedText,
       sender,
       messageType, // 'text' | 'file' | 'form' | 'question' | 'loading' | 'error' | 'audio'
       customData,
@@ -694,7 +724,7 @@ const StudioChatBot = ({
   const handleSendMessage = async () => {
     if (!(inputValue.trim()) && uploadedFiles.length === 0) return
 
-    let userMessage = inputValue.trim()
+    let userMessage = sanitizeMessageText(inputValue)
     let fileData = []
     if (uploadedFiles.length > 0) {
       fileData = uploadedFiles.map(f => f.base64)
@@ -762,7 +792,12 @@ const StudioChatBot = ({
 
     if (option.nextMessage) {
       setTimeout(() => {
-        const nextMessage = { ...option.nextMessage, id: generateUniqueId(), timestamp: new Date() }
+        const nextMessage = {
+          ...option.nextMessage,
+          id: generateUniqueId(),
+          timestamp: new Date(),
+          text: sanitizeMessageText(option.nextMessage.text)
+        }
         setMessages((prev) => [...prev, nextMessage])
       }, 400)
     }
@@ -868,7 +903,7 @@ const StudioChatBot = ({
         ) : message.messageType === "question" ? (
           <div>
             <div className="bg-white text-gray-800 rounded-2xl rounded-bl-md shadow-sm border border-gray-200 px-4 py-3">
-              <p className="text-sm leading-relaxed">{message.text}</p>
+              <div className="text-sm leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: message.text }} />
             </div>
             {message.customData?.payload?.options && (
               <div className="mt-3 space-y-2">
