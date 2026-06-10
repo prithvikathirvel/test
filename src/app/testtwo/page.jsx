@@ -1,196 +1,146 @@
-"use client"
-import React, { useMemo, useState } from "react";
-import ReactFlow, { ReactFlowProvider, Background } from "reactflow";
+'use client';
 
-import "reactflow/dist/style.css";
+import React, { useState, useCallback } from 'react';
+import { ReactFlow, Background, Controls, applyNodeChanges } from 'reactflow';
+import 'reactflow/dist/style.css';
+import { Bot } from 'lucide-react';
 
-function transformWorkflowToElements(workflow) {
-    // Space between nodes
-    const nodeSpacingY = 120;
-    const nodeStartX = 250;
-    const nodeStartY = 50;
-  
-    // Transform stages into nodes, aligned vertically
-    const nodes = workflow.stages.map((stage, idx) => ({
-      id: stage.id,
-      data: { label: stage.name },
-      position: { x: nodeStartX, y: nodeStartY + idx * nodeSpacingY },
-      style: { padding: 20, border: "1px solid black" },
-      draggable: true,
-      connectable: true,
-      selectable: true,
-      focusable: true,
-    }));
-  
-    // Transform relationships into edges
-    const edges = [];
-  
-    workflow.stages.forEach((stage) => {
-      if (stage.nextPossibleActions) {
-        stage.nextPossibleActions.forEach((action) => {
-          edges.push({ id: `${stage.id}_${action.id}`, source: stage.id, target: action.id });
-        });
+import ReActAgentNode from '@/components/ReactAgentNode';
+
+// Register the custom node types
+const nodeTypes = {
+  react_agent: ReActAgentNode,
+};
+
+export default function WorkflowBuilder() {
+  const [nodes, setNodes] = useState([]);
+  const [edges, setEdges] = useState([]);
+
+  // Handles moving the node around the canvas
+  const onNodesChange = useCallback(
+    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    []
+  );
+
+  // Simulated: Adds a Tool to the specific Agent node's internal state
+  const handleAddToolToAgent = (nodeId) => {
+    const newTool = {
+      name: "check_server_latency",
+      node_type: "MCP Tool Caller",
+      config: {
+        server_id: "infrastructure",
+        tool_name: "execute_bash",
+        arguments: { command: "ping -c 4 {{target_ip}}" }
       }
-    });
-  
-    return { nodes, edges };
-  }
+    };
 
-function WorkflowGraph({ workflow }) {
-  const { nodes, edges } = useMemo(
-    () => transformWorkflowToElements(workflow),
-    [workflow]
-  );
-
-  return (
-    <ReactFlowProvider>
-      <div style={{ width: "100%", height: "500px" }}>
-        <ReactFlow nodes={nodes} edges={edges} fitView>
-          <Background color="#888" gap={16} />
-        </ReactFlow>
-      </div>
-    </ReactFlowProvider>
-  );
-}
-
-export default function App() {
-  // Your workflow data (that's your object)
-  const workflow = {
-    isActive: true,
-    name: "Metadata Workflow - New Check",
-    stages: [
-      {
-        actionType: "static",
-        allowedRoles: ["TSSTechOps"],
-        allowedUsers: [],
-        id: "3LkjCx8lutI40sjVJjQX",
-        isDecision: false,
-        isEnd: false,
-        isRequest: false,
-        isStart: true,
-        name: "Start",
-        nextPossibleActions: [
-          {
-            id: "qUR3tLauAujAy1mZwZlT",
-            stageName: "ChangeMetadata",
-          },
-        ],
-        status: "started",
-      },
-      {
-        actionType: "static",
-        allowedRoles: ["TSSTechOps"],
-        allowedUsers: [],
-        id: "qUR3tLauAujAy1mZwZlT",
-        inputSchema: {
-          description: {
-            required: false,
-            type: "string",
-          },
-          tags: {
-            items: "string",
-            required: false,
-            type: "array",
-          },
-          title: {
-            required: false,
-            type: "string",
-          },
-        },
-        isDecision: false,
-        isEnd: false,
-        isRequest: true,
-        isStart: false,
-        name: "ChangeMetadata",
-        nextPossibleActions: [
-          {
-            id: "lJeFg2DydsjSAIxqicfE",
-            stageName: "ApproveChanges",
-          },
-          {
-            id: "wcjrI83w5ezIlPa2NhwV",
-            stageName: "RejectChanges",
-          },
-        ],
-        status: "Review in Progress",
-      },
-      {
-        actionType: "static",
-        allowedRoles: ["SuperAdmin"],
-        allowedUsers: [],
-        id: "lJeFg2DydsjSAIxqicfE",
-        inputSchema: {
-          comments: {
-            required: false,
-            type: "string",
-          },
-        },
-        isDecision: true,
-        isEnd: false,
-        isRequest: false,
-        isStart: false,
-        name: "ApproveChanges",
-        nextPossibleActions: [
-          {
-            id: "LhaP64lqX8XpRb8Zw3ab",
-            stageName: "CreateSummary",
-          },
-        ],
-        status: "approved",
-      },
-      {
-        actionType: "static",
-        allowedRoles: ["SuperAdmin"],
-        allowedUsers: [],
-        id: "wcjrI83w5ezIlPa2NhwV",
-        inputSchema: {
-          comments: {
-            required: false,
-            type: "string",
-          },
-        },
-        isDecision: true,
-        isEnd: false,
-        isRequest: false,
-        isStart: false,
-        name: "RejectChanges",
-        nextPossibleActions: [
-          {
-            id: "JRCyEWp8avV8OXJ6uIwy",
-            stageName: "End",
-          },
-        ],
-        status: "rejected",
-      },
-      {
-        actionType: "handler",
-        handlerFunction: "createSummary",
-        id: "LhaP64lqX8XpRb8Zw3ab",
-        isEnd: false,
-        isStart: false,
-        name: "CreateSummary",
-        nextPossibleActions: [
-          {
-            id: "JRCyEWp8avV8OXJ6uIwy",
-            stageName: "End",
-          },
-        ],
-        specification: {},
-        status: "Update Metadata",
-      },
-      {
-        actionType: "handler",
-        handlerFunction: "endWorkflowHandler",
-        id: "JRCyEWp8avV8OXJ6uIwy",
-        isEnd: true,
-        isStart: false,
-        name: "End",
-        specification: {},
-        status: "completed",
-      },
-    ],
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              tools: [...(node.data.tools || []), newTool],
+            },
+          };
+        }
+        return node;
+      })
+    );
   };
 
-  return <WorkflowGraph workflow={workflow} />;
-}
+  // Handles dropping a new Agent onto the canvas
+  const onDrop = (event) => {
+    event.preventDefault();
+    const type = event.dataTransfer.getData('application/reactflow');
+    if (!type) return;
 
+    // Calculate position based on the sidebar width (approx 256px)
+    const position = { x: event.clientX - 300, y: event.clientY - 100 };
+
+    const newNode = {
+      id: `node_${Date.now()}`,
+      type: type,
+      position,
+      data: {
+        model: "gemini-2.5-pro",
+        system_prompt: "You are a Level 3 Network NOC Engineer. Diagnose the user's issue...",
+        tools: [],
+        onAddTool: handleAddToolToAgent, // Pass the function to the custom node
+      },
+    };
+
+    setNodes((nds) => nds.concat(newNode));
+  };
+
+  // Required to allow the browser to accept dropped items
+  const onDragOver = (event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+  };
+
+  // Convert the visual React Flow nodes into the Backend JSON Schema
+  const exportToBackend = () => {
+    const backendSchema = {
+      name: "NOC ReAct Flow",
+      type: "flow",
+      graphSpec: {
+        nodes: nodes.map(n => ({
+          node_id: n.id,
+          name: "Autonomous ReAct Agent",
+          type: "agent",
+          inputParameters: [
+            { key: "Model", value: n.data.model, type: "text" },
+            { key: "system_prompt", value: n.data.system_prompt, type: "text" },
+            { key: "tools", value: n.data.tools, type: "object" } // Automatically serializes array of tools to JSON!
+          ],
+          outputParameters: [{ key: "output", value: "react_final_answer", type: "string" }]
+        })),
+        edges: edges
+      }
+    };
+
+    console.log("Sending to FastAPI:", JSON.stringify(backendSchema, null, 2));
+    alert("Check browser console for the generated JSON Schema!");
+  };
+
+  return (
+    <div className="flex h-screen w-screen bg-slate-50">
+      {/* LEFT SIDEBAR: Palette */}
+      <div className="w-64 bg-white border-r border-slate-200 p-4 shadow-sm z-10 flex flex-col">
+        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">Node Palette</h2>
+
+        {/* Draggable ReAct Node Button */}
+        <div
+          className="p-3 bg-indigo-50 border border-indigo-200 text-indigo-700 rounded-lg cursor-grab hover:bg-indigo-100 transition-colors flex items-center font-medium text-sm shadow-sm"
+          onDragStart={(e) => e.dataTransfer.setData('application/reactflow', 'react_agent')}
+          draggable
+        >
+          <Bot size={16} className="mr-2" /> Autonomous Agent
+        </div>
+
+        <div className="mt-auto">
+          <button onClick={exportToBackend} className="w-full bg-slate-900 text-white py-3 rounded-lg text-sm font-bold shadow-md hover:bg-slate-800 transition-colors">
+            Export JSON to Backend
+          </button>
+        </div>
+      </div>
+
+      {/* REACT FLOW CANVAS */}
+      <div className="flex-1 h-full relative" onDrop={onDrop} onDragOver={onDragOver}>
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          nodeTypes={nodeTypes}
+          fitView
+          className="bg-slate-50"
+        >
+          <Background color="#cbd5e1" gap={16} size={2} />
+          <Controls className="bg-white shadow-md border-slate-200" />
+        </ReactFlow>
+      </div>
+    </div>
+  );
+}
