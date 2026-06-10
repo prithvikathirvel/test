@@ -119,6 +119,45 @@ function CustomNode({ data, type }) {
   const shouldShowOptionsUI = nodeType === "question" || 
                              (nodeType === "inputs" && (data.name === "Question Node" || data.displayName === "Question Node"));
 
+  // Process options to handle dynamic variables or stringified JSON
+  const displayOptions = useMemo(() => {
+    let opts = questionData.options;
+
+    // Handle case where opts might be an array of characters
+    if (Array.isArray(opts) && opts.length > 0 && opts.every(v => typeof v === 'string' && v.length === 1)) {
+      opts = opts.join('');
+    }
+
+    // Handle case where opts might be an object map of characters (numeric keys)
+    if (typeof opts === 'object' && opts !== null && !Array.isArray(opts)) {
+      const keys = Object.keys(opts);
+      if (keys.length > 0 && keys.every(k => !isNaN(parseInt(k)) && typeof opts[k] === 'string' && opts[k].length === 1)) {
+        opts = Object.values(opts).join('');
+      }
+    }
+
+    if (typeof opts === 'string') {
+      try {
+        // Try to parse if it's a valid JSON string (but not a template variable)
+        const trimmed = opts.trim();
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+          const parsed = JSON.parse(trimmed);
+          if (typeof parsed === 'object' && parsed !== null) return parsed;
+        }
+      } catch (e) {
+        // Ignore parsing errors for template variables like {{abc}}
+      }
+    }
+    return opts;
+  }, [questionData.options]);
+
+  // Helper to detect dynamic template variables
+  const isDynamic = (val) => {
+    if (!val) return false;
+    const str = String(val).trim();
+    return str.startsWith('{{') && str.endsWith('}}');
+  };
+
   return (
     <div className="relative min-w-[250px] bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200/60 backdrop-blur-sm">
       
@@ -155,7 +194,7 @@ function CustomNode({ data, type }) {
       {/* Question/Options Content */}
       {shouldShowOptionsUI && (
         <div className="px-4 py-4 border-b border-gray-100">
-          {questionData.questionText && (
+          {questionData.questionText && !isDynamic(questionData.questionText) && (
             <p className="text-sm text-gray-700 font-medium leading-relaxed mb-4 break-words">
               {questionData.questionText.length > 40 
                 ? `${questionData.questionText.substring(0, 40)}...` 
@@ -164,27 +203,23 @@ function CustomNode({ data, type }) {
           )}
 
           {/* Options List */}
-          {Object.keys(questionData.options).length > 0 && (
+          {displayOptions && typeof displayOptions === 'object' && !isDynamic(displayOptions) && Object.keys(displayOptions).length > 0 && (
             <div className="space-y-2">
               <p className="text-xs text-gray-500 font-medium mb-3">
-                {Object.keys(questionData.options).length} option{Object.keys(questionData.options).length !== 1 ? 's' : ''}:
+                {Object.keys(displayOptions).length} option{Object.keys(displayOptions).length !== 1 ? 's' : ''}:
               </p>
               
-              {Object.entries(questionData.options).map(([key, value], index) => {
+              {Object.entries(displayOptions).map(([key, value], index) => {
                 const colorIndex = index % optionColors.length;
                 const color = optionColors[colorIndex];
                 
                 return (
                   <div key={key} className="flex justify-between gap-3 group bg-gray-100 p-2 px-4 rounded-lg">
-                  <div 
-                    // className={`w-3 h-3 rounded-full ${color.bg} flex-shrink-0 shadow-sm`}
-                    // style={{ backgroundColor: color.hex }}
-                  >Option {index + 1}</div>
-                  
-                  <span className="text-sm text-gray-800 font-medium truncate">
-                    {value}
-                  </span>
-                </div>
+                    <div>Option {index + 1}</div>
+                    <span className="text-sm text-gray-800 font-medium truncate">
+                      {String(value)}
+                    </span>
+                  </div>
                 );
               })}
             </div>
@@ -193,7 +228,7 @@ function CustomNode({ data, type }) {
       )}
 
       {/* Condition Content */}
-      {(nodeType === "conditions" || nodeType === "condition") && conditionData.conditions.length > 0 && (
+      {(nodeType === "conditions" || nodeType === "condition") && Array.isArray(conditionData.conditions) && conditionData.conditions.length > 0 && (
         <div className="px-4 py-4 border-b border-gray-100">
           <p className="text-sm text-gray-700 font-medium leading-relaxed mb-4">
             {conditionData.conditions.length} condition{conditionData.conditions.length !== 1 ? 's' : ''}
