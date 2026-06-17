@@ -6,6 +6,7 @@ import authReducer from "./slices/authSlice";
 import studioReducer from "./slices/studioSlice";
 import flowReducer from "./slices/flowSlice";
 import knowledgeReducer from "./slices/knowledgeSlice";
+import knowledgeGraphReducer from "./slices/knowledgeGraphSlice";
 import { FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from "redux-persist/es/constants";
 import initialRootState from "./initialRootState";
 import autoMergeLevel2 from 'redux-persist/lib/stateReconciler/autoMergeLevel2';
@@ -22,7 +23,8 @@ const rootReducer = combineReducers({
   auth: authReducer,
   studio: studioReducer,
   flow: flowReducer,
-  knowledge: knowledgeReducer
+  knowledge: knowledgeReducer,
+  knowledgeGraph: knowledgeGraphReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

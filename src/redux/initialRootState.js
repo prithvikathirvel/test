@@ -9,6 +9,22 @@ const initialKnowledgeState = {
   uploadProgress: 0,
 };
 
+// Initial state for knowledge graph slice
+const initialKnowledgeGraphState = {
+  connections: [],
+  connectionsLoading: false,
+  connectionsError: null,
+  selectedConnectionId: null,
+  healthStatus: {},
+  serverHealth: 'checking',
+  step: 1,
+  uploadSession: null,
+  sessionExpired: false,
+  graphs: [],
+  graphsLoading: false,
+  graphsError: null,
+};
+
 const initialRootState = {
   auth: {
     isAuthenticated: false,
@@ -17,6 +33,7 @@ const initialRootState = {
     authError: null
   },
   knowledge: initialKnowledgeState,
+  knowledgeGraph: initialKnowledgeGraphState,
   studio: {
     tools: [],
     agents: [],

@@ -7,12 +7,14 @@ import {
   LayoutDashboard,
   Settings,
   BookOpen,
+  Share2,
 } from "lucide-react";
 
 const Menus = [
   // { title: "Home", icon: <LayoutDashboard size={18} />, path: "/dashboard" },
   { title: "Flow Listing", icon: <LayoutDashboard size={18} />, path: "/studio" },
   { title: "LLM", icon: <BookOpen size={18} />, path: "/knowledge" },
+  { title: "Knowledge Graph", icon: <Share2 size={18} />, path: "/knowledge-graph" },
   { title: "Settings", icon: <Settings size={18} />, path: "/settings" },
 ];
 
