@@ -8,8 +8,7 @@ import {
   GitBranch, 
   RotateCcw, 
   TextCursorInput,
-  HelpCircle,
-  Dot
+  HelpCircle
 } from 'lucide-react';
 import { useSelector } from "react-redux";
 import { memo, useMemo } from "react";
@@ -19,57 +18,47 @@ const getNodeIcon = (type, tools, agents, models, inputs, outputs, agentflows) =
   const item = [...tools, ...agents, ...models, ...inputs, ...outputs, ...agentflows].find((item) => item.type === type);
   
   switch (type?.toLowerCase()) {
-    case "decision": return <GitBranch size={16} />;
-    case "iterator": return <RotateCcw size={16} />;
-    case "inputs": return <TextCursorInput size={16} />;
-    case "output": return <CloudUpload size={16} />;
-    case "question": return <HelpCircle size={16} />;
-    case "conditions": return <GitBranch size={16} />;
-    case "condition": return <GitBranch size={16} />;
-    case "start": return <Circle size={16} />;
+    case "decision": return <GitBranch size={15} />;
+    case "iterator": return <RotateCcw size={15} />;
+    case "inputs": return <TextCursorInput size={15} />;
+    case "output": return <CloudUpload size={15} />;
+    case "question": return <HelpCircle size={15} />;
+    case "conditions": return <GitBranch size={15} />;
+    case "condition": return <GitBranch size={15} />;
+    case "start": return <Circle size={15} />;
   }
   
-  if (!item) return <Workflow size={16} />;
+  if (!item) return <Workflow size={15} />;
 
   switch (item.type?.toLowerCase()) {
-    case "tool": return <Workflow size={16} />;
-    case "agent": return <Bot size={16} />;
-    case "model": return <Database size={16} />;
-    case "agentflow": return <Circle size={16} />;
-    default: return <Circle size={16} />;
+    case "tool": return <Workflow size={15} />;
+    case "agent": return <Bot size={15} />;
+    case "model": return <Database size={15} />;
+    case "agentflow": return <Circle size={15} />;
+    default: return <Circle size={15} />;
   }
 };
 
+// Minimalist executive SaaS colors (no rainbow toy colors!)
 const getNodeAccent = (type, tools, agents, models, inputs, outputs, agentflows) => {
   const item = [...tools, ...agents, ...models, ...inputs, ...outputs, ...agentflows].find((item) => item.type === type);
   
   switch (item?.type?.toLowerCase() || type?.toLowerCase()) {
-    case "tool": return "bg-gradient-to-r from-blue-500 to-blue-600";
-    case "agent": return "bg-gradient-to-r from-emerald-500 to-emerald-600";
-    case "model": return "bg-gradient-to-r from-purple-500 to-purple-600";
-    case "inputs": return "bg-gradient-to-r from-cyan-500 to-cyan-600";
-    case "output": return "bg-gradient-to-r from-orange-500 to-orange-600";
-    case "agentflow": return "bg-gradient-to-r from-pink-500 to-pink-600";
-    case "decision": return "bg-gradient-to-r from-amber-500 to-amber-600";
-    case "iterator": return "bg-gradient-to-r from-indigo-500 to-indigo-600";
-    case "question": return "bg-gradient-to-r from-violet-500 to-violet-600";
-    case "conditions": return "bg-gradient-to-r from-amber-500 to-amber-600";
-    case "condition": return "bg-gradient-to-r from-amber-500 to-amber-600";
-    case "start": return "bg-gradient-to-r from-green-500 to-green-600";
-    default: return "bg-gradient-to-r from-gray-400 to-gray-500";
+    case "tool": return "bg-zinc-800 text-white";
+    case "agent": return "bg-[#0d47a1] text-white";
+    case "model": return "bg-zinc-900 text-white";
+    case "inputs": return "bg-slate-700 text-white";
+    case "output": return "bg-zinc-900 text-white";
+    case "agentflow": return "bg-[#0d47a1] text-white";
+    case "decision": return "bg-zinc-800 text-white";
+    case "iterator": return "bg-zinc-800 text-white";
+    case "question": return "bg-[#0d47a1] text-white";
+    case "conditions": return "bg-zinc-800 text-white";
+    case "condition": return "bg-zinc-800 text-white";
+    case "start": return "bg-[#0d47a1] text-white";
+    default: return "bg-zinc-900 text-white";
   }
 };
-
-const getOptionColors = () => [
-  { bg: 'bg-blue-500', hex: '#3B82F6' },
-  { bg: 'bg-emerald-500', hex: '#10B981' },
-  { bg: 'bg-orange-500', hex: '#F97316' },
-  { bg: 'bg-rose-500', hex: '#F43F5E' },
-  { bg: 'bg-purple-500', hex: '#A855F7' },
-  { bg: 'bg-cyan-500', hex: '#06B6D4' },
-  { bg: 'bg-amber-500', hex: '#F59E0B' },
-  { bg: 'bg-pink-500', hex: '#EC4899' }
-];
 
 const CustomNode = memo(function CustomNode({ data, type }) {
   const tools = useSelector((state) => state.studio.tools);
@@ -82,9 +71,7 @@ const CustomNode = memo(function CustomNode({ data, type }) {
   const accent = getNodeAccent(type, tools, agents, models, inputs, outputs, agentflows);
   const icon = getNodeIcon(type, tools, agents, models, inputs, outputs, agentflows);
   const nodeType = type?.toLowerCase() || data?.type?.toLowerCase();
-  const optionColors = getOptionColors();
 
-  // Extract condition data from inputParameters for condition nodes
   const conditionData = useMemo(() => {
     if ((nodeType !== "conditions" && nodeType !== "condition") || !data.inputParameters) {
       return { conditions: [] };
@@ -96,9 +83,7 @@ const CustomNode = memo(function CustomNode({ data, type }) {
     return { conditions };
   }, [nodeType, data.inputParameters]);
 
-  // Extract options data from inputParameters for question and inputs nodes
   const questionData = useMemo(() => {
-    // Show options for question type OR inputs type with Question Node name
     const shouldShowOptions = nodeType === "question" || 
                              (nodeType === "inputs" && (data.name === "Question Node" || data.displayName === "Question Node"));
     
@@ -115,20 +100,16 @@ const CustomNode = memo(function CustomNode({ data, type }) {
     };
   }, [nodeType, data.inputParameters, data.name, data.displayName]);
 
-  // Check if should show options based on node type and name
   const shouldShowOptionsUI = nodeType === "question" || 
                              (nodeType === "inputs" && (data.name === "Question Node" || data.displayName === "Question Node"));
 
-  // Process options to handle dynamic variables or stringified JSON
   const displayOptions = useMemo(() => {
     let opts = questionData.options;
 
-    // Handle case where opts might be an array of characters
     if (Array.isArray(opts) && opts.length > 0 && opts.every(v => typeof v === 'string' && v.length === 1)) {
       opts = opts.join('');
     }
 
-    // Handle case where opts might be an object map of characters (numeric keys)
     if (typeof opts === 'object' && opts !== null && !Array.isArray(opts)) {
       const keys = Object.keys(opts);
       if (keys.length > 0 && keys.every(k => !isNaN(parseInt(k)) && typeof opts[k] === 'string' && opts[k].length === 1)) {
@@ -138,20 +119,18 @@ const CustomNode = memo(function CustomNode({ data, type }) {
 
     if (typeof opts === 'string') {
       try {
-        // Try to parse if it's a valid JSON string (but not a template variable)
         const trimmed = opts.trim();
         if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
           const parsed = JSON.parse(trimmed);
           if (typeof parsed === 'object' && parsed !== null) return parsed;
         }
       } catch (e) {
-        // Ignore parsing errors for template variables like {{abc}}
+        // ignore
       }
     }
     return opts;
   }, [questionData.options]);
 
-  // Helper to detect dynamic template variables
   const isDynamic = (val) => {
     if (!val) return false;
     const str = String(val).trim();
@@ -159,16 +138,11 @@ const CustomNode = memo(function CustomNode({ data, type }) {
   };
 
   return (
-    <div className="relative min-w-[250px] bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200/60 backdrop-blur-sm">
+    <div className="relative min-w-[240px] bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 border border-zinc-200">
       
-      {/* Header */}
-      <div className={`flex items-center gap-3 px-4 py-3.5 !rounded-md ${accent} relative overflow-hidden`}>
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-white/10 opacity-20">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
-        </div>
-        
-        <div className="relative z-10 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm border border-white/30">
+      {/* Sleek Minimal Header */}
+      <div className={`flex items-center gap-2.5 px-3.5 py-2.5 rounded-t-xl ${accent}`}>
+        <div className="w-6 h-6 bg-white/10 rounded-md flex items-center justify-center border border-white/15">
           {nodeType === "iterator" ? (
             <div className="text-white animate-spin">{icon}</div>
           ) : (
@@ -176,52 +150,41 @@ const CustomNode = memo(function CustomNode({ data, type }) {
           )}
         </div>
         
-        <div className="relative z-10 flex-1 min-w-0">
-          <h3 className="text-white font-semibold text-sm leading-tight truncate">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-xs leading-tight truncate">
             {data.displayName || data.name}
           </h3>
-          <p className="text-white/80 text-xs capitalize mt-0.5 font-medium">
+          <p className="text-white/70 text-[10px] uppercase font-mono mt-0.5">
             {nodeType}
           </p>
         </div>
-        
-        {/* <div className="relative z-10 flex items-center gap-2">
-          <div className="w-2 h-2 bg-white/90 rounded-full animate-pulse shadow-sm"></div>
-          <span className="text-white/90 text-xs font-medium">Ready</span>
-        </div> */}
       </div>
 
-      {/* Question/Options Content */}
+      {/* Question / Options Content */}
       {shouldShowOptionsUI && (
-        <div className="px-4 py-4 border-b border-gray-100">
+        <div className="p-3.5 border-b border-zinc-100">
           {questionData.questionText && !isDynamic(questionData.questionText) && (
-            <p className="text-sm text-gray-700 font-medium leading-relaxed mb-4 break-words">
-              {questionData.questionText.length > 40 
-                ? `${questionData.questionText.substring(0, 40)}...` 
+            <p className="text-xs text-zinc-700 font-medium leading-relaxed mb-3 break-words">
+              {questionData.questionText.length > 45 
+                ? `${questionData.questionText.substring(0, 45)}...` 
                 : questionData.questionText}
             </p>
           )}
 
-          {/* Options List */}
           {displayOptions && typeof displayOptions === 'object' && !isDynamic(displayOptions) && Object.keys(displayOptions).length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs text-gray-500 font-medium mb-3">
+            <div className="space-y-1.5">
+              <p className="text-[11px] text-zinc-500 font-medium">
                 {Object.keys(displayOptions).length} option{Object.keys(displayOptions).length !== 1 ? 's' : ''}:
               </p>
               
-              {Object.entries(displayOptions).map(([key, value], index) => {
-                const colorIndex = index % optionColors.length;
-                const color = optionColors[colorIndex];
-                
-                return (
-                  <div key={key} className="flex justify-between gap-3 group bg-gray-100 p-2 px-4 rounded-lg">
-                    <div>Option {index + 1}</div>
-                    <span className="text-sm text-gray-800 font-medium truncate">
-                      {String(value)}
-                    </span>
-                  </div>
-                );
-              })}
+              {Object.entries(displayOptions).map(([key, value], index) => (
+                <div key={key} className="flex justify-between items-center gap-2 bg-zinc-50 border border-zinc-200/70 p-1.5 px-2.5 rounded-md text-xs">
+                  <span className="font-mono text-[10px] text-zinc-400">0{index + 1}</span>
+                  <span className="text-zinc-800 font-medium truncate flex-1 text-right">
+                    {String(value)}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </div>
@@ -229,36 +192,28 @@ const CustomNode = memo(function CustomNode({ data, type }) {
 
       {/* Condition Content */}
       {(nodeType === "conditions" || nodeType === "condition") && Array.isArray(conditionData.conditions) && conditionData.conditions.length > 0 && (
-        <div className="px-4 py-4 border-b border-gray-100">
-          <p className="text-sm text-gray-700 font-medium leading-relaxed mb-4">
+        <div className="p-3.5 border-b border-zinc-100">
+          <p className="text-xs text-zinc-700 font-medium mb-3">
             {conditionData.conditions.length} condition{conditionData.conditions.length !== 1 ? 's' : ''}
           </p>
 
-          {/* Conditions List with inline handles */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             {conditionData.conditions.map((condition, index) => (
-              <div key={index} className="flex items-center gap-3 group relative pr-6 border-1 border-gray-300 p-2 rounded-md">
-               {/* <span className="text-xs text-gray-500 font-medium flex-shrink-0">
-                  Condition {index + 1}:
-                </span> */}
-              <span className="text-sm text-gray-800 font-medium truncate flex gap-3 items-center">
-                  <span className="text-xs text-gray-500 font-medium bg-gray-100 border-1 border-gray-300 px-2 py-1 rounded">{condition.operator}</span>
-                  <span className="text-xs text-gray-500 font-medium">{condition.comparisonValue || '(no value)'}</span>
+              <div key={index} className="flex items-center gap-2 relative pr-6 bg-zinc-50 border border-zinc-200 p-1.5 rounded-md">
+                <span className="text-xs font-mono bg-zinc-200/70 text-zinc-700 px-1.5 py-0.5 rounded">
+                  {condition.operator}
+                </span>
+                <span className="text-xs text-zinc-800 font-medium truncate">
+                  {condition.comparisonValue || '(no value)'}
                 </span>
 
-                {/* Handle positioned right next to this specific condition */}
                 <Handle
                   key={index}
                   id={index.toString()}
                   type="source"
                   position={Position.Right}
-                  className="!w-3 !h-3 border-2 border-white shadow-md !absolute !right-0 !top-1/2 !transform !-translate-y-1/2"
-                  style={{
-                    background: 'gray',
-                    width: 10,
-                    height: 10,
-                    right: -6
-                  }}
+                  className="!w-2.5 !h-2.5 border-2 border-white bg-[#0d47a1] !absolute !right-0 !top-1/2 !-translate-y-1/2"
+                  style={{ right: -5 }}
                 />
               </div>
             ))}
@@ -266,39 +221,13 @@ const CustomNode = memo(function CustomNode({ data, type }) {
         </div>
       )}
 
-      {/* Regular Node Body */}
-      {/* {!shouldShowOptionsUI && (
-        <div className="px-4 py-3.5">
-          {data.description && (
-            <p className="text-xs text-gray-600 leading-relaxed mb-3">
-              {data.description}
-            </p>
-          )}
-          
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-sm"></div>
-              <span className="text-xs text-gray-600 font-medium">Active</span>
-            </div>
-          </div>
-        </div>
-      )} */}
-
-      {/* --- HANDLES --- */}
-
-      {/* Input Handle - exclude start node type */}
+      {/* Input Handle */}
       {nodeType !== "start" && (
         <Handle
           type="target"
           position={Position.Left}
-          className="w-15 h-15 border-2 border-white bg-gray-400 shadow-md hover:bg-gray-500 transition-colors"
-          style={{ 
-            background: "gray",
-            width: 10,
-            height: 10,
-            left: -6,
-            zIndex: 10
-          }}
+          className="w-2.5 h-2.5 border-2 border-white bg-[#0d47a1]"
+          style={{ left: -5, zIndex: 10 }}
         />
       )}
 
@@ -307,8 +236,8 @@ const CustomNode = memo(function CustomNode({ data, type }) {
         <Handle
           type="source"
           position={Position.Right}
-          className="w-15 h-15 border-2 border-white bg-gray-400 shadow-md hover:bg-gray-500 transition-colors"
-          style={{ right: -6,width: 10,height: 10,backgroundColor: 'gray',zIndex: 1000 }}
+          className="w-2.5 h-2.5 border-2 border-white bg-[#0d47a1]"
+          style={{ right: -5, zIndex: 10 }}
         />
       )}
 
@@ -319,15 +248,15 @@ const CustomNode = memo(function CustomNode({ data, type }) {
             id="true"
             type="source"
             position={Position.Right}
-            className="w-3 h-3 border-2 border-white bg-emerald-500 shadow-md hover:bg-emerald-600 transition-colors"
-            style={{ right: -6, top: '40%',width: 10,height: 10,backgroundColor: 'gray' }}
+            className="w-2.5 h-2.5 border-2 border-white bg-emerald-600"
+            style={{ right: -5, top: '40%' }}
           />
           <Handle
             id="false"
             type="source"
             position={Position.Right}
-            className="w-3 h-3 border-2 border-white bg-red-500 shadow-md hover:bg-red-600 transition-colors"
-            style={{ right: -6, top: '60%',width: 10,height: 10,backgroundColor: 'gray' }}
+            className="w-2.5 h-2.5 border-2 border-white bg-red-600"
+            style={{ right: -5, top: '65%' }}
           />
         </>
       )}
@@ -335,23 +264,21 @@ const CustomNode = memo(function CustomNode({ data, type }) {
       {/* Iterator Node Handles */}
       {nodeType === "iterator" && (
         <>
-         <Tooltip title="Complete">
-
-         <Handle
-            id="loop"
-            type="source"
-            position={Position.Right}
-            className="w-3 h-3 border-2 border-white bg-blue-500 shadow-md hover:bg-blue-600 transition-colors"
-            style={{ right: -6, top: '40%',width: 10,height: 10,backgroundColor: 'gray' }}
-          />
-
-         </Tooltip>
+          <Tooltip title="Loop">
+            <Handle
+              id="loop"
+              type="source"
+              position={Position.Right}
+              className="w-2.5 h-2.5 border-2 border-white bg-[#0d47a1]"
+              style={{ right: -5, top: '40%' }}
+            />
+          </Tooltip>
           <Handle
             id="complete"
             type="source"
             position={Position.Right}
-            className="w-3 h-3 border-2 border-white bg-gray-500 shadow-md hover:bg-gray-600 transition-colors"
-            style={{ right: -6, top: '70%',width: 10,height: 10,backgroundColor: 'gray' }}
+            className="w-2.5 h-2.5 border-2 border-white bg-zinc-600"
+            style={{ right: -5, top: '70%' }}
             focusable={true}
           />
         </>

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Box, Typography, CircularProgress, IconButton, Tooltip, TextField, Chip } from "@mui/material";
-import { CloudUpload, Search, Trash2, FileText, AlertCircle, Database, Upload, FolderOpen } from "lucide-react";
+import { Box, Typography, CircularProgress, IconButton, Tooltip, Chip } from "@mui/material";
+import { CloudUpload, Search, Trash2, FileText, AlertCircle, Database, FolderOpen } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import CustomButton from "@/components/Common/CustomButton";
 import InputBox from "@/components/Common/InputBox";
@@ -25,24 +25,22 @@ const FILE_TYPE_COLORS = {
     pdf: { bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-600' },
     docx: { bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-600' },
     doc: { bg: 'bg-blue-50', border: 'border-blue-100', text: 'text-blue-600' },
-    txt: { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-600' },
+    txt: { bg: 'bg-zinc-100', border: 'border-zinc-200', text: 'text-zinc-700' },
     md: { bg: 'bg-purple-50', border: 'border-purple-100', text: 'text-purple-600' },
     json: { bg: 'bg-amber-50', border: 'border-amber-100', text: 'text-amber-600' },
-    csv: { bg: 'bg-green-50', border: 'border-green-100', text: 'text-green-600' },
+    csv: { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-600' },
 };
 
-const getFileTypeStyle = (ext) => FILE_TYPE_COLORS[ext] || { bg: 'bg-slate-50', border: 'border-slate-200', text: 'text-slate-600' };
+const getFileTypeStyle = (ext) => FILE_TYPE_COLORS[ext] || { bg: 'bg-zinc-100', border: 'border-zinc-200', text: 'text-zinc-700' };
 
 const KnowledgePage = () => {
     const dispatch = useDispatch();
     const [searchKnowledge, setSearchKnowledge] = useState("");
     const [isDragging, setIsDragging] = useState(false);
 
-    // File State
     const [selectedFiles, setSelectedFiles] = useState([]);
     const fileInputRef = useRef(null);
 
-    // Selectors
     const sources = useSelector(selectKnowledgeSources);
     const loading = useSelector(selectKnowledgeLoading);
     const error = useSelector(selectKnowledgeError);
@@ -135,59 +133,42 @@ const KnowledgePage = () => {
         );
     }, [sources, searchKnowledge]);
 
-    // Validation Check: ensure all files have a mapped Knowledge Base Name
     const isFormValid = selectedFiles.every(file => file.knowledgeBaseName.trim() !== "");
 
     return (
-        <Box className="px-4 sm:px-6 lg:px-10 py-8 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 min-h-screen">
-            {/* Page Header */}
-            <Box className="mb-8 flex items-start gap-4">
-                <Box className="p-3 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg shadow-blue-200/50">
-                    <Database size={24} className="text-white" />
-                </Box>
-                <Box>
-                    <Typography variant="h5" className="!font-bold !text-gray-900 !tracking-tight">
-                        Knowledge Base
-                    </Typography>
-                    <Typography variant="body2" className="!text-slate-500 !mt-0.5">
-                        Upload and manage documents to power your AI agents with contextual knowledge.
-                    </Typography>
-                </Box>
-            </Box>
+        <Box className="min-h-screen bg-[#fafafa] px-6 py-8">
+            {/* Minimal Header */}
+            <div className="flex items-center justify-between mb-8 pb-4 border-b border-zinc-200/80">
+                <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">
+                    Knowledge sources
+                </h1>
+                <span className="text-xs text-zinc-500">
+                    PDF, DOCX, TXT, MD, CSV — up to 25 MB per file
+                </span>
+            </div>
 
-            {/* Upload Section */}
-            <Box className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <Box className="px-6 py-4 border-b border-gray-100">
-                    <Box className="flex items-center gap-2">
-                        <Upload size={18} className="text-gray-500" />
-                        <Typography variant="subtitle1" className="!font-semibold !text-gray-800">
-                            Upload Sources
-                        </Typography>
-                    </Box>
-                </Box>
-
+            {/* Minimal Upload Section */}
+            <Box className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden mb-8">
                 <Box className="p-6">
                     <DashedBox
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
-                        className={`transition-all duration-300 ease-in-out !bg-gradient-to-b !rounded-xl ${isDragging
-                                ? '!from-blue-50 !to-indigo-50 !border-blue-400 !shadow-lg !shadow-blue-100/50'
-                                : '!from-slate-50/50 !to-white !border-gray-200 hover:!border-blue-300 hover:!shadow-sm'
-                            }`}
+                        className={`transition-all duration-150 ease-in-out !rounded-xl ${
+                            isDragging
+                                ? '!bg-zinc-100 !border-zinc-500'
+                                : '!bg-zinc-50/50 !border-zinc-200 hover:!border-zinc-400'
+                        }`}
                     >
-                        <Box className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                            <Box className={`p-5 rounded-2xl mb-5 transition-all duration-300 ${isDragging
-                                    ? 'bg-blue-100 scale-110'
-                                    : 'bg-gradient-to-br from-blue-50 to-indigo-50'
-                                }`}>
-                                <CloudUpload size={32} className={`transition-colors duration-300 ${isDragging ? 'text-blue-600' : 'text-blue-500'}`} />
+                        <Box className="flex flex-col items-center justify-center py-10 px-6 text-center">
+                            <Box className="p-3 rounded-xl bg-zinc-100 mb-3">
+                                <CloudUpload size={22} className="text-zinc-700" />
                             </Box>
-                            <Typography variant="subtitle1" className="!font-semibold !text-gray-700 !mb-1">
-                                {isDragging ? 'Release to upload files' : 'Drag & drop files here'}
+                            <Typography className="!text-sm !font-semibold !text-zinc-900 !mb-1">
+                                {isDragging ? 'Release to upload' : 'Add your knowledge sources'}
                             </Typography>
-                            <Typography variant="body2" className="!text-slate-400 !mb-5">
-                                or click below to browse your files
+                            <Typography className="!text-xs !text-zinc-500 !mb-4">
+                                Drop files here or click to browse
                             </Typography>
                             <Box className="flex flex-col items-center gap-3">
                                 <input
@@ -199,117 +180,51 @@ const KnowledgePage = () => {
                                     onChange={handleFileInput}
                                     multiple
                                 />
-                                <CustomButton
-                                    variant="contained"
-                                    color="primary"
+                                <button
+                                    type="button"
                                     onClick={() => fileInputRef.current?.click()}
-                                    startIcon={<FolderOpen size={16} />}
-                                    className="!px-6 !py-2.5 !rounded-lg !shadow-md !shadow-blue-200/40 hover:!shadow-lg hover:!shadow-blue-200/50 !transition-all"
+                                    className="px-4 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-xs transition-colors"
                                 >
-                                    Browse Files
-                                </CustomButton>
-                                <Box className="flex flex-wrap items-center justify-center gap-1.5 mt-2">
-                                    {['PDF', 'DOCX', 'TXT', 'MD', 'JSON', 'CSV'].map((format) => (
-                                        <Chip
-                                            key={format}
-                                            label={format}
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{
-                                                fontSize: '11px',
-                                                height: '22px',
-                                                borderColor: '#e2e8f0',
-                                                color: '#64748b',
-                                                fontWeight: 500,
-                                            }}
-                                        />
-                                    ))}
-                                    <Typography variant="caption" className="!text-slate-400 !ml-1">
-                                        Max 15MB
-                                    </Typography>
-                                </Box>
+                                    Browse files
+                                </button>
                             </Box>
                         </Box>
                     </DashedBox>
                 </Box>
             </Box>
 
-            {/* Pending Files Configuration */}
+            {/* Pending Files Queue */}
             {selectedFiles.length > 0 && (
-                <Box className="bg-white mt-5 rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                    <Box className="flex justify-between items-center px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-slate-50 to-white">
-                        <Box className="flex items-center gap-3">
-                            <Box className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                                <FileText size={16} className="text-blue-600" />
-                            </Box>
-                            <Box>
-                                <Typography variant="subtitle1" className="!font-semibold !text-gray-800">
-                                    Configure Uploads
-                                </Typography>
-                                <Typography variant="caption" className="!text-slate-400">
-                                    Set a knowledge base name for each file
-                                </Typography>
-                            </Box>
-                        </Box>
-                        <Chip
-                            label={`${selectedFiles.length} ${selectedFiles.length === 1 ? 'file' : 'files'} ready`}
-                            size="small"
-                            sx={{
-                                bgcolor: '#eff6ff',
-                                color: '#1d4ed8',
-                                fontWeight: 600,
-                                fontSize: '12px',
-                            }}
-                        />
+                <Box className="bg-white mb-8 rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+                    <Box className="flex justify-between items-center px-5 py-3 border-b border-zinc-100 bg-zinc-50/60">
+                        <span className="text-xs font-semibold text-zinc-900">
+                            Configure files ({selectedFiles.length})
+                        </span>
                     </Box>
 
-                    <Box className="max-h-[420px] overflow-y-auto divide-y divide-gray-50">
+                    <Box className="max-h-[320px] overflow-y-auto divide-y divide-zinc-100">
                         {selectedFiles.map((item, index) => {
                             const typeStyle = getFileTypeStyle(item.extension);
                             return (
                                 <Box
                                     key={index}
-                                    className="flex flex-col lg:flex-row items-start lg:items-center px-6 py-4 hover:bg-slate-25 transition-colors gap-4 group"
+                                    className="flex flex-col lg:flex-row items-start lg:items-center px-5 py-3 gap-4"
                                 >
-                                    {/* File Info */}
-                                    <Box className="flex items-center gap-3 w-full lg:w-[280px] shrink-0">
-                                        <Box className={`p-2.5 rounded-lg ${typeStyle.bg} border ${typeStyle.border}`}>
-                                            <FileText size={20} className={typeStyle.text} />
+                                    <Box className="flex items-center gap-2.5 w-full lg:w-[260px] shrink-0">
+                                        <Box className={`p-2 rounded-lg ${typeStyle.bg}`}>
+                                            <FileText size={16} className={typeStyle.text} />
                                         </Box>
                                         <Box className="overflow-hidden flex-1">
-                                            <Typography variant="body2" className="!font-semibold !text-gray-800 truncate !text-[13px]" title={item.file.name}>
+                                            <Typography className="!font-medium !text-zinc-900 truncate !text-xs" title={item.file.name}>
                                                 {item.file.name}
                                             </Typography>
-                                            <Box className="flex items-center gap-2 mt-0.5">
-                                                <Typography variant="caption" className="!text-slate-400 !text-[11px]">
-                                                    {item.file.size ? bytesToSize(item.file.size) : '--'}
-                                                </Typography>
-                                                <Box className="w-1 h-1 rounded-full bg-slate-300" />
-                                                <Chip
-                                                    label={item.extension.toUpperCase()}
-                                                    size="small"
-                                                    sx={{
-                                                        height: '18px',
-                                                        fontSize: '10px',
-                                                        fontWeight: 600,
-                                                        bgcolor: typeStyle.bg.replace('bg-', '').includes('red') ? '#fef2f2' :
-                                                            typeStyle.bg.replace('bg-', '').includes('blue') ? '#eff6ff' :
-                                                                typeStyle.bg.replace('bg-', '').includes('purple') ? '#faf5ff' :
-                                                                    typeStyle.bg.replace('bg-', '').includes('amber') ? '#fffbeb' :
-                                                                        typeStyle.bg.replace('bg-', '').includes('green') ? '#f0fdf4' : '#f8fafc',
-                                                        color: typeStyle.text.replace('text-', '').includes('red') ? '#dc2626' :
-                                                            typeStyle.text.replace('text-', '').includes('blue') ? '#2563eb' :
-                                                                typeStyle.text.replace('text-', '').includes('purple') ? '#7c3aed' :
-                                                                    typeStyle.text.replace('text-', '').includes('amber') ? '#d97706' :
-                                                                        typeStyle.text.replace('text-', '').includes('green') ? '#16a34a' : '#475569',
-                                                    }}
-                                                />
-                                            </Box>
+                                            <Typography className="!text-zinc-400 !text-[10px]">
+                                                {item.file.size ? bytesToSize(item.file.size) : '--'}
+                                            </Typography>
                                         </Box>
                                     </Box>
 
-                                    {/* Input Fields */}
-                                    <Box className="flex flex-col sm:flex-row gap-3 w-full lg:flex-grow">
+                                    <Box className="flex flex-col sm:flex-row gap-2.5 w-full lg:flex-grow">
                                         <InputBox
                                             label="Knowledge Base Name *"
                                             value={item.knowledgeBaseName}
@@ -321,23 +236,22 @@ const KnowledgePage = () => {
 
                                         {ALLOWED_SETTINGS_EXTENSIONS_FOR_CHUNKING.includes(item.extension) && (
                                             <InputBox
-                                                label="Chunk Word (Optional)"
+                                                label="Chunk Token (Optional)"
                                                 value={item.chunkWord}
                                                 onChange={(val) => handleFieldChange(index, 'chunkWord', val)}
-                                                className="bg-white sm:max-w-[180px]"
+                                                className="bg-white sm:max-w-[160px]"
                                                 icon={null}
                                             />
                                         )}
                                     </Box>
 
-                                    {/* Delete Action */}
                                     <Tooltip title="Remove file" arrow>
                                         <IconButton
                                             onClick={() => handleRemoveFile(index)}
                                             size="small"
-                                            className="!text-gray-300 hover:!text-red-500 hover:!bg-red-50 !opacity-0 group-hover:!opacity-100 !transition-all shrink-0"
+                                            className="!text-zinc-400 hover:!text-red-600"
                                         >
-                                            <Trash2 size={18} />
+                                            <Trash2 size={15} />
                                         </IconButton>
                                     </Tooltip>
                                 </Box>
@@ -345,90 +259,69 @@ const KnowledgePage = () => {
                         })}
                     </Box>
 
-                    <Box className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-50 to-white border-t border-gray-100">
+                    <Box className="flex items-center justify-between px-5 py-3 bg-zinc-50/60 border-t border-zinc-100">
                         <Box>
                             {!isFormValid && (
-                                <Box className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg">
-                                    <AlertCircle size={14} />
-                                    <Typography variant="caption" className="!font-medium !text-[12px]">
-                                        All files need a Knowledge Base Name
-                                    </Typography>
-                                </Box>
+                                <span className="text-xs text-amber-600">
+                                    All files need a Knowledge Base Name
+                                </span>
                             )}
                         </Box>
-                        <Box className="flex gap-2.5">
-                            <CustomButton
-                                variant="outlined"
+                        <Box className="flex gap-2">
+                            <button
+                                type="button"
                                 onClick={() => setSelectedFiles([])}
                                 disabled={uploadStatus === 'loading'}
-                                className="!bg-white !text-gray-500 !border-gray-200 hover:!bg-gray-50 !rounded-lg !text-[13px]"
+                                className="px-3.5 py-1.5 rounded-lg border border-zinc-200 text-zinc-600 hover:bg-zinc-50 text-xs font-medium"
                             >
-                                Clear All
-                            </CustomButton>
-                            <CustomButton
-                                variant="contained"
-                                color="primary"
-                                startIcon={uploadStatus === 'loading' ? <CircularProgress size={14} color="inherit" /> : <CloudUpload size={16} />}
+                                Clear
+                            </button>
+                            <button
+                                type="button"
                                 onClick={handleUpload}
                                 disabled={uploadStatus === 'loading' || !isFormValid}
-                                className="!px-5 !rounded-lg !shadow-md !shadow-blue-200/30"
+                                className="px-4 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium"
                             >
-                                {uploadStatus === 'loading' ? 'Uploading...' : 'Upload All'}
-                            </CustomButton>
+                                {uploadStatus === 'loading' ? 'Uploading...' : 'Upload'}
+                            </button>
                         </Box>
                     </Box>
                 </Box>
             )}
 
             {/* Existing Sources Section */}
-            <Box className="mt-10">
-                <Box className="flex items-center justify-between mb-5">
-                    <Box className="flex items-center gap-2">
-                        <Typography variant="subtitle1" className="!font-bold !text-gray-800">
-                            Existing Sources
-                        </Typography>
-                        {sources.length > 0 && (
-                            <Chip
-                                label={sources.length}
-                                size="small"
-                                sx={{
-                                    height: '20px',
-                                    fontSize: '11px',
-                                    fontWeight: 600,
-                                    bgcolor: '#f1f5f9',
-                                    color: '#475569',
-                                }}
-                            />
-                        )}
+            <Box className="bg-white rounded-xl border border-zinc-200 shadow-sm p-5">
+                <Box className="flex items-center justify-between gap-4 mb-4">
+                    <span className="text-sm font-semibold text-zinc-900">
+                        Existing sources ({sources.length})
+                    </span>
+
+                    <Box className="w-64">
+                        <InputBox
+                            placeholder="Search sources..."
+                            value={searchKnowledge}
+                            isShowLabel={false}
+                            height="36px"
+                            onChange={setSearchKnowledge}
+                            icon={<Search className="text-zinc-400" size={14} />}
+                        />
                     </Box>
                 </Box>
 
                 {loading && sources.length === 0 ? (
-                    <Box className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-100">
-                        <CircularProgress size={32} sx={{ color: 'var(--primary-color)' }} />
-                        <Typography variant="body2" className="!text-slate-400 !mt-3">Loading sources...</Typography>
+                    <Box className="flex flex-col items-center justify-center py-12">
+                        <CircularProgress size={24} sx={{ color: '#18181b' }} />
+                        <Typography className="!text-xs !text-zinc-500 !mt-2">Loading…</Typography>
                     </Box>
                 ) : error ? (
-                    <Box className="flex items-center gap-3 p-4 bg-red-50 border border-red-100 text-red-700 rounded-xl mt-2">
-                        <AlertCircle size={18} className="text-red-500 shrink-0" />
-                        <Typography variant="body2" className="!font-medium">Error loading sources: {error}</Typography>
+                    <Box className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+                        <AlertCircle size={16} className="text-red-500 shrink-0" />
+                        <Typography className="!text-xs !font-medium">Error: {error}</Typography>
                     </Box>
                 ) : (
                     <>
-                        <Box className="mb-4">
-                            <InputBox
-                                placeholder="Search sources..."
-                                value={searchKnowledge}
-                                isShowLabel={false}
-                                height="42px"
-                                onChange={setSearchKnowledge}
-                                className="w-full md:w-80 bg-white"
-                                icon={<Search className='text-gray-400' size={18} />}
-                            />
-                        </Box>
-
                         {filteredSources.length > 0 ? (
-                            <Box className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                            <Box className="rounded-lg border border-zinc-200 overflow-hidden">
                                 <KnowledgeListingTableView
                                     filteredFlows={filteredSources}
                                     handleOpenStudio={(row) => console.log("Open", row)}
@@ -436,13 +329,10 @@ const KnowledgePage = () => {
                                 />
                             </Box>
                         ) : (
-                            <Box className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border border-gray-100">
-                                <Box className="p-4 rounded-2xl bg-slate-50 mb-4">
-                                    <FileText size={32} className="text-slate-300" />
-                                </Box>
-                                <Typography variant="subtitle2" className="!text-gray-500 !font-semibold">No sources found</Typography>
-                                <Typography variant="caption" className="!text-slate-400 !mt-1">
-                                    {searchKnowledge ? 'Try a different search term' : 'Upload files above to get started'}
+                            <Box className="flex flex-col items-center justify-center py-12 text-center">
+                                <Typography className="!text-sm !font-semibold !text-zinc-900">No sources found</Typography>
+                                <Typography className="!text-xs !text-zinc-500 !mt-1">
+                                    {searchKnowledge ? 'No matches' : 'Upload files above to start'}
                                 </Typography>
                             </Box>
                         )}

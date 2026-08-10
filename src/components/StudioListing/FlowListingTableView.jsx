@@ -8,73 +8,94 @@ import {
   TableRow,
   Box,
   Paper,
-  Typography,
-  Button
+  Tooltip
 } from '@mui/material';
-import { Network, ArrowUpRight, Trash2 } from 'lucide-react';
+import { Workflow, ArrowUpRight, Play, Trash2 } from 'lucide-react';
 import { timeAgo } from '@/utils/commonFunction';
 
-const FlowListingTableView = ({ filteredFlows, handleRunFlow, handleOpenStudio , handleDeleteFlow}) => {
+const FlowListingTableView = ({ filteredFlows, handleRunFlow, handleOpenStudio, handleDeleteFlow }) => {
   return (
-    <Box className="bg-white rounded-xl shadow-sm overflow-hidden border border-slate-100">
+    <Box className="bg-white rounded-xl shadow-sm overflow-hidden border border-zinc-200">
       <TableContainer component={Paper} className="shadow-none">
         <Table className="min-w-full">
-          <TableHead className="bg-slate-50">
+          <TableHead className="bg-zinc-50 border-b border-zinc-200">
             <TableRow>
-              <TableCell className="px-6 py-3 text-left text-xs font-semibold text-slate-500  tracking-wider">
+              <TableCell className="px-5 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">
                 Name
               </TableCell>
-              <TableCell className="px-6 py-3 text-left text-xs font-semibold text-slate-500  tracking-wider">
+              <TableCell className="px-5 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">
                 Description
               </TableCell>
-              <TableCell className="px-6 py-3 text-left text-xs font-semibold text-slate-500  tracking-wider">
-                Last Updated
+              <TableCell className="px-5 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                Status
               </TableCell>
-              <TableCell className="!px-25 py-3 !text-right text-xs font-semibold text-slate-500  tracking-wider">
+              <TableCell className="px-5 py-3 text-left text-xs font-semibold text-zinc-500 uppercase tracking-wider">
+                Updated
+              </TableCell>
+              <TableCell className="px-5 py-3 text-right text-xs font-semibold text-zinc-500 uppercase tracking-wider">
                 Actions
               </TableCell>
             </TableRow>
           </TableHead>
-          <TableBody className="bg-white divide-y divide-slate-200">
-
+          <TableBody className="bg-white divide-y divide-zinc-100">
             {filteredFlows.map((flow) => (
-              <TableRow key={flow.id || flow.agent_id} className="hover:bg-slate-50">
-                <TableCell className="px-6 py-4 whitespace-nowrap">
-                  <Box className="flex items-center">
-                    <Box className="h-8 w-8 rounded-full bg-[var(--primary-color)]/10 flex items-center justify-center mr-3">
-                      <Network size={15}className="!text-[var(--primary-color)]"/>
+              <TableRow key={flow.id || flow.agent_id} className="hover:bg-zinc-50/70 transition-colors">
+                <TableCell className="px-5 py-3.5 whitespace-nowrap">
+                  <Box className="flex items-center gap-2.5">
+                    <Box className="h-7 w-7 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                      <Workflow size={15} className="text-zinc-700" />
                     </Box>
-                    <Typography className="!text-sm !font-semibold">
-                      {flow.name || flow.agent_name || "Unnamed Flow"}
-                    </Typography>
+                    <span className="text-xs font-semibold text-zinc-900">
+                      {flow.name || flow.agent_name || "Unnamed workflow"}
+                    </span>
                   </Box>
-                </TableCell>
-                <TableCell className="px-6 py-4">
-                  <Box className="!text-sm !text-slate-500 line-clamp-1">
-                    {flow?.description || flow?.agent_description || "No description available"}
-                  </Box>
-                </TableCell>
-                <TableCell className="px-6 py-4 whitespace-nowrap">
-                  <Box className="!text-sm !text-slate-500">{timeAgo(flow?.updatedAt)}</Box>
                 </TableCell>
 
-                <TableCell className="!px-6 py-4 !justify-end whitespace-nowrap">
-                  <Box className="flex items-center justify-center">
-                    <Button
+                <TableCell className="px-5 py-3.5 max-w-xs">
+                  <Box className="text-xs text-zinc-500 line-clamp-1">
+                    {flow?.description || flow?.agent_description || "AI agent workflow"}
+                  </Box>
+                </TableCell>
+
+                <TableCell className="px-5 py-3.5 whitespace-nowrap">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 text-[11px] font-medium">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    {flow.status || "Live"}
+                  </span>
+                </TableCell>
+
+                <TableCell className="px-5 py-3.5 whitespace-nowrap">
+                  <Box className="text-xs text-zinc-400">
+                    {timeAgo(flow?.updatedAt)}
+                  </Box>
+                </TableCell>
+
+                <TableCell className="px-5 py-3.5 whitespace-nowrap text-right">
+                  <Box className="flex items-center justify-end gap-1.5">
+                    <button
                       onClick={() => handleOpenStudio(flow.id)}
-                      color="secondary"
+                      className="px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium transition-colors"
                     >
-                      <ArrowUpRight size={18} />
-                    </Button>
-                    <Button
+                      Open
+                    </button>
+
+                    <button
+                      onClick={() => handleRunFlow(flow)}
+                      className="p-1.5 rounded hover:bg-zinc-100 text-zinc-600 transition-colors"
+                      title="Run"
+                    >
+                      <Play size={14} />
+                    </button>
+
+                    <button
                       onClick={() => handleDeleteFlow(flow.id)}
-                      color="error"
+                      className="p-1.5 rounded text-zinc-400 hover:text-red-600 transition-colors"
+                      title="Delete"
                     >
-                      <Trash2 size={18} />
-                    </Button>
+                      <Trash2 size={14} />
+                    </button>
                   </Box>
                 </TableCell>
-
               </TableRow>
             ))}
           </TableBody>

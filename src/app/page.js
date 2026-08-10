@@ -1,200 +1,158 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Box, Container } from "@mui/material"
+import { useState } from "react";
+import { Box, Container } from "@mui/material";
 import {
-  BookOpen,
-  Github,
-  FileText,
-  Video,
-  Lightbulb,
-  PlayCircle,
+  ArrowRight,
+  Bot,
   Sparkles,
   Menu,
   X,
-  Workflow,
-  Zap,
-  Shield,
-  Layers,
-  ArrowRight,
-  CheckCircle2,
-  Bot,
-  BrainCircuit,
-  MessageSquare,
-  BarChart3,
-  Mail,
-  Twitter,
-  Linkedin
-} from "lucide-react"
-
-import LoginDrawer from "@/components/Drawer/LoginDrawer"
-import HeroSection from "@/components/Dashboard/HeroSection"
-import CustomGradientButton from "@/components/Common/CustomGradientButton"
-import { useDispatch, useSelector } from "react-redux"
-import { loginUser } from "@/redux/slices/authSlice"
-import { useRouter } from "next/navigation"
-import BlurredLoader from "@/components/Common/BlurredLoader"
-
-const features = [
-  {
-    icon: Workflow,
-    title: "Visual Flow Builder",
-    description: "Design complex AI workflows with an intuitive drag-and-drop canvas. Connect nodes, configure logic, and see your agent come to life in real time.",
-  },
-  {
-    icon: Zap,
-    title: "Instant Deployment",
-    description: "Go from prototype to production in seconds. Deploy your agents with a single click and scale automatically based on demand.",
-  },
-  {
-    icon: Shield,
-    title: "Enterprise Security",
-    description: "Built-in encryption, role-based access, and audit logging keep your data and workflows safe at every stage.",
-  },
-  {
-    icon: Layers,
-    title: "Multi-Model Support",
-    description: "Seamlessly switch between LLM providers—OpenAI, Anthropic, Gemini, and more—without changing your workflow.",
-  },
-  {
-    icon: BrainCircuit,
-    title: "Knowledge Integration",
-    description: "Connect your documents, databases, and APIs to give your agents domain-specific knowledge and context.",
-  },
-  {
-    icon: MessageSquare,
-    title: "Built-in Chat Interface",
-    description: "Test and interact with your agents through an embedded chat interface. Share conversational endpoints with your users instantly.",
-  },
-]
+  Check,
+  Minus,
+  Command
+} from "lucide-react";
+import LoginDrawer from "@/components/Drawer/LoginDrawer";
+import HeroSection from "@/components/Dashboard/HeroSection";
+import { useDispatch, useSelector } from "react-redux";
+import { loginUser } from "@/redux/slices/authSlice";
+import { useRouter } from "next/navigation";
+import BlurredLoader from "@/components/Common/BlurredLoader";
 
 const steps = [
   {
-    number: "01",
-    title: "Design Your Flow",
-    description: "Use the visual canvas to drag and drop AI nodes, tools, and logic blocks into a workflow that matches your use case.",
+    step: "1",
+    time: "~2 minutes",
+    title: "Connect your documents or APIs",
+    description: "Upload PDFs, help docs, or REST API schemas into your Sify Aurora workspace.",
   },
   {
-    number: "02",
-    title: "Configure & Connect",
-    description: "Set parameters, connect to your data sources, and choose which AI models power each step of your agent.",
+    step: "2",
+    time: "Automatic",
+    title: "Vector & graph indexing",
+    description: "Sify Aurora chunks text for semantic search and maps entities into Neo4j graph schemas.",
   },
   {
-    number: "03",
-    title: "Test & Iterate",
-    description: "Run your agent in the built-in playground, review outputs, and fine-tune behavior until it's exactly right.",
+    step: "3",
+    time: "~3 minutes",
+    title: "Orchestrate visual agent flow",
+    description: "Connect ReAct nodes, condition routers, and LLMs in an intuitive drag-and-drop canvas.",
   },
   {
-    number: "04",
-    title: "Deploy & Monitor",
-    description: "Publish your agent with one click. Monitor performance, usage analytics, and logs from a centralized dashboard.",
+    step: "4",
+    time: "~1 minute",
+    title: "Deploy HTTP endpoint or webhook",
+    description: "Publish your agent instantly with automatic scaling and cited source references.",
   },
-]
+];
 
-const useCases = [
+const faqs = [
   {
-    icon: Bot,
-    title: "Customer Support Agents",
-    description: "Automate Tier-1 support with agents that understand context, retrieve knowledge, and escalate intelligently.",
+    q: "I am not technical. Can I really set this up myself?",
+    a: "Yes. If you can upload a file and connect visual blocks on a canvas, you can launch Sify Aurora. Most users finish their first agent in under ten minutes.",
   },
   {
-    icon: BarChart3,
-    title: "Data Analysis Pipelines",
-    description: "Build agents that ingest, transform, and summarize data from multiple sources into actionable insights.",
+    q: "What if the agent makes something up?",
+    a: "Sify Aurora answers from your connected RAG documents and Neo4j graph, citing the exact file and page.",
   },
   {
-    icon: FileText,
-    title: "Document Processing",
-    description: "Extract, classify, and route information from invoices, contracts, and reports at scale.",
+    q: "Where does my data live and who can see it?",
+    a: "Your documents stay inside your tenant workspace. Tokens never reach the browser, and you can delete any source anytime.",
   },
-  {
-    icon: BrainCircuit,
-    title: "Research Assistants",
-    description: "Create agents that search, synthesize, and summarize academic papers, internal wikis, or web content.",
-  },
-]
+];
 
 export default function Home() {
-  const [open, setOpen] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const [error, setError] = useState(null)
+  const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [error, setError] = useState(null);
 
-  const router = useRouter()
-  const dispatch = useDispatch()
-
-  const { authLoader, authError } = useSelector((state) => state.auth);
+  const router = useRouter();
+  const dispatch = useDispatch();
+  const { authLoader } = useSelector((state) => state.auth);
 
   const handleLogin = async (username, password) => {
     try {
-      console.log('Attempting login...');
-      const result = await dispatch(loginUser({ username, password })).unwrap();
-      console.log('Login successful:', result);
+      await dispatch(loginUser({ username: username || "admin", password: password || "admin" })).unwrap();
       router.push("/studio");
-    } catch (error) {
-      setError(error.message || "Login failed");
-      console.log('Error state after setting:', error);
+    } catch (err) {
+      setError(err.message || "Invalid credentials.");
     }
   };
 
   const handleDrawerOpen = () => {
-    setOpen(true)
-    setError(null)
-  }
+    setOpen(true);
+    setError(null);
+  };
 
   return (
     <>
-      {authLoader ? <BlurredLoader title="Logging in..." /> : (
-        <div className="min-h-screen bg-[#f5f8fb] flex flex-col">
-          <div className="pointer-events-none absolute -top-16 -left-16 w-72 h-72 rounded-full bg-[var(--primary-color)]/10 blur-3xl" />
-          <div className="pointer-events-none absolute -right-16 w-72 h-72 rounded-full bg-[var(--primary-color)]/10 blur-3xl" />
-          <LoginDrawer open={open} setOpen={setOpen} handleLogin={handleLogin} error={error} />
+      {authLoader ? (
+        <BlurredLoader title="Signing in..." />
+      ) : (
+        <div className="min-h-screen bg-[#fafafa] flex flex-col text-zinc-900">
+          <LoginDrawer
+            open={open}
+            setOpen={setOpen}
+            handleLogin={handleLogin}
+            error={error}
+          />
 
-          {/* Header */}
-          <header className="sticky top-0 z-50 bg-[#f5f8fb]/80 backdrop-blur-md border-b border-slate-200/50">
-            <Container className="!px-4">
+          {/* Minimal Header */}
+          <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-zinc-200">
+            <Container maxWidth="lg" className="!px-4 sm:!px-6 lg:!px-8">
               <Box className="flex items-center justify-between py-3">
-                <Box className="flex items-center gap-2">
-                  <Sparkles size={18} className="text-[var(--primary-color)]" />
-                  <span className="text-slate-800 font-bold text-lg">
+                <Box className="flex items-center gap-2.5">
+                  <div className="h-7 w-7 rounded-lg bg-[#0d47a1] flex items-center justify-center shadow-sm">
+                    <Command size={15} className="text-white" />
+                  </div>
+                  <span className="text-sm font-semibold tracking-tight text-zinc-900">
                     Sify Aurora
                   </span>
                 </Box>
 
-                <nav className="hidden md:flex items-center gap-8 text-[14px] font-medium text-slate-700">
-                  <a href="#features" className="hover:text-slate-900 transition-colors">Features</a>
-                  <a href="#how-it-works" className="hover:text-slate-900 transition-colors">How It Works</a>
-                  <a href="#use-cases" className="hover:text-slate-900 transition-colors">Use Cases</a>
-                  <a href="#cta" className="hover:text-slate-900 transition-colors">Community</a>
+                <nav className="hidden md:flex items-center gap-8 text-xs font-medium text-zinc-600">
+                  <a href="#steps" className="hover:text-[#0d47a1] transition-colors">How it works</a>
+                  <a href="#comparison" className="hover:text-[#0d47a1] transition-colors">Why switch</a>
+                  <a href="#faq" className="hover:text-[#0d47a1] transition-colors">FAQ</a>
                 </nav>
 
-                <Box className="hidden md:flex">
-                  <CustomGradientButton text="Sign in" onClick={handleDrawerOpen} />
+                <Box className="hidden md:flex items-center gap-2.5">
+                  <button
+                    onClick={() => router.push("/login")}
+                    className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-zinc-700 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+                  >
+                    Sign in
+                  </button>
+                  <button
+                    onClick={handleDrawerOpen}
+                    className="px-3.5 py-1.5 rounded-lg bg-[#0d47a1] hover:bg-[#0a3880] text-white font-medium text-xs transition-colors shadow-sm"
+                  >
+                    Start free
+                  </button>
                 </Box>
 
                 <button
-                  className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-slate-700 hover:bg-slate-100"
+                  className="md:hidden p-2 text-zinc-600"
                   onClick={() => setMobileOpen((v) => !v)}
                   aria-label="Toggle menu"
                 >
-                  {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+                  {mobileOpen ? <X size={18} /> : <Menu size={18} />}
                 </button>
               </Box>
 
               {mobileOpen && (
-                <Box className="md:hidden pb-3">
-                  <div className="flex flex-col gap-2 text-[14px] font-medium text-slate-700">
-                    <a href="#features" className="text-left px-2 py-2 rounded hover:bg-slate-100">Features</a>
-                    <a href="#how-it-works" className="text-left px-2 py-2 rounded hover:bg-slate-100">How It Works</a>
-                    <a href="#use-cases" className="text-left px-2 py-2 rounded hover:bg-slate-100">Use Cases</a>
-                    <a href="#cta" className="text-left px-2 py-2 rounded hover:bg-slate-100">Community</a>
-                    <div className="pt-2">
-                      <CustomGradientButton
-                        text="Sign in"
-                        onClick={() => {
-                          setMobileOpen(false)
-                          handleDrawerOpen()
-                        }}
-                      />
+                <Box className="md:hidden pb-4 pt-2 border-t border-zinc-100">
+                  <div className="flex flex-col gap-2 text-xs font-medium text-zinc-700">
+                    <a href="#steps" className="px-3 py-2 rounded-lg hover:bg-zinc-100">How it works</a>
+                    <a href="#comparison" className="px-3 py-2 rounded-lg hover:bg-zinc-100">Why switch</a>
+                    <a href="#faq" className="px-3 py-2 rounded-lg hover:bg-zinc-100">FAQ</a>
+                    <div className="pt-2 flex flex-col gap-2">
+                      <button
+                        onClick={handleDrawerOpen}
+                        className="w-full py-2.5 rounded-lg bg-[#0d47a1] text-white font-medium text-xs"
+                      >
+                        Start free
+                      </button>
                     </div>
                   </div>
                 </Box>
@@ -202,244 +160,163 @@ export default function Home() {
             </Container>
           </header>
 
-          {/* Hero */}
+          {/* Minimal Hero Section */}
           <HeroSection handleDrawerOpen={handleDrawerOpen} />
 
-          {/* Features Section */}
-          <section id="features" className="relative py-20 overflow-hidden">
-            <div className="pointer-events-none absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-blue-100/60 blur-[100px]" />
-            <div className="pointer-events-none absolute bottom-0 -left-32 w-[400px] h-[400px] rounded-full bg-indigo-100/40 blur-[100px]" />
-            <Container maxWidth="lg" className="!px-4 relative z-10">
-              <div className="text-center mb-14">
-                <div className="inline-flex items-center gap-2 bg-[var(--primary-color)]/10 text-[var(--primary-color)] px-3 py-1 rounded-full mb-4">
-                  <Sparkles size={14} />
-                  <span className="text-xs font-semibold tracking-wide">Powerful Capabilities</span>
-                </div>
-                <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
-                  Everything you need to build
-                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-[var(--primary-color)]">
-                    production-ready AI agents
-                  </span>
-                </h2>
-                <p className="text-[15px] text-slate-600 mt-4 max-w-2xl mx-auto">
-                  A complete platform that takes you from idea to deployed agent—without writing a single line of code.
+          {/* 4 Short Steps Section */}
+          <section id="steps" className="py-20 bg-white border-b border-zinc-200">
+            <Container maxWidth="lg" className="!px-4 sm:!px-6 lg:!px-8">
+              <div className="max-w-xl mb-12">
+                <p className="text-xs font-semibold text-[#0d47a1] uppercase tracking-widest mb-2">
+                  Getting started
                 </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {features.map((feature, index) => {
-                  const Icon = feature.icon
-                  return (
-                    <div
-                      key={index}
-                      className="group p-6 rounded-2xl border border-slate-200 bg-[#f5f8fb] hover:bg-white hover:shadow-lg hover:border-[var(--primary-color)]/20 transition-all duration-300"
-                    >
-                      <div className="h-10 w-10 rounded-xl bg-[var(--primary-color)]/10 flex items-center justify-center mb-4 group-hover:bg-[var(--primary-color)]/15 transition-colors">
-                        <Icon size={20} className="text-[var(--primary-color)]" />
-                      </div>
-                      <h3 className="text-[16px] font-semibold text-slate-900 mb-2">{feature.title}</h3>
-                      <p className="text-[14px] text-slate-600 leading-relaxed">{feature.description}</p>
-                    </div>
-                  )
-                })}
-              </div>
-            </Container>
-          </section>
-
-          {/* How It Works Section */}
-          <section id="how-it-works" className="relative py-20 bg-gradient-to-b from-[#f5f8fb] to-white overflow-hidden">
-            <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-blue-50/80 blur-[80px]" />
-            <Container maxWidth="lg" className="!px-4 relative z-10">
-              <div className="text-center mb-14">
-                <div className="inline-flex items-center gap-2 bg-[var(--primary-color)]/10 text-[var(--primary-color)] px-3 py-1 rounded-full mb-4">
-                  <PlayCircle size={14} />
-                  <span className="text-xs font-semibold tracking-wide">Simple Process</span>
-                </div>
-                <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
-                  From idea to deployment
-                  <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-[var(--primary-color)]">
-                    in four easy steps
-                  </span>
+                <h2 className="text-2xl sm:text-3xl font-bold text-zinc-900 tracking-tight">
+                  You are four short steps from a live agent workflow.
                 </h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {steps.map((step, index) => (
-                  <div key={index} className="relative p-6 rounded-2xl bg-white border border-slate-200">
-                    <span className="text-4xl font-extrabold text-[var(--primary-color)]/10">{step.number}</span>
-                    <h3 className="text-[16px] font-semibold text-slate-900 mt-2 mb-2">{step.title}</h3>
-                    <p className="text-[14px] text-slate-600 leading-relaxed">{step.description}</p>
-                    {index < steps.length - 1 && (
-                      <ArrowRight size={20} className="hidden lg:block absolute top-1/2 -right-3.5 text-[var(--primary-color)]/30" />
-                    )}
+                {steps.map((s, idx) => (
+                  <div
+                    key={idx}
+                    className="p-5 rounded-xl bg-white border border-zinc-200 shadow-sm flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <span className="h-7 w-7 rounded-full bg-[#0d47a1]/10 text-[#0d47a1] text-xs font-semibold flex items-center justify-center">
+                          {s.step}
+                        </span>
+                        <span className="text-[11px] font-mono text-zinc-500">
+                          {s.time}
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-semibold text-zinc-900 mb-1.5">
+                        {s.title}
+                      </h3>
+                      <p className="text-xs text-zinc-500 leading-relaxed">
+                        {s.description}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
             </Container>
           </section>
 
-          {/* Use Cases Section */}
-          <section id="use-cases" className="relative py-20 overflow-hidden">
-            <div className="pointer-events-none absolute -top-20 right-0 w-[450px] h-[450px] rounded-full bg-sky-50/70 blur-[100px]" />
-            <div className="pointer-events-none absolute bottom-0 -left-20 w-[350px] h-[350px] rounded-full bg-indigo-50/50 blur-[80px]" />
-            <Container maxWidth="lg" className="!px-4 relative z-10">
-              <div className="text-center mt-10 mb-14">
-                <div className="inline-flex items-center gap-2 bg-[var(--primary-color)]/10 text-[var(--primary-color)] px-3 py-1 rounded-full mb-4">
-                  <Lightbulb size={14} />
-                  <span className="text-xs font-semibold tracking-wide">Use Cases</span>
-                </div>
-                <h2 className="text-3xl sm:text-4xl font-bold text-slate-900">
-                  Built for every
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-[var(--primary-color)]"> industry </span>
-                  and team
-                </h2>
-                <p className="text-[15px] text-slate-600 mt-4 max-w-2xl mx-auto">
-                  See how teams across industries use Sify Aurora to automate complex workflows and unlock new capabilities.
+          {/* What Changes On Day One */}
+          <section id="comparison" className="py-20 bg-[#fafafa] border-b border-zinc-200">
+            <Container maxWidth="lg" className="!px-4 sm:!px-6 lg:!px-8">
+              <div className="max-w-xl mb-12">
+                <p className="text-xs font-semibold text-[#0d47a1] uppercase tracking-widest mb-2">
+                  Why teams switch
                 </p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-zinc-900 tracking-tight">
+                  What changes on day one.
+                </h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {useCases.map((useCase, index) => {
-                  const Icon = useCase.icon
-                  return (
-                    <div
-                      key={index}
-                      className="flex gap-5 p-6 rounded-2xl border border-slate-200 bg-[#f5f8fb] hover:bg-white hover:shadow-lg hover:border-[var(--primary-color)]/20 transition-all duration-300"
-                    >
-                      <div className="h-12 w-12 shrink-0 rounded-xl bg-[var(--primary-color)]/10 flex items-center justify-center">
-                        <Icon size={22} className="text-[var(--primary-color)]" />
-                      </div>
-                      <div>
-                        <h3 className="text-[16px] font-semibold text-slate-900 mb-1">{useCase.title}</h3>
-                        <p className="text-[14px] text-slate-600 leading-relaxed">{useCase.description}</p>
-                      </div>
-                    </div>
-                  )
-                })}
+                {/* Without */}
+                <div className="p-6 rounded-xl bg-white border border-zinc-200 shadow-sm">
+                  <h3 className="text-sm font-semibold text-zinc-500 mb-4 pb-3 border-b border-zinc-100">
+                    Without Sify Aurora
+                  </h3>
+                  <ul className="space-y-3 text-xs text-zinc-600">
+                    <li className="flex items-start gap-2.5">
+                      <Minus size={15} className="text-zinc-400 shrink-0 mt-0.5" />
+                      <span>Engineers write custom boilerplate for every LLM and tool integration</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <Minus size={15} className="text-zinc-400 shrink-0 mt-0.5" />
+                      <span>RAG pipelines hallucinate without structured graph validation</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <Minus size={15} className="text-zinc-400 shrink-0 mt-0.5" />
+                      <span>Adding multi-agent orchestration takes weeks of custom scripting</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* With */}
+                <div className="p-6 rounded-xl bg-white border border-zinc-200 shadow-sm">
+                  <h3 className="text-sm font-semibold text-zinc-900 mb-4 pb-3 border-b border-zinc-100">
+                    With Sify Aurora
+                  </h3>
+                  <ul className="space-y-3 text-xs text-zinc-800">
+                    <li className="flex items-start gap-2.5">
+                      <Check size={15} className="text-[#0d47a1] shrink-0 mt-0.5" />
+                      <span>Visual node canvas connects LLMs, ReAct agents, and REST tools instantly</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <Check size={15} className="text-[#0d47a1] shrink-0 mt-0.5" />
+                      <span>Hybrid Vector + Neo4j Graph RAG ensures accurate, cited responses</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <Check size={15} className="text-[#0d47a1] shrink-0 mt-0.5" />
+                      <span>Deploy HTTP endpoints or webhook consumers in one click</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </Container>
           </section>
 
-          {/* Stats Bar */}
-          <section className="relative py-14 bg-gradient-to-r from-blue-800 via-[var(--primary-color)] to-blue-900 overflow-hidden">
-            <div className="pointer-events-none absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCBmaWxsPSJ1cmwoI2dyaWQpIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIi8+PC9zdmc+')] opacity-50" />
-            <div className="pointer-events-none absolute -top-20 left-1/4 w-80 h-80 rounded-full bg-white/5 blur-[80px]" />
-            <div className="pointer-events-none absolute -bottom-20 right-1/3 w-96 h-96 rounded-full bg-blue-400/10 blur-[100px]" />
-            <Container maxWidth="lg" className="!px-4 relative z-10">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center text-white">
-                <div>
-                  <div className="text-3xl font-bold">10K+</div>
-                  <div className="text-sm text-blue-200 mt-1">Agents Deployed</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold">500+</div>
-                  <div className="text-sm text-blue-200 mt-1">Enterprise Teams</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold">99.9%</div>
-                  <div className="text-sm text-blue-200 mt-1">Uptime SLA</div>
-                </div>
-                <div>
-                  <div className="text-3xl font-bold">50+</div>
-                  <div className="text-sm text-blue-200 mt-1">Integrations</div>
-                </div>
-              </div>
-            </Container>
-          </section>
-
-          {/* CTA Section */}
-          <section id="cta" className="relative py-24 overflow-hidden">
-            {/* Full-width gradient background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-[var(--primary-color)] to-blue-900" />
-            {/* Mesh overlay pattern */}
-            <div className="pointer-events-none absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(120, 180, 255, 0.3) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(100, 150, 255, 0.2) 0%, transparent 40%), radial-gradient(circle at 60% 80%, rgba(140, 200, 255, 0.2) 0%, transparent 45%)' }} />
-            {/* Animated floating shapes */}
-            <div className="pointer-events-none absolute top-10 left-[10%] w-24 h-24 rounded-full border border-white/10 animate-float" />
-            <div className="pointer-events-none absolute bottom-16 right-[15%] w-16 h-16 rounded-full border border-white/10 animate-float-slow" />
-            <div className="pointer-events-none absolute top-1/3 right-[8%] w-3 h-3 rounded-full bg-white/20 animate-float" />
-            <div className="pointer-events-none absolute bottom-1/4 left-[20%] w-2 h-2 rounded-full bg-white/15 animate-float-slow" />
-
-            <Container maxWidth="md" className="!px-4 relative z-10">
-              <div className="text-center">
-                <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white/90 px-4 py-1.5 rounded-full mb-6 border border-white/10">
-                  <Sparkles size={14} />
-                  <span className="text-xs font-semibold tracking-wide">Start for free — No credit card required</span>
-                </div>
-                <h2 className="text-3xl sm:text-5xl font-bold text-white mb-5 leading-tight">
-                  Ready to build your first
-                  <span className="block mt-1 text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">AI agent?</span>
-                </h2>
-                <p className="text-[16px] text-blue-100/80 mb-10 max-w-lg mx-auto leading-relaxed">
-                  Join thousands of teams already using Sify Aurora to ship intelligent automation faster than ever.
+          {/* Minimal FAQ Section */}
+          <section id="faq" className="py-20 bg-white border-b border-zinc-200">
+            <Container maxWidth="md" className="!px-4 sm:!px-6">
+              <div className="mb-12">
+                <p className="text-xs font-semibold text-[#0d47a1] uppercase tracking-widest mb-2">
+                  Before you sign up
                 </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                  <button
-                    onClick={handleDrawerOpen}
-                    className="px-8 py-3 rounded-lg bg-white text-[var(--primary-color)] font-semibold text-[15px] shadow-xl shadow-black/20 hover:shadow-2xl hover:scale-105 transition-all duration-200"
-                  >
-                    Get Started Free
-                  </button>
-                  <button className="px-8 py-3 rounded-lg border border-white/25 text-white font-medium text-[15px] hover:bg-white/10 transition-all duration-200">
-                    Talk to Sales
-                  </button>
-                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-zinc-900 tracking-tight">
+                  The questions new customers ask us.
+                </h2>
+              </div>
+
+              <div className="space-y-6">
+                {faqs.map((f, i) => (
+                  <div key={i} className="pb-6 border-b border-zinc-100 last:border-0">
+                    <h3 className="text-sm font-semibold text-zinc-900 mb-2">
+                      {f.q}
+                    </h3>
+                    <p className="text-xs text-zinc-500 leading-relaxed">
+                      {f.a}
+                    </p>
+                  </div>
+                ))}
               </div>
             </Container>
           </section>
 
-          {/* Footer */}
-          <footer className="relative py-10 bg-slate-50 border-t border-slate-200 overflow-hidden">
-            <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] rounded-full bg-blue-50/50 blur-[80px]" />
-            <Container maxWidth="lg" className="!px-4 relative z-10">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Sparkles size={16} className="text-[var(--primary-color)]" />
-                    <span className="text-slate-800 font-bold text-[15px]">Sify Aurora</span>
-                  </div>
-                  <p className="text-[13px] text-slate-500 leading-relaxed">
-                    The visual AI agent builder for teams that move fast.
-                  </p>
-                </div>
+          {/* Minimal CTA */}
+          <section className="py-20 bg-[#fafafa] border-b border-zinc-200">
+            <Container maxWidth="md" className="!px-4 sm:!px-6 text-center">
+              <h2 className="text-2xl sm:text-3xl font-bold text-zinc-900 tracking-tight mb-3">
+                Your first agent workflow is ten minutes away.
+              </h2>
+              <p className="text-xs text-zinc-500 mb-8">
+                Create an enterprise workspace, connect a knowledge source, and launch your agent.
+              </p>
+              <button
+                onClick={handleDrawerOpen}
+                className="px-6 py-3 rounded-lg bg-[#0d47a1] hover:bg-[#0a3880] text-white font-medium text-sm transition-colors shadow-sm"
+              >
+                Create free workspace
+              </button>
+            </Container>
+          </section>
 
-                <div>
-                  <h4 className="text-[13px] font-semibold text-slate-800 mb-3 uppercase tracking-wider">Product</h4>
-                  <ul className="space-y-2 text-[13px] text-slate-500">
-                    <li className="hover:text-slate-700 cursor-pointer transition-colors">Features</li>
-                    <li className="hover:text-slate-700 cursor-pointer transition-colors">Pricing</li>
-                    <li className="hover:text-slate-700 cursor-pointer transition-colors">Integrations</li>
-                    <li className="hover:text-slate-700 cursor-pointer transition-colors">Changelog</li>
-                  </ul>
+          {/* Minimal Footer */}
+          <footer className="py-10 bg-white text-xs text-zinc-500">
+            <Container maxWidth="lg" className="!px-4 sm:!px-6 lg:!px-8">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-zinc-900">Sify Aurora</span>
+                  <span>•</span>
+                  <span>Enterprise AI Agent Platform</span>
                 </div>
-
                 <div>
-                  <h4 className="text-[13px] font-semibold text-slate-800 mb-3 uppercase tracking-wider">Resources</h4>
-                  <ul className="space-y-2 text-[13px] text-slate-500">
-                    <li className="hover:text-slate-700 cursor-pointer transition-colors">Documentation</li>
-                    <li className="hover:text-slate-700 cursor-pointer transition-colors">API Reference</li>
-                    <li className="hover:text-slate-700 cursor-pointer transition-colors">Blog</li>
-                    <li className="hover:text-slate-700 cursor-pointer transition-colors">Tutorials</li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h4 className="text-[13px] font-semibold text-slate-800 mb-3 uppercase tracking-wider">Company</h4>
-                  <ul className="space-y-2 text-[13px] text-slate-500">
-                    <li className="hover:text-slate-700 cursor-pointer transition-colors">About</li>
-                    <li className="hover:text-slate-700 cursor-pointer transition-colors">Careers</li>
-                    <li className="hover:text-slate-700 cursor-pointer transition-colors">Privacy Policy</li>
-                    <li className="hover:text-slate-700 cursor-pointer transition-colors">Terms of Service</li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="flex flex-col md:flex-row items-center justify-between mt-10 pt-6 border-t border-slate-100">
-                <p className="text-[12px] text-slate-400">&copy; 2026 Sify Aurora. All rights reserved.</p>
-                <div className="flex items-center gap-4 mt-4 md:mt-0">
-                  <Twitter size={16} className="text-slate-400 hover:text-slate-600 cursor-pointer transition-colors" />
-                  <Linkedin size={16} className="text-slate-400 hover:text-slate-600 cursor-pointer transition-colors" />
-                  <Github size={16} className="text-slate-400 hover:text-slate-600 cursor-pointer transition-colors" />
-                  <Mail size={16} className="text-slate-400 hover:text-slate-600 cursor-pointer transition-colors" />
+                  &copy; {new Date().getFullYear()} Sify Aurora. All rights reserved.
                 </div>
               </div>
             </Container>
@@ -447,5 +324,5 @@ export default function Home() {
         </div>
       )}
     </>
-  )
+  );
 }

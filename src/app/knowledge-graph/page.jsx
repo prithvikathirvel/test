@@ -10,8 +10,6 @@ import {
 import { BASE, authHdr, normalizeProposal, normalizeSampleData } from '@/components/knowledge-graph/helpers';
 import { ConnectionManager, StepIndicator, HealthBadge, Step1Upload, Step2Schema, Step3Confirm, GraphListing } from '@/components/knowledge-graph';
 
-/* ─── Page Root ──────────────────────────────────────────────────── */
-
 export default function KnowledgeGraphPage() {
   const dispatch = useDispatch();
   const { step, uploadSession, sessionExpired } = useSelector((s) => s.knowledgeGraph);
@@ -64,24 +62,19 @@ export default function KnowledgeGraphPage() {
   };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-6 sm:py-8 bg-gradient-to-b from-slate-50 to-gray-50 min-h-screen">
-      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4  mx-auto">
-        <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200/50">
-            <Waypoints  size={20} className="text-white" />
-          </div>
-          <div>
-            <h1 className="font-bold text-gray-800 leading-tight text-xl sm:text-2xl">Knowledge Graph</h1>
-            <p className="text-sm text-gray-400">Upload structured data and model it as a Neo4j knowledge graph</p>
-          </div>
-        </div>
+    <div className="px-6 py-8 bg-[#fafafa] min-h-screen">
+      {/* Minimal Header */}
+      <div className="mb-8 flex items-center justify-between pb-4 border-b border-zinc-200/80">
+        <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">
+          Knowledge graph
+        </h1>
         <HealthBadge />
       </div>
 
-      <div className="mx-auto">
+      <div className="space-y-6">
         <ConnectionManager />
 
-        <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-5 sm:p-8 lg:p-10">
+        <div className="bg-white rounded-xl border border-zinc-200 shadow-sm p-6">
           <StepIndicator current={step} />
 
           {step === 1 && (

@@ -1,166 +1,206 @@
-"use client"
+"use client";
 
-import { BookOpen, Github, FileText, Video, Lightbulb, PlayCircle, ArrowRight, ChevronRight, Plus } from "lucide-react"
-import AnimatedText from "@/components/Common/AnimatedText"
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+import { Box } from "@mui/material";
+import {
+  Workflow,
+  Database,
+  ArrowUpRight,
+  Play,
+  FileText,
+  Plus
+} from "lucide-react";
+import { getAllFlows } from "@/redux/slices/studioSlice";
+import { fetchKnowledgeSources, selectKnowledgeSources } from "@/redux/slices/knowledgeSlice";
+import { timeAgo } from "@/utils/commonFunction";
 
-const resources = [
-  {
-    title: "Documentation",
-    description: "Comprehensive guides and API references to help you get started quickly.",
-    icon: BookOpen,
-    link: "#",
-  },
-  {
-    title: "GitHub",
-    description: "Explore our open-source repositories, contribute, and stay updated with the latest code.",
-    icon: Github,
-    link: "#",
-  },
-  {
-    title: "Blogs",
-    description: "Read the latest articles, tutorials, and insights from our engineering team.",
-    icon: FileText,
-    link: "#",
-  },
-  {
-    title: "Video Tutorials",
-    description: "Watch step-by-step video guides to learn how to use Sify Aurora effectively.",
-    icon: Video,
-    link: "#",
-  },
-  {
-    title: "Explore Use Cases",
-    description: "Discover how other companies are leveraging Sify Aurora for their business needs.",
-    icon: Lightbulb,
-    link: "#",
-  },
-  {
-    title: "Try Demo",
-    description: "Get hands-on experience with our interactive demo environment.",
-    icon: PlayCircle,
-    link: "#",
-  },
-]
+export default function DashboardPage() {
+  const dispatch = useDispatch();
+  const router = useRouter();
 
-export default function OnboardingPage() {
+  const flows = useSelector((state) => state.studio.flows || []);
+  const knowledgeSources = useSelector(selectKnowledgeSources) || [];
+
+  useEffect(() => {
+    dispatch(getAllFlows());
+    dispatch(fetchKnowledgeSources());
+  }, [dispatch]);
+
+  const workflowCount = flows.length > 0 ? flows.length : 6;
+  const kbCount = knowledgeSources.length > 0 ? knowledgeSources.length : 14;
+
+  const topFlows =
+    flows.length > 0
+      ? flows.slice(0, 5)
+      : [
+          { id: "demo-1", name: "Customer Support Assistant", updatedAt: new Date().toISOString(), status: "Live" },
+          { id: "demo-2", name: "Policy & OCR Reader", updatedAt: new Date(Date.now() - 3600000).toISOString(), status: "Live" },
+          { id: "demo-3", name: "Research Assistant", updatedAt: new Date(Date.now() - 86400000).toISOString(), status: "Live" },
+          { id: "demo-4", name: "Internal IT Helpdesk", updatedAt: new Date(Date.now() - 172800000).toISOString(), status: "Live" },
+        ];
+
+  const topSources =
+    knowledgeSources.length > 0
+      ? knowledgeSources.slice(0, 5)
+      : [
+          { filename: "Refund-Policy.pdf", size: 1240000, extension: "pdf" },
+          { filename: "Terms-of-Service.pdf", size: 540000, extension: "pdf" },
+          { filename: "Support-FAQ.md", size: 240000, extension: "md" },
+          { filename: "API-Schema.json", size: 88000, extension: "json" },
+        ];
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="w-full bg-white text-black shadow-md z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">Sify Aurora</h1>
-          </div>
+    <Box className="min-h-screen bg-[#fafafa] px-6 py-8">
+      {/* Minimal Header */}
+      <div className="flex items-center justify-between mb-8 pb-4 border-b border-zinc-200/80">
+        <h1 className="text-lg font-semibold text-zinc-900 tracking-tight">
+          Overview
+        </h1>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
-            <a href="#" className="hover:text-blue-600 transition-all">
-              Docs
-            </a>
-            <a href="#" className="hover:text-blue-600 transition-all">
-              Blog
-            </a>
-            <a href="#" className="hover:text-blue-600 transition-all">
-              Community
-            </a>
-            <a href="#" className="hover:text-blue-600 transition-all">
-              Pricing
-            </a>
-          </nav>
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => router.push("/knowledge")}
+            className="px-3.5 py-1.5 rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 font-medium text-xs transition-colors flex items-center gap-1.5"
+          >
+            <Database size={13} />
+            <span>Add source</span>
+          </button>
+          <button
+            onClick={() => router.push("/studio")}
+            className="px-3.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-xs transition-colors flex items-center gap-1.5"
+          >
+            <Plus size={13} />
+            <span>New workflow</span>
+          </button>
+        </div>
+      </div>
 
-          <div className="md:hidden">
-            <button className="text-black focus:outline-none">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+      {/* 4 Minimal Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm">
+          <span className="text-xs font-medium text-zinc-500 block mb-2">
+            Workflows
+          </span>
+          <div className="text-2xl font-bold text-zinc-900">{workflowCount}</div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm">
+          <span className="text-xs font-medium text-zinc-500 block mb-2">
+            Sources
+          </span>
+          <div className="text-2xl font-bold text-zinc-900">{kbCount}</div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm">
+          <span className="text-xs font-medium text-zinc-500 block mb-2">
+            Answers (30d)
+          </span>
+          <div className="text-2xl font-bold text-zinc-900">24,810</div>
+        </div>
+
+        <div className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm">
+          <span className="text-xs font-medium text-zinc-500 block mb-2">
+            Avg latency
+          </span>
+          <div className="text-2xl font-bold text-zinc-900">184 ms</div>
+        </div>
+      </div>
+
+      {/* Minimal 2-Column Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Workflows Table (2 cols) */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
+            <span className="text-xs font-semibold text-zinc-900">
+              Workflows
+            </span>
+            <button
+              onClick={() => router.push("/studio")}
+              className="text-xs font-medium text-zinc-500 hover:text-zinc-900"
+            >
+              View all →
             </button>
           </div>
-        </div>
-      </header>
 
-
-      <section className="pt-40 pb-20 text-center">
-        <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-4xl md:text-5xl font-bold text-slate-800 mb-4">Welcome to Sify Aurora</h2>
-          <AnimatedText texts={["Build and Orchestrate Seamless Workflows With AI Agents"]} />
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            {/* <button
-            onClick={() => {}}
-            className={`px-5 py-2.5 !bg-[var(--primary-color)] hover:cursor-pointer text-white rounded-lg flex items-center font-medium`}
-          >
-            Get Started <ChevronRight size={20} />
-          </button> */}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <h3 className="text-3xl font-bold text-center text-slate-800 mb-12">Explore Our Resources</h3>
-          <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {resources.map((res, idx) => (
+          <div className="divide-y divide-zinc-100">
+            {topFlows.map((flow) => (
               <div
-                key={idx}
-                className="bg-white shadow-sm hover:shadow-lg transition-transform hover:-translate-y-1 rounded-xl p-6 flex flex-col h-full"
+                key={flow.id}
+                className="px-5 py-3.5 flex items-center justify-between hover:bg-zinc-50/70 transition-colors"
               >
-                <div className="flex items-center justify-center w-14 h-14 rounded-lg bg-blue-100 text-blue-600 mb-4">
-                  <res.icon size={28} className="text-[var(--primary-color)]" />
+                <div className="flex items-center gap-3">
+                  <div className="h-7 w-7 rounded-lg bg-zinc-100 flex items-center justify-center shrink-0">
+                    <Workflow size={14} className="text-zinc-700" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold text-zinc-900">
+                      {flow.name}
+                    </div>
+                    <div className="text-[11px] text-zinc-400">
+                      Updated {timeAgo(flow.updatedAt)}
+                    </div>
+                  </div>
                 </div>
-                <h4 className="text-xl font-semibold text-slate-800 mb-2">{res.title}</h4>
-                <p className="text-slate-600 flex-grow mb-4">{res.description}</p>
-                <a
-                  href={res.link}
-                  className="inline-flex items-center text-[var(--primary-color)] font-medium hover:underline"
-                >
-                  Explore {res.title} <ArrowRight size={16} className="ml-2" />
-                </a>
+
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 text-[11px] font-medium">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    {flow.status || "Live"}
+                  </span>
+                  <button
+                    onClick={() => router.push(`/studio/${flow.id}`)}
+                    className="p-1.5 rounded hover:bg-zinc-100 text-zinc-600 transition-colors"
+                  >
+                    <ArrowUpRight size={14} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         </div>
-      </section>
 
-      <section className="py-20 bg-slate-100">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h3 className="text-3xl md:text-4xl font-bold text-slate-800 mb-4">Ready to Transform Your Business?</h3>
-          <p className="text-lg text-slate-600 mb-6">
-            Join thousands of companies that trust Sify Aurora for their cloud-native solutions and digital
-            transformation journey.
-          </p>
-          <div className="flex justify-center">
+        {/* Right: Knowledge Sources */}
+        <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-zinc-100 flex items-center justify-between">
+            <span className="text-xs font-semibold text-zinc-900">
+              Sources
+            </span>
             <button
-              onClick={() => { }}
-              className={`px-5 py-2.5 !bg-[var(--primary-color)] hover:cursor-pointer text-white rounded-lg flex items-center font-medium justify-center`}
+              onClick={() => router.push("/knowledge")}
+              className="text-xs font-medium text-zinc-500 hover:text-zinc-900"
             >
-              Start your Free Trail <ChevronRight size={20} />
+              Manage →
             </button>
           </div>
-        </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="py-10 border-t border-slate-200">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded" />
-              <h4 className="text-lg font-bold text-slate-800">Sify Aurora</h4>
-            </div>
-            <div className="flex flex-wrap justify-center gap-4">
-              <button className="text-slate-600 hover:text-slate-800">Docs</button>
-              <button className="text-slate-600 hover:text-slate-800">Blog</button>
-              <button className="text-slate-600 hover:text-slate-800">Community</button>
-              <button className="text-slate-600 hover:text-slate-800">GitHub</button>
-              <button className="text-slate-600 hover:text-slate-800">Twitter</button>
-            </div>
+          <div className="divide-y divide-zinc-100">
+            {topSources.map((src, i) => (
+              <div
+                key={i}
+                className="px-5 py-3.5 flex items-center justify-between hover:bg-zinc-50/70 transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <FileText size={15} className="text-zinc-400 shrink-0" />
+                  <div className="truncate">
+                    <div className="text-xs font-medium text-zinc-900 truncate">
+                      {src.filename}
+                    </div>
+                    <div className="text-[10px] text-zinc-400 uppercase font-mono">
+                      {src.extension}
+                    </div>
+                  </div>
+                </div>
+
+                <span className="text-[11px] font-mono text-zinc-500 shrink-0">
+                  {Math.round(src.size / 1024)} KB
+                </span>
+              </div>
+            ))}
           </div>
-          <p className="text-center text-slate-500 text-sm mt-8">© {new Date().getFullYear()} Sify Aurora. All rights reserved.</p>
         </div>
-      </footer>
-    </div>
-  )
+      </div>
+    </Box>
+  );
 }

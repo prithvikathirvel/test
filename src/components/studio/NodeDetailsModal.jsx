@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Typography,
   Box,
   Drawer,
   Divider,
   Stack,
-  Paper,
   Chip,
-  IconButton,
   Tooltip,
-  Button,
   TextField,
 } from '@mui/material';
 import {
@@ -18,80 +15,52 @@ import {
   Settings as SettingsIcon,
   User as PersonIcon,
   Globe as PublicIcon,
-  NotepadText as DescriptionIcon,
   Code as CodeIcon,
   TextCursorInput as InputIcon,
   ChevronsLeftRightEllipsis as OutputIcon,
-  Bot as BotIcon,
-  Tags as TagsIcon,
   Info as InfoIcon,
   Trash2 as DeleteIcon,
   Edit as EditIcon,
   Play as PlayIcon,
   Save as SaveIcon,
+  Activity,
+  CheckCircle2
 } from 'lucide-react';
-import { convertToTitleCase } from '@/utils/commonFunction';
 import { getNodeColor } from '@/utils/commonFunction';
 import { getParameterComponent } from './InputParameterComponents';
-import DashedBox from '@/components/Common/DashedBox';
 import CustomAccordion from '@/components/Common/CustomAccordion';
 import OutputParameterComponents from './OutputParameterComponents';
 import JsonOutputDrawer from './JsonOutputDrawer';
-import { updateNode } from '@/redux/slices/studioSlice';
-import { runFlow } from '@/redux/slices/studioSlice';
-import { useSelector } from 'react-redux';
+import { updateNode, runFlow } from '@/redux/slices/studioSlice';
 
 const InfoItem = ({ label, value, icon }) => (
-  <Box key={label} className="flex justify-between">
-    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1, p: 0.5, color: 'gray' }}>
-      {icon}
-      <Typography variant="body2" sx={{ fontSize: '15px' }}>
-        {label}
-      </Typography>
-    </Stack>
-    <Typography variant="body2" sx={{ fontSize: '15px' }}>
-      {value ?? 'N/A'}
-    </Typography>
-  </Box>
+  <div className="flex items-center justify-between py-2 border-b border-zinc-100 last:border-0 text-xs">
+    <div className="flex items-center gap-2 text-zinc-500">
+      <span className="text-zinc-400">{icon}</span>
+      <span>{label}</span>
+    </div>
+    <span className="font-semibold text-zinc-900">{value ?? 'N/A'}</span>
+  </div>
 );
 
-const DescriptionSection = ({ description }) => (
-  <Box className="!mb-5">
-    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-      <DescriptionIcon className="text-gray-500" size={20} />
-      <Typography variant="subtitle2">Description</Typography>
-    </Stack>
-    <DashedBox sx={{ p: 2, borderRadius: 2 }}>
-      <Typography variant="body2">{description || 'No description available'}</Typography>
-    </DashedBox>
-  </Box>
-);
-
-const TagsSection = ({ tags, color }) => (
-  <Box className="!mb-5">
-    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-      <TagsIcon className="text-gray-500" size={20} />
-      <Typography variant="subtitle2">Tags</Typography>
-    </Stack>
-    <DashedBox sx={{ p: 2, borderRadius: 2 }}>
-      {tags && tags.length > 0 && (
-        tags.map((tag, index) => (
-          <Chip
-            key={index}
-            label={tag}
-            size="medium"
-            className="!font-semibold !text-[12px] !font-sans !mr-4"
-            sx={{ border: '1px solid ' + color, backgroundColor: 'transparent' }}
-          />
-        ))
-      )}
-    </DashedBox>
-  </Box>
-);
-
-const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName,handleSaveChanges,isDirty,disabled,loading,handleTestClick }) => {
+const ModalHeader = ({
+  title,
+  type,
+  onClose,
+  onDelete,
+  onUpdateName,
+  handleSaveChanges,
+  isDirty,
+  disabled,
+  loading,
+  handleTestClick
+}) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedName, setEditedName] = useState(title || 'Undefined Node');
+  const [editedName, setEditedName] = useState(title || 'Untitled Node');
+
+  useEffect(() => {
+    setEditedName(title || 'Untitled Node');
+  }, [title]);
 
   const handleEditClick = () => {
     if (isEditing) {
@@ -112,152 +81,85 @@ const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName,handl
   };
 
   return (
-    <Box className="flex justify-between items-center p-4">
-      <Box className="flex gap-4 justify-between min-w-65  items-center">
-        {isEditing ? (
-          <TextField
-            value={editedName}
-            onChange={handleNameChange}
-            onKeyPress={handleKeyPress}
-            size="small"
-            autoFocus
-            className="min-w-[200px]"
-          />
-        ) : (
-          <Typography className="font-bold">{editedName || 'Undefined Node'}</Typography>
-        )}
-        {/* <Chip
-          label={convertToTitleCase(type)}
-          size="medium"
-          className="font-bold text-[0.7rem]"
-          sx={{ color: '#f5f5f7', ml: 2, backgroundColor: color }}
-        /> */}
-      </Box>
-      <Box className="flex items-center !gap-1 !m-2">
+    <div className="flex items-center justify-between p-5 border-b border-zinc-200 bg-white sticky top-0 z-20">
+      <div className="flex items-center gap-3 min-w-0 flex-1 mr-4">
+        <div className="h-9 w-9 rounded-xl bg-[#0d47a1] flex items-center justify-center text-white shrink-0 shadow-sm">
+          <Activity size={18} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            {isEditing ? (
+              <TextField
+                value={editedName}
+                onChange={handleNameChange}
+                onKeyDown={handleKeyPress}
+                size="small"
+                autoFocus
+                sx={{ '& .MuiInputBase-root': { fontSize: '13px', height: '32px' } }}
+              />
+            ) : (
+              <h2 className="text-base font-bold text-zinc-900 truncate">
+                {editedName}
+              </h2>
+            )}
+            <button
+              onClick={handleEditClick}
+              className="p-1 rounded hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-colors"
+              title="Edit Node Title"
+            >
+              <EditIcon size={14} />
+            </button>
+          </div>
+          <span className="text-[11px] font-mono font-semibold text-[#0d47a1] uppercase">
+            {type || 'Node'}
+          </span>
+        </div>
+      </div>
 
-      <Tooltip title={isEditing ? "Test" : "Test"}>
-          <IconButton
-            onClick={handleTestClick}
-            color={isEditing ? "primary" : "default"}
-            aria-label={isEditing ? "Test" : "Test"}
-            disabled={loading}
-          >
-            <PlayIcon size={18} color={'green'}/>
-          </IconButton>
-        </Tooltip>
-        
-        <Tooltip title={isEditing ? "Save Changes" : "Save Changes"}>
-          <IconButton
-            onClick={handleSaveChanges}
-            color={isEditing ? "primary" : "default"}
-            aria-label={isEditing ? "Save Changes" : "Save Changes"}
-            disabled={!isDirty || disabled || loading}
-          >
-            <SaveIcon size={18} color={'blue'}/>
-          </IconButton>
-        </Tooltip>
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={handleTestClick}
+          disabled={loading}
+          className="px-3.5 py-1.5 rounded-lg bg-[#0d47a1] hover:bg-[#0a3880] text-white text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+        >
+          <PlayIcon size={13} />
+          <span>Test</span>
+        </button>
 
-        <Tooltip title={isEditing ? "Save Name" : "Edit Name"}>
-          <IconButton
-            onClick={handleEditClick}
-            color={isEditing ? "primary" : "default"}
-            aria-label={isEditing ? "Save Name" : "Edit Name"}
-          >
-            <EditIcon size={18} color={'grey'}/>
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Delete Node">
-          <IconButton
-            onClick={onDelete}
-            color="error"
-            aria-label="Delete Node"
-          >
-            <DeleteIcon size={18} color={'red'}/>
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Close">
-          <IconButton
-            onClick={onClose}
-            aria-label="Close"
-            sx={{ color: 'black',marginRight: '10px' }}
-          >
-            <CloseIcon size={18} />
-          </IconButton>
-        </Tooltip>
-      </Box>
-    </Box>
+        <button
+          onClick={handleSaveChanges}
+          disabled={!isDirty || disabled || loading}
+          className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shadow-sm ${
+            isDirty
+              ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+              : 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
+          }`}
+        >
+          <SaveIcon size={13} />
+          <span>Save</span>
+        </button>
+
+        <button
+          onClick={onDelete}
+          className="p-2 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+          title="Delete Node"
+        >
+          <DeleteIcon size={16} />
+        </button>
+
+        <div className="h-4 w-px bg-zinc-200 mx-1" />
+
+        <button
+          onClick={onClose}
+          className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+          title="Close Inspector"
+        >
+          <CloseIcon size={18} />
+        </button>
+      </div>
+    </div>
   );
 };
-
-const InputParameterRenderer = ({ parameters, title, icon, color, loading, disabled, onUpdate, parameter }) => (
-  <CustomAccordion
-    title={title}
-    icon={icon}
-    emptyStateMessage={`No ${title.toLowerCase()} parameters available`}
-    loading={loading}
-    loadingText={`Loading...`}
-    disabled={disabled}
-  >
-    {parameters?.length > 0 && (
-      <Stack spacing={2}>
-        {parameters.map((param, index) => (
-          <Box key={index}>
-            {getParameterComponent(param, color, onUpdate, parameters, parameter)}
-          </Box>
-        ))}
-      </Stack>
-    )}
-  </CustomAccordion>
-);
-
-const OutputParameterRenderer = ({ parameters, title, icon, color, loading, disabled }) => (
-  <CustomAccordion
-    title={title}
-    icon={icon}
-    emptyStateMessage={`No ${title.toLowerCase()} parameters available`}
-    tooltip={disabled ? undefined : `${title} - ${parameters?.length || 0} parameters`}
-    loading={loading}
-    loadingText={`Loading...`}
-    disabled={disabled}
-  >
-    {parameters?.length > 0 && (
-      <Stack spacing={2}>
-        {parameters.map((param, index) => (
-          <Box key={index}>
-            <OutputParameterComponents param={param} color={color} />
-          </Box>
-        ))}
-      </Stack>
-    )}
-  </CustomAccordion>
-);
-
-const BasicInformationSection = ({ description, items, tags, loading, disabled, color }) => (
-  <CustomAccordion
-    title="Basic Information"
-    icon={<InfoIcon size={20} />}
-    emptyStateMessage="No basic information available"
-    tooltip={disabled ? undefined : (tags?.length > 0 ? `${tags.length} tags` : undefined)}
-    loading={loading}
-    loadingText="Loading basic information..."
-    disabled={disabled}
-  >
-    <DescriptionSection description={description} />
-    <TagsSection tags={tags} color={color} />
-    <DashedBox
-      sx={{
-        p: 2,
-        mb: 3,
-        borderRadius: 2,
-        opacity: disabled ? 0.6 : 1,
-      }}
-    >
-      {items.map((item) => (
-        <InfoItem key={item.label} {...item} />
-      ))}
-    </DashedBox>
-  </CustomAccordion>
-);
 
 const NodeDetailsModal = ({
   flowId,
@@ -273,18 +175,14 @@ const NodeDetailsModal = ({
     displayInputParameters: true,
     displayOutputParameters: true,
   },
-  flow,
-  onOpenExecutionOutput
+  flow
 }) => {
   const dispatch = useDispatch();
   const [localInputParams, setLocalInputParams] = useState([]);
   const [localOutputParams, setLocalOutputParams] = useState([]);
   const [isDirty, setIsDirty] = useState(false);
   const [outputDrawerOpen, setOutputDrawerOpen] = useState(false);
-  const [executionOutput, setExecutionOutput] = useState(null);
   const [output, setOutput] = useState(null);
-  const [executionStatus, setExecutionStatus] = useState('success');
-  const flowOutput = useSelector(state => state.studio.flowOutput);
   const isFlowRunning = useSelector(state => state.studio.isFlowRunning);
 
   useEffect(() => {
@@ -295,7 +193,7 @@ const NodeDetailsModal = ({
     }
   }, [node]);
 
-  const handleParameterChange = (updatedParams, paramType, isLocalChange = false) => {
+  const handleParameterChange = (updatedParams, paramType) => {
     if (paramType === 'inputParameters') {
       setLocalInputParams(updatedParams);
     } else if (paramType === 'outputParameters') {
@@ -307,11 +205,9 @@ const NodeDetailsModal = ({
   const handleTestClick = async () => {
     if (!node?.id) return;
     setOutputDrawerOpen(true);
-    setExecutionStatus('pending');
-    setExecutionOutput({ status: 'executing', message: 'Test execution started...' });
 
     try {
-      const resultAction = await dispatch(
+      await dispatch(
         runFlow({
           data: { test: node.id, agent_id: flowId },
           onSuccess: () => {
@@ -321,36 +217,12 @@ const NodeDetailsModal = ({
       )
         .unwrap()
         .then((response) => {
-          console.log("Response from sssss:", response);
           setOutput(response);
-        })
-        .catch((error) => {
-          throw error;
-        })
-        .finally(() => {
         });
-
-      
     } catch (error) {
-      
-    } finally {
-      
+      console.error("Test execution error:", error);
     }
-  
-    // const resultAction = await dispatch(runFlow({ data: { test: node.id, agent_id: flowId } }));
-
-    // if (runFlow.fulfilled.match(resultAction)) {
-    //   setExecutionStatus('success');
-      
-    //   console.log("Payload to set:", resultAction.payload);
-    //   console.log("Payload type:", typeof resultAction.payload);
-    //   console.log("Is payload null/undefined?", resultAction.payload == null);
-      
-    //   setOutput(resultAction.payload); 
-    // } 
-    
-};
-
+  };
 
   const handleSaveChanges = () => {
     if (node && isDirty) {
@@ -396,24 +268,21 @@ const NodeDetailsModal = ({
 
   const { type, data } = node;
   const {
-    name,
     description,
     version,
     isPublic,
     createdBy,
     status,
-    inputParameters,
-    outputParameters,
     tags,
   } = data;
 
   const nodeColor = getNodeColor(type);
 
   const basicInfo = [
-    { label: 'Created By', value: createdBy, icon: <PersonIcon size={20} /> },
-    { label: 'Version', value: version, icon: <SettingsIcon size={20} /> },
-    { label: 'Public', value: isPublic ? 'Yes' : 'No', icon: <PublicIcon size={20} /> },
-    { label: 'Status', value: status ? 'Active' : 'Inactive', icon: <CodeIcon size={20} /> },
+    { label: 'Created By', value: createdBy, icon: <PersonIcon size={16} /> },
+    { label: 'Version', value: version, icon: <SettingsIcon size={16} /> },
+    { label: 'Public', value: isPublic ? 'Yes' : 'No', icon: <PublicIcon size={16} /> },
+    { label: 'Status', value: status ? 'Active' : 'Inactive', icon: <CodeIcon size={16} /> },
   ];
 
   return (
@@ -424,15 +293,15 @@ const NodeDetailsModal = ({
         onClose={onClose}
         PaperProps={{
           sx: {
-            width: 600,
+            width: 560,
             maxWidth: '100%',
+            backgroundColor: '#fafafa',
           },
         }}
       >
         <ModalHeader
-          title={node?.data?.name || node?.name}
+          title={node?.data?.displayName || node?.data?.name || node?.name}
           type={node?.data?.type || node?.type}
-          color={getNodeColor(node?.data?.type || node?.type)}
           onClose={onClose}
           onDelete={handleDelete}
           onUpdateName={handleUpdateName}
@@ -443,88 +312,113 @@ const NodeDetailsModal = ({
           handleTestClick={handleTestClick}
         />
 
-        <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 2 }}>
+        <div className="p-6 space-y-6 overflow-y-auto flex-1">
+          {/* Input Parameters Section */}
           {displayInputParameters && (
-            <InputParameterRenderer
-              parameters={localInputParams}
-              title="Input Parameters"
-              icon={<InputIcon size={20} />}
-              color={nodeColor}
-              loading={loading}
-              disabled={disabled}
-              onUpdate={(params, type) => handleParameterChange(params, 'inputParameters')}
-              parameter={'inputParameters'}
-            />
+            <div className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+                <div className="flex items-center gap-2">
+                  <InputIcon size={16} className="text-[#0d47a1]" />
+                  <h3 className="text-sm font-bold text-zinc-900">Input Parameters</h3>
+                </div>
+                <span className="text-xs font-mono bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded">
+                  {localInputParams?.length || 0} configured
+                </span>
+              </div>
+
+              {localInputParams?.length > 0 ? (
+                <div className="space-y-4">
+                  {localInputParams.map((param, index) => (
+                    <div key={index}>
+                      {getParameterComponent(
+                        param,
+                        '#0d47a1',
+                        (params) => handleParameterChange(params, 'inputParameters'),
+                        localInputParams,
+                        'inputParameters'
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-xs text-zinc-400">
+                  No input parameters required for this node.
+                </div>
+              )}
+            </div>
           )}
 
+          {/* Output Parameters Section */}
           {displayOutputParameters && (
-            <InputParameterRenderer
-              parameters={localOutputParams}
-              title="Output Parameters"
-              icon={<OutputIcon size={20} />}
-              color={nodeColor}
-              loading={loading}
-              disabled={disabled}
-              onUpdate={(params, type) => handleParameterChange(params, 'outputParameters')}
-              parameter={'outputParameters'}
-            />
+            <div className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-zinc-100">
+                <div className="flex items-center gap-2">
+                  <OutputIcon size={16} className="text-[#0d47a1]" />
+                  <h3 className="text-sm font-bold text-zinc-900">Output Parameters</h3>
+                </div>
+                <span className="text-xs font-mono bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded">
+                  {localOutputParams?.length || 0} fields
+                </span>
+              </div>
+
+              {localOutputParams?.length > 0 ? (
+                <div className="space-y-4">
+                  {localOutputParams.map((param, index) => (
+                    <div key={index}>
+                      <OutputParameterComponents param={param} color="#0d47a1" />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 text-xs text-zinc-400">
+                  No output parameters mapped.
+                </div>
+              )}
+            </div>
           )}
 
-          <Divider sx={{ my: 2 }} />
-
+          {/* Basic Information Panel */}
           {displayBasicInformation && (
-            <BasicInformationSection
-              description={description}
-              items={basicInfo}
-              tags={tags}
-              loading={loading}
-              disabled={disabled}
-              color={nodeColor}
-            />
-          )}
+            <div className="bg-white rounded-xl border border-zinc-200 p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-4 pb-3 border-b border-zinc-100">
+                <InfoIcon size={16} className="text-[#0d47a1]" />
+                <h3 className="text-sm font-bold text-zinc-900">Node Information</h3>
+              </div>
 
-          {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={handleTestClick}
-              disabled={disabled || loading}
-              startIcon={<PlayIcon size={16} />}
-              sx={{
-                borderColor: nodeColor,
-                color: nodeColor,
-                '&:hover': {
-                  borderColor: nodeColor,
-                  backgroundColor: `${nodeColor}10`
-                }
-              }}
-            >
-              Test & View Output
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSaveChanges}
-              disabled={!isDirty || disabled || loading}
-              sx={{
-                backgroundColor: nodeColor,
-                '&:hover': {
-                  backgroundColor: nodeColor,
-                  opacity: 0.9
-                }
-              }}
-            >
-              Save Changes
-            </Button>
-          </Box> */}
-        </Box>
+              {description && (
+                <p className="text-xs text-zinc-600 mb-4 bg-zinc-50 p-3 rounded-lg border border-zinc-200/80 leading-relaxed">
+                  {description}
+                </p>
+              )}
+
+              {tags && tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-4">
+                  {tags.map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className="text-[11px] font-medium px-2 py-0.5 rounded bg-blue-50 text-[#0d47a1] border border-blue-200/60"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="divide-y divide-zinc-100">
+                {basicInfo.map((item) => (
+                  <InfoItem key={item.label} {...item} />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </Drawer>
 
       <JsonOutputDrawer
         open={outputDrawerOpen}
         onClose={() => setOutputDrawerOpen(false)}
         outputData={output}
-        title={`${node?.data?.name || 'Node'} Execution Output`}
+        title={`${node?.data?.displayName || node?.data?.name || 'Node'} Execution Output`}
         status={isFlowRunning ? 'pending' : 'success'}
       />
     </>

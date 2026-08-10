@@ -972,14 +972,14 @@ const StudioChatBot = ({
           {/* Header */}
           <div className={`bg-gradient-to-r ${colors.gradient} text-white p-5 flex justify-between items-center`}>
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <img src="https://images.scalebranding.com/chatbot-woman-logo-0a79f97c-1fde-4cf9-8796-dbbbac54bb34.jpg" alt="Chatbot Logo" className="w-10 h-10 rounded-full object-cover" />
+              <div className="w-9 h-9 bg-white/10 border border-white/20 rounded-lg flex items-center justify-center">
+                <Bot className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-base">{botName}</h3>
-                <div className="flex items-center space-x-2">
-                  <span className={`w-2 h-2 rounded-full ${botStatus === 'Online' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  <p className="text-sm opacity-90">{botStatus}</p>
+                <h3 className="font-semibold text-sm">{botName}</h3>
+                <div className="flex items-center space-x-1.5">
+                  <span className={`w-1.5 h-1.5 rounded-full ${botStatus === 'Online' ? 'bg-emerald-400' : 'bg-red-400'}`}></span>
+                  <p className="text-xs text-white/80">{botStatus}</p>
                 </div>
               </div>
             </div>

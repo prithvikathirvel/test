@@ -1,96 +1,105 @@
-"use client"
+"use client";
 
-import { Box, Container } from "@mui/material"
-import { Sparkles, ArrowRight, Workflow, Bot, Cpu, BrainCircuit, Database, MessageSquare } from "lucide-react"
-import CustomGradientButton from "@/components/Common/CustomGradientButton"
-
+import { Box, Container } from "@mui/material";
+import {
+  ArrowRight,
+  Bot,
+  Sparkles,
+  Workflow,
+  Cpu,
+  BrainCircuit,
+  Database,
+  MessageSquare,
+  CheckCircle2
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import AnimatedText from "@/components/Common/AnimatedText";
 
 export default function HeroSection({ handleDrawerOpen }) {
+  const router = useRouter();
 
   return (
-    <Box className="relative overflow-hidden bg-transparent min-h-[calc(100vh-60px)] flex items-center">
-      {/* Section background blurs */}
-      <div className="pointer-events-none absolute top-10 -left-40 w-[500px] h-[500px] rounded-full bg-blue-100/50 blur-[100px]" />
-      <div className="pointer-events-none absolute -bottom-20 -right-20 w-[400px] h-[400px] rounded-full bg-indigo-100/40 blur-[100px]" />
+    <Box className="relative overflow-hidden bg-[#fafafa] py-16 sm:py-24 border-b border-zinc-200">
+      <Container maxWidth="lg" className="!px-4 sm:!px-6 lg:!px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          {/* Minimal Sify Aurora Copy Column */}
+          <div className="lg:col-span-7 animate-fade-in">
+            <p className="text-xs font-semibold text-[#0d47a1] uppercase tracking-widest mb-4">
+              Sify Aurora • Enterprise Agent Platform
+            </p>
 
-      <Container maxWidth="lg" className="!px-4 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center py-10 lg:py-0">
-          <div className="animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 bg-[var(--primary-color)]/10 text-[var(--primary-color)] px-3 py-1 rounded-full mb-4">
-              <Sparkles size={14} />
-              <span className="text-xs font-semibold tracking-wide">
-                Future of AI Agent Development
-              </span>
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl  !text-slate-900 !leading-tight">
-              Build Intelligent
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-[var(--primary-color)]">
-                AI Agents Effortlessly
-              </span>
+            <h1 className="text-4xl sm:text-5xl font-bold text-zinc-900 tracking-tight leading-[1.15] mb-4">
+              Turn your documents, APIs, and models into autonomous AI workflows.
             </h1>
 
-            <p className="text-[15px] text-slate-700 mt-4">
-              Transform your ideas into powerful AI agents with our intuitive visual builder.
-            </p>
-            <p className="text-[15px] text-slate-700">
-              No coding required—just drag, drop, and deploy intelligent automation solutions.
+            <div className="mb-6 min-h-[48px]">
+              <AnimatedText
+                texts={[
+                  "Visual ReAct Agent Builder with multi-model routing",
+                  "Hybrid Vector + Neo4j Graph RAG retrieval pipelines",
+                  "One-click HTTP & webhook edge deployment",
+                  "Built-in test playground and voice TTS/STT agents"
+                ]}
+              />
+            </div>
+
+            <p className="text-sm text-zinc-600 mb-8 max-w-xl leading-relaxed">
+              An intuitive visual platform to design, test, and deploy intelligent multi-agent systems — without writing custom boilerplate.
             </p>
 
-            <ul className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-700">
-              <li className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[var(--primary-color)]" />
-                Visual node-based builder
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[var(--primary-color)]" />
-                Reusable workflows & templates
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[var(--primary-color)]" />
-                Multi-tool integrations
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[var(--primary-color)]" />
-                One-click deploy
-              </li>
-            </ul>
-
-            <div className="mt-8 flex items-center gap-4">
-              <CustomGradientButton text="Start Building" onClick={handleDrawerOpen} />
-              <button className="flex items-center gap-2 text-[14px] font-medium text-slate-600 hover:text-[var(--primary-color)] transition-colors">
-                Watch Demo
-                <ArrowRight size={14} />
+            {/* Sify Blue Primary Action Button */}
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+              <button
+                onClick={handleDrawerOpen}
+                className="px-5 py-2.5 rounded-lg bg-[#0d47a1] hover:bg-[#0a3880] text-white font-medium text-sm transition-colors flex items-center gap-2 shadow-sm"
+              >
+                <span>Start free</span>
+                <ArrowRight size={15} />
               </button>
+
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="px-5 py-2.5 rounded-lg bg-white border border-zinc-200 hover:bg-zinc-50 text-zinc-800 font-medium text-sm transition-colors"
+              >
+                Explore console
+              </button>
+            </div>
+
+            {/* Minimal Sify Aurora trust caption */}
+            <div className="flex flex-wrap items-center gap-4 text-xs text-zinc-500">
+              <span>No credit card required</span>
+              <span>•</span>
+              <span>No model training</span>
+              <span>•</span>
+              <span>Enterprise SOC2 Type II</span>
             </div>
           </div>
 
-          {/* Animated Orbital Visual */}
-          <div className="hidden lg:flex items-center justify-center">
-            <div className="relative w-[380px] h-[380px]">
+          {/* Animated Orbital Visual from dev.sifymodernization.digital/agent-studio/ */}
+          <div className="lg:col-span-5 flex items-center justify-center">
+            <div className="relative w-[360px] h-[360px] flex items-center justify-center">
               {/* Outer ring */}
-              <div className="absolute inset-0 rounded-full border-2 border-dashed border-[var(--primary-color)]/15 animate-pulse-ring" />
+              <div className="absolute inset-0 rounded-full border-2 border-dashed border-[#0d47a1]/20 animate-pulse-ring" />
               {/* Middle ring */}
-              <div className="absolute inset-8 rounded-full border border-[var(--primary-color)]/10" />
+              <div className="absolute inset-8 rounded-full border border-[#0d47a1]/15" />
               {/* Inner ring */}
-              <div className="absolute inset-20 rounded-full border border-blue-200/40" />
+              <div className="absolute inset-16 rounded-full border border-zinc-200" />
 
-              {/* Center core */}
+              {/* Center Core */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="relative">
-                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-blue-600 to-[var(--primary-color)] flex items-center justify-center shadow-xl shadow-blue-500/25 animate-float-slow">
-                    <BrainCircuit size={36} className="text-white" />
+                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#0d47a1] to-[#1565c0] flex items-center justify-center shadow-lg shadow-[#0d47a1]/25 animate-float-slow">
+                    <BrainCircuit size={32} className="text-white" />
                   </div>
-                  {/* Core glow */}
-                  <div className="absolute -inset-3 rounded-2xl bg-blue-500/10 blur-xl" />
+                  <div className="absolute -inset-3 rounded-2xl bg-[#0d47a1]/10 blur-xl" />
                 </div>
               </div>
 
               {/* Orbiting node 1 - Bot */}
               <div className="absolute inset-0 animate-orbit">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="h-14 w-14 rounded-xl bg-white border border-blue-200 shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
-                    <Bot size={22} className="text-[var(--primary-color)]" />
+                  <div className="h-12 w-12 rounded-xl bg-white border border-zinc-200 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
+                    <Bot size={20} className="text-[#0d47a1]" />
                   </div>
                 </div>
               </div>
@@ -98,8 +107,8 @@ export default function HeroSection({ handleDrawerOpen }) {
               {/* Orbiting node 2 - Workflow */}
               <div className="absolute inset-0 animate-orbit" style={{ animationDelay: "-4s" }}>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="h-14 w-14 rounded-xl bg-white border border-purple-200 shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
-                    <Workflow size={22} className="text-purple-600" />
+                  <div className="h-12 w-12 rounded-xl bg-white border border-zinc-200 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
+                    <Workflow size={20} className="text-[#0d47a1]" />
                   </div>
                 </div>
               </div>
@@ -107,8 +116,8 @@ export default function HeroSection({ handleDrawerOpen }) {
               {/* Orbiting node 3 - Cpu */}
               <div className="absolute inset-0 animate-orbit" style={{ animationDelay: "-8s" }}>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="h-14 w-14 rounded-xl bg-white border border-green-200 shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
-                    <Cpu size={22} className="text-green-600" />
+                  <div className="h-12 w-12 rounded-xl bg-white border border-zinc-200 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
+                    <Cpu size={20} className="text-[#0d47a1]" />
                   </div>
                 </div>
               </div>
@@ -116,8 +125,8 @@ export default function HeroSection({ handleDrawerOpen }) {
               {/* Inner orbiting node 1 - Database */}
               <div className="absolute inset-0 animate-orbit-reverse">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="h-10 w-10 rounded-lg bg-white border border-amber-200 shadow-md flex items-center justify-center">
-                    <Database size={16} className="text-amber-600" />
+                  <div className="h-10 w-10 rounded-lg bg-white border border-zinc-200 shadow-sm flex items-center justify-center">
+                    <Database size={16} className="text-zinc-700" />
                   </div>
                 </div>
               </div>
@@ -125,21 +134,20 @@ export default function HeroSection({ handleDrawerOpen }) {
               {/* Inner orbiting node 2 - MessageSquare */}
               <div className="absolute inset-0 animate-orbit-reverse" style={{ animationDelay: "-5s" }}>
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="h-10 w-10 rounded-lg bg-white border border-rose-200 shadow-md flex items-center justify-center">
-                    <MessageSquare size={16} className="text-rose-500" />
+                  <div className="h-10 w-10 rounded-lg bg-white border border-zinc-200 shadow-sm flex items-center justify-center">
+                    <MessageSquare size={16} className="text-zinc-700" />
                   </div>
                 </div>
               </div>
 
-              {/* Floating particles */}
-              <div className="absolute top-6 right-12 h-2 w-2 rounded-full bg-blue-400/50 animate-float" />
-              <div className="absolute bottom-12 left-8 h-1.5 w-1.5 rounded-full bg-purple-400/40 animate-float-slow" />
-              <div className="absolute top-1/3 left-4 h-2.5 w-2.5 rounded-full bg-[var(--primary-color)]/20 animate-float" style={{ animationDelay: "-2s" }} />
-              <div className="absolute bottom-8 right-16 h-2 w-2 rounded-full bg-green-400/30 animate-float-slow" style={{ animationDelay: "-1s" }} />
+              {/* Subtle floating particles */}
+              <div className="absolute top-6 right-10 h-2 w-2 rounded-full bg-[#0d47a1]/40 animate-float" />
+              <div className="absolute bottom-10 left-8 h-1.5 w-1.5 rounded-full bg-[#0d47a1]/30 animate-float-slow" />
+              <div className="absolute top-1/3 left-4 h-2.5 w-2.5 rounded-full bg-[#0d47a1]/20 animate-float" style={{ animationDelay: "-2s" }} />
             </div>
           </div>
         </div>
       </Container>
     </Box>
-  )
+  );
 }

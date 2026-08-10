@@ -1,56 +1,72 @@
 import React from 'react'
-import { Box, Card, Button } from '@mui/material'
-import { Play, ArrowUpRight, Clock, Trash2 } from 'lucide-react'
-import {timeAgo} from "@/utils/commonFunction";
+import { Box, Card } from '@mui/material'
+import { Play, ArrowUpRight, Clock, Trash2, Workflow } from 'lucide-react'
+import { timeAgo } from "@/utils/commonFunction";
 
 const FlowListingGridView = ({ flows, handleRunFlow, handleOpenStudio, handleDeleteFlow }) => {
   return (
-    <Box className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {flows.map((flow) => (
-      <Card
-        key={flow.id || flow.agent_id}
-        className="group relative bg-white rounded-xl overflow-hidden shadow-sm  border border-slate-100"
-      >
-        <Box className="absolute top-0 left-0 w-full h-1 bg-[var(--primary-color)]"></Box>
-        <Box className="p-6">
-          <h3 className="text-lg font-bold text-slate-800 mb-2 transition-colors">
-            {flow.name || flow.agent_name || "Unnamed Flow"}
-          </h3>
-          <p className="text-slate-500 text-sm mb-4 line-clamp-2">
-            {flow.description || flow.agent_description || "No description available"}
-          </p>
-          <Box className="flex items-center text-xs text-slate-400 mb-4">
-            <Clock className="h-3 w-3 mr-1" /> {timeAgo(flow.updatedAt)}
+    <Box className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {flows.map((flow) => (
+        <Card
+          key={flow.id || flow.agent_id}
+          className="group relative bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md border border-zinc-200 transition-all flex flex-col justify-between"
+          elevation={0}
+        >
+          <Box className="p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div className="h-7 w-7 rounded-lg bg-zinc-100 flex items-center justify-center">
+                <Workflow size={14} className="text-zinc-700" />
+              </div>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 text-[11px] font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                Live
+              </span>
+            </div>
+
+            <h3 className="text-sm font-semibold text-zinc-900 mb-1 line-clamp-1">
+              {flow.name || flow.agent_name || "Unnamed workflow"}
+            </h3>
+
+            <p className="text-zinc-500 text-xs mb-4 line-clamp-2 leading-relaxed">
+              {flow.description || flow.agent_description || "AI agent workflow"}
+            </p>
+
+            <Box className="flex items-center gap-1 text-[11px] text-zinc-400">
+              <Clock size={12} />
+              <span>{timeAgo(flow.updatedAt)}</span>
+            </Box>
           </Box>
 
-          <Box className="flex items-center justify-between pt-4 border-t border-slate-300">
-            <Button
+          <Box className="px-5 py-3 bg-zinc-50/60 border-t border-zinc-100 flex items-center justify-between">
+            <button
               onClick={() => handleRunFlow(flow)}
-    
-              className='!text-[var(--primary-color)] !hover:bg-[var(--primary-color)]'
+              className="inline-flex items-center gap-1 text-xs font-medium text-zinc-600 hover:text-zinc-900"
             >
-              <Play size={15} className="mr-1" /> Run
-            </Button  >
+              <Play size={13} />
+              <span>Execute</span>
+            </button>
 
-            <Button
-            //   color=""
-              onClick={() => handleOpenStudio(flow.id)}
-              className="!text-[#6c5ce7]"
-            >
-              Open Studio <ArrowUpRight size={16} className="ml-1" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleOpenStudio(flow.id)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium transition-colors"
+              >
+                <span>Open</span>
+                <ArrowUpRight size={13} />
+              </button>
 
-            <Button
-              onClick={() => handleDeleteFlow(flow.id)}
-              color="error"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+              <button
+                onClick={() => handleDeleteFlow(flow.id)}
+                className="p-1 rounded text-zinc-400 hover:text-red-600 transition-colors"
+                title="Delete"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
           </Box>
-        </Box>
-      </Card>
-    ))}
-  </Box>
+        </Card>
+      ))}
+    </Box>
   )
 }
 

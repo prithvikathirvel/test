@@ -1321,19 +1321,19 @@ function ComponentSection({ section, isFirstSection, onDragStart }) {
 function getNodeColor(nodeType) {
   switch (nodeType) {
     case "Inputs":
-      return "#10b981"
+      return "#475569"
     case "Agents":
-      return "#10b981"
+      return "#0d47a1"
     case "Agent Flows":
-      return "#06b6d4"
+      return "#0d47a1"
     case "Tools":
-      return "#800080"
+      return "#18181b"
     case "AI Models":
-      return "#8b5cf6"
+      return "#18181b"
     case "Outputs":
-      return "#ef4444"
+      return "#475569"
     default:
-      return "#6b7280"
+      return "#64748b"
   }
 }
 
@@ -1341,18 +1341,18 @@ function getNodeColor(nodeType) {
 function getNodeBgColor(nodeType) {
   switch (nodeType) {
     case "Inputs":
-      return "#ecfdf5"
+      return "#f8fafc"
     case "Agents":
       return "#eff6ff"
     case "Agent Flows":
-      return "#ecfeff"
+      return "#eff6ff"
     case "Tools":
-      return "#fffbeb"
+      return "#f4f4f5"
     case "AI Models":
-      return "#f3e8ff"
+      return "#f4f4f5"
     case "Outputs":
-      return "#fef2f2"
+      return "#f8fafc"
     default:
-      return "#f9fafb"
+      return "#fafafa"
   }
 }

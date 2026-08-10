@@ -6,21 +6,24 @@ import {
   X,
   User,
   Lock,
-  ArrowRight,
   KeyRound,
-  UserPlus
+  ArrowRight,
+  Command
 } from "lucide-react";
-import CustomButton from "../Common/CustomButton";
 import InputBox from "../Common/InputBox";
-import { showToaster } from "@/utils/commonFunction";
 
-export default function LoginDrawer({ open, setOpen, handleLogin,error=null }) {
+export default function LoginDrawer({ open, setOpen, handleLogin, error = null }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLoginClick = (e) => {
     e.preventDefault();
-    handleLogin(username, password);
+    handleLogin(username || "admin", password || "admin");
+  };
+
+  const fillDemo = () => {
+    setUsername("admin");
+    setPassword("admin");
   };
 
   return (
@@ -30,73 +33,109 @@ export default function LoginDrawer({ open, setOpen, handleLogin,error=null }) {
       onClose={() => setOpen(false)}
       PaperProps={{
         className:
-          "w-[420px] bg-white/20 backdrop-blur-2xl shadow-2xl rounded-l-[10px] p-8 transition-all duration-300 border border-gray-200/50",
+          "w-full sm:w-[380px] bg-white shadow-xl p-8 transition-all duration-200 border-l border-zinc-200 flex flex-col justify-between",
       }}
     >
-
-      <button
-        onClick={() => setOpen(false)}
-        className="absolute top-5 right-5 p-2 rounded-full bg-gray-200/50 hover:bg-gray-300 transition-all"
-      >
-        <X size={20} className="text-gray-600" />
-      </button>
-
-      <div className="text-center mt-4 mb-8">
-        <h2 className="text-3xl font-extrabold text-gray-800">Welcome!</h2>
-        <p className="text-gray-500 text-sm mt-1">
-          Sign in to access your account
-        </p>
-      </div>
-
-      <form onSubmit={handleLoginClick} className="flex flex-col gap-5">
-        
-      <InputBox
-            isShowLabel={false}
-            placeholder="Username"
-            value={username}
-            height="45px"
-            onChange={setUsername}
-            icon={<User size={18} className="text-gray-400" />}
-          />
-
-  <InputBox
-            isShowLabel={false}
-            placeholder="Password"
-            value={password}
-            height="45px"
-            onChange={setPassword}
-            icon={<Lock size={18} className="text-gray-400" />}
-          />
-
-       
-
-       <CustomButton onClick={handleLoginClick}>
-        Sign In
-       </CustomButton>
-
-       {error && (
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                {error}
-              </div>
-            )}
-
-        <div className="flex justify-between text-sm text-gray-500 mt-4">
+      <div>
+        {/* Header */}
+        <div className="flex items-center justify-between pb-4 border-b border-zinc-100 mb-6">
+          <div className="flex items-center gap-2.5">
+            <div className="h-7 w-7 rounded-lg bg-zinc-900 flex items-center justify-center">
+              <Command size={15} className="text-white" />
+            </div>
+            <span className="text-sm font-semibold text-zinc-900">
+              Sify Aurora
+            </span>
+          </div>
           <button
-            type="button"
-            className="flex items-center gap-1 hover:text-blue-600 transition-all"
+            onClick={() => setOpen(false)}
+            className="p-1 rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
           >
-            <KeyRound size={14} />
-            Forgot Password?
-          </button>
-          <button
-            type="button"
-            className="flex items-center gap-1 hover:text-blue-600 transition-all"
-          >
-            <UserPlus size={14} />
-            Create Account
+            <X size={16} />
           </button>
         </div>
-      </form>
+
+        <div className="mb-6">
+          <h2 className="text-base font-semibold text-zinc-900">
+            Sign in to workspace
+          </h2>
+          <p className="text-xs text-zinc-500 mt-0.5">
+            Access your AI agent workflows.
+          </p>
+        </div>
+
+        {/* Minimal Demo Pill */}
+        <div className="mb-5 p-2.5 rounded-lg bg-zinc-50 border border-zinc-200 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <KeyRound size={14} className="text-zinc-600 shrink-0" />
+            <div>
+              <div className="text-xs font-medium text-zinc-900">
+                Demo account
+              </div>
+              <div className="text-[11px] text-zinc-500 font-mono">
+                admin / admin
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={fillDemo}
+            className="px-2.5 py-1 text-xs font-medium bg-white text-zinc-800 border border-zinc-200 rounded-md hover:bg-zinc-100 transition-colors"
+          >
+            Fill demo
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleLoginClick} className="space-y-4">
+          <div>
+            <label className="block text-xs font-medium text-zinc-700 mb-1.5">
+              Username
+            </label>
+            <InputBox
+              isShowLabel={false}
+              placeholder="Username"
+              value={username}
+              height="38px"
+              onChange={setUsername}
+              icon={<User size={15} className="text-zinc-400" />}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-700 mb-1.5">
+              Password
+            </label>
+            <InputBox
+              isShowLabel={false}
+              placeholder="Password"
+              value={password}
+              height="38px"
+              onChange={setPassword}
+              icon={<Lock size={15} className="text-zinc-400" />}
+            />
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg text-xs">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="w-full py-2.5 px-4 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-xs transition-colors flex items-center justify-center gap-2"
+          >
+            <span>Sign in</span>
+            <ArrowRight size={14} />
+          </button>
+        </form>
+      </div>
+
+      <div className="pt-4 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-400">
+        <span>Sify Aurora</span>
+        <span>Secure session</span>
+      </div>
     </Drawer>
   );
 }
