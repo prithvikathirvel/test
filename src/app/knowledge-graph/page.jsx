@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Database } from 'lucide-react';
+import { Waypoints } from 'lucide-react';
 import {
   setStep, setUploadSession,
   clearSession, setSessionExpired, resetWizard,
@@ -68,7 +68,7 @@ export default function KnowledgeGraphPage() {
       <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4  mx-auto">
         <div className="flex items-center gap-3.5">
           <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200/50">
-            <Database size={20} className="text-white" />
+            <Waypoints  size={20} className="text-white" />
           </div>
           <div>
             <h1 className="font-bold text-gray-800 leading-tight text-xl sm:text-2xl">Knowledge Graph</h1>

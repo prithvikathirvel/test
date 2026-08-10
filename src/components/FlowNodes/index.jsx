@@ -12,7 +12,7 @@ import {
   Dot
 } from 'lucide-react';
 import { useSelector } from "react-redux";
-import { useMemo } from "react";
+import { memo, useMemo } from "react";
 import { Tooltip } from "@mui/material";
 
 const getNodeIcon = (type, tools, agents, models, inputs, outputs, agentflows) => {
@@ -71,7 +71,7 @@ const getOptionColors = () => [
   { bg: 'bg-pink-500', hex: '#EC4899' }
 ];
 
-function CustomNode({ data, type }) {
+const CustomNode = memo(function CustomNode({ data, type }) {
   const tools = useSelector((state) => state.studio.tools);
   const agents = useSelector((state) => state.studio.agents);
   const models = useSelector((state) => state.studio.models);
@@ -358,7 +358,7 @@ function CustomNode({ data, type }) {
       )}
     </div>
   );
-}
+});
 
 export const useNodeTypes = () => {
   const tools = useSelector((state) => state.studio.tools);

@@ -1,7 +1,7 @@
 "use client";
 import { Box, Typography, Button, ButtonGroup, Tooltip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { useCallback, useState, useEffect, useMemo } from "react";
+import { useCallback, useState, useEffect, useMemo, useRef } from "react";
 import ReactFlow, { Background, Controls, useNodesState, useEdgesState, addEdge } from "reactflow";
 import "reactflow/dist/style.css";
 import { useNodeTypes } from "@/components/FlowNodes";
@@ -50,6 +50,11 @@ const Studio = () => {
     const flowOutput = useSelector(state => state.studio.flowOutput);
     const isFlowRunning = useSelector(state => state.studio.isFlowRunning);
     const nodeTypes = useNodeTypes();
+
+    const nodesRef = useRef(nodes);
+    nodesRef.current = nodes;
+    const flowRef = useRef(flow);
+    flowRef.current = flow;
 
     const [voiceEnabled, setVoiceEnabled] = useState(false);
     const [voiceConfig, setVoiceConfig] = useState({
@@ -402,8 +407,8 @@ const Studio = () => {
 
                     if (flowInputs.length > 0) {
                         const updatedConfig = {
-                            ...flow,
-                            inputs: [...(flow?.inputs || []), ...flowInputs]
+                            ...flowRef.current,
+                            inputs: [...(flowRef.current?.inputs || []), ...flowInputs]
                         };
                         console.log(updatedConfig, 'flow 2')
 
@@ -441,13 +446,13 @@ const Studio = () => {
                 };
 
                 setNodesState((nds) => [...nds, newNode]);
-                dispatch(setNodes({ nodes: [...nodes, newNode], flow }));
+                dispatch(setNodes({ nodes: [...nodesRef.current, newNode], flow: flowRef.current }));
 
             } catch (error) {
                 console.error("Error handling node drop:", error);
             }
         },
-        [dispatch, setNodesState, setEdgesState, nodes, flow, specification]
+        [dispatch, setNodesState]
     );
 
     const handleRenderFlow = () => {
@@ -458,13 +463,52 @@ const Studio = () => {
         setOutputModalOpen(true);
     }
 
+    const syncTimeoutRef = useRef(null);
+    const prevNodesLenRef = useRef(0);
+    const prevEdgesLenRef = useRef(0);
+
     useEffect(() => {
-        dispatch(setNodes({ nodes: nodes, flow: flow }));
+        const nodesLen = nodes.length;
+        const structuralChange = nodesLen !== prevNodesLenRef.current;
+        prevNodesLenRef.current = nodesLen;
+
+        if (structuralChange) {
+            // Immediate sync for add/remove node
+            dispatch(setNodes({ nodes: nodes, flow: flow }));
+        } else {
+            // Debounced sync for position-only changes (drag)
+            if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+            syncTimeoutRef.current = setTimeout(() => {
+                dispatch(setNodes({ nodes: nodes, flow: flow }));
+            }, 300);
+        }
+
+        return () => {
+            if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
+        };
     }, [nodes]);
 
+    const edgeSyncTimeoutRef = useRef(null);
 
     useEffect(() => {
-        dispatch(setEdges({ edges: edges, flow: flow }));
+        const edgesLen = edges.length;
+        const structuralChange = edgesLen !== prevEdgesLenRef.current;
+        prevEdgesLenRef.current = edgesLen;
+
+        if (structuralChange) {
+            // Immediate sync for add/remove edge
+            dispatch(setEdges({ edges: edges, flow: flow }));
+        } else {
+            // Debounced sync for non-structural changes
+            if (edgeSyncTimeoutRef.current) clearTimeout(edgeSyncTimeoutRef.current);
+            edgeSyncTimeoutRef.current = setTimeout(() => {
+                dispatch(setEdges({ edges: edges, flow: flow }));
+            }, 300);
+        }
+
+        return () => {
+            if (edgeSyncTimeoutRef.current) clearTimeout(edgeSyncTimeoutRef.current);
+        };
     }, [edges]);
 
 
