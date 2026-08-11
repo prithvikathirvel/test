@@ -4,37 +4,27 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import {
-  Network,
   Plus,
   Play,
-  Trash2,
   Search,
-  Filter,
-  ArrowUpRight,
-  Clock,
-  Zap,
   Grid3X3,
   List,
   Sparkles,
-  Layers,
-  Cpu,
-  ShieldCheck,
-  Bot,
-  Activity,
   Workflow,
+  Activity,
+  Zap,
+  Cpu,
   CheckCircle2,
 } from "lucide-react";
 import { getAllFlows, saveFlow, updateSpecification, deleteFlow } from "@/redux/slices/studioSlice";
 import FlowDetailsModal from "@/components/studio/FlowDetailsModal";
-import { Container, Box, Typography, Button, ButtonGroup, Chip, Tooltip } from "@mui/material";
-import DetailsCard from "@/components/StudioListing/DetailsCard";
+import { Box, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import InputBox from "@/components/Common/InputBox";
 import { sortByField } from "@/utils/commonFunction";
 import FlowListingTableView from "@/components/StudioListing/FlowListingTableView";
 import FlowListingGridView from "@/components/StudioListing/FlowListingGridView";
 import BlurredLoader from "@/components/Common/BlurredLoader";
-import CustomButton from "@/components/Common/CustomButton";
 
 const StudioListing = () => {
   const dispatch = useDispatch();
@@ -45,7 +35,6 @@ const StudioListing = () => {
   const studioSaveFlowLoader = useSelector((state) => state.studio.studioSaveFlowLoader);
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("list"); // 'list' or 'grid'
-  const [selectedFilter, setSelectedFilter] = useState("all"); // 'all', 'active', 'recent'
 
   useEffect(() => {
     dispatch(getAllFlows());
@@ -122,77 +111,68 @@ const StudioListing = () => {
       {studioSaveFlowLoader && <BlurredLoader title="Provisioning New Agentic Flow..." />}
 
       <Box className="px-6 lg:px-10 py-8">
-        {/* Top Header & Action Bar */}
-        <Box className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        {/* Top Header */}
+        <Box className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
               <span>Platform</span>
               <span>/</span>
-              <span className="text-slate-900">Flow Studio</span>
+              <span className="text-slate-700">Studio</span>
             </div>
             <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
-              Agent Workflows
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
-                {flows.length} Total
+              Flows
+              <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                {flows.length}
               </span>
             </h1>
             <p className="text-slate-500 text-sm mt-0.5">
-              Build, test, and orchestrate autonomous AI agent workflows with real-time telemetry.
+              Build, test, and orchestrate autonomous AI agent workflows.
             </p>
           </div>
 
           <Box className="flex items-center gap-3">
-            <CustomButton
+            <button
               onClick={handleCreateStudio}
-              variant="contained"
-              size="medium"
-              startIcon={<Plus size={16} />}
-              className="!shadow-sm !shadow-blue-500/20"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 shadow-xs transition-colors"
             >
-              Create Agentic Flow
-            </CustomButton>
+              <Plus size={15} /> Create Flow
+            </button>
           </Box>
         </Box>
 
-        {/* Enterprise KPI Metric Cards */}
-        <Grid container spacing={2.5} className="mb-8">
+        {/* Telemetry Metric Cards */}
+        <Grid container spacing={2} className="mb-8">
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Box className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs">
+            <Box className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Flows</p>
-                <div className="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                  <Workflow size={16} />
-                </div>
+                <Workflow size={16} className="text-slate-400" />
               </div>
               <p className="text-2xl font-bold text-slate-900 mt-2">{flows.length}</p>
-              <div className="flex items-center gap-1 mt-2 text-[11px] text-emerald-600 font-medium">
-                <CheckCircle2 size={12} /> Ready for deployment
+              <div className="flex items-center gap-1 mt-2 text-[11px] text-slate-500 font-medium">
+                <CheckCircle2 size={12} className="text-emerald-500" /> Production ready
               </div>
             </Box>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Box className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs">
+            <Box className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Instances</p>
-                <div className="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                  <Activity size={16} />
-                </div>
+                <Activity size={16} className="text-slate-400" />
               </div>
               <p className="text-2xl font-bold text-slate-900 mt-2">{flows.length > 0 ? flows.length : 0}</p>
               <div className="flex items-center gap-1.5 mt-2 text-[11px] text-slate-500">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Cluster healthy
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Cluster operational
               </div>
             </Box>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Box className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs">
+            <Box className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Execution SLA</p>
-                <div className="h-8 w-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center">
-                  <Zap size={16} />
-                </div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Reliability SLA</p>
+                <Zap size={16} className="text-slate-400" />
               </div>
               <p className="text-2xl font-bold text-slate-900 mt-2">99.9%</p>
               <div className="mt-2 text-[11px] text-slate-500 font-medium">
@@ -202,12 +182,10 @@ const StudioListing = () => {
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Box className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs">
+            <Box className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Connected Tools</p>
-                <div className="h-8 w-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                  <Cpu size={16} />
-                </div>
+                <Cpu size={16} className="text-slate-400" />
               </div>
               <p className="text-2xl font-bold text-slate-900 mt-2">12 MCP</p>
               <div className="mt-2 text-[11px] text-slate-500 font-medium">
@@ -217,17 +195,17 @@ const StudioListing = () => {
           </Grid>
         </Grid>
 
-        {/* Search, Filter, and View Controls */}
+        {/* Controls Bar */}
         <Box className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-5">
           <Box className="flex items-center gap-2">
             <InputBox
               placeholder="Search workflows by name or description..."
               value={searchTerm}
               isShowLabel={false}
-              height="38px"
+              height="36px"
               onChange={setSearchTerm}
               className="w-full sm:w-80 bg-white"
-              icon={<Search className="text-slate-400" size={16} />}
+              icon={<Search className="text-slate-400" size={15} />}
             />
           </Box>
 
@@ -276,24 +254,23 @@ const StudioListing = () => {
           )
         ) : (
           <Box className="flex flex-col items-center justify-center py-20 px-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
-            <div className="h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 border border-blue-100 shadow-sm">
-              <Sparkles size={22} />
+            <div className="h-10 w-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mb-3">
+              <Sparkles size={18} />
             </div>
-            <Typography variant="h6" className="!font-bold !text-slate-900 !tracking-tight mb-1">
+            <Typography variant="h6" className="!font-bold !text-slate-900 !tracking-tight mb-1 !text-base">
               No Workflows Found
             </Typography>
-            <Typography variant="body2" className="!text-slate-500 !max-w-md mb-6">
+            <Typography variant="body2" className="!text-slate-500 !max-w-md mb-5 !text-xs">
               {searchTerm
-                ? "No agent flows match your search filter. Try clearing the query or search for something else."
-                : "Create your first AI flow to connect nodes, models, and tools into autonomous agent workflows."}
+                ? "No agent flows match your search query."
+                : "Create your first AI workflow to connect nodes, models, and tools."}
             </Typography>
-            <CustomButton
+            <button
               onClick={handleCreateStudio}
-              variant="contained"
-              startIcon={<Plus size={16} />}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 shadow-xs transition-colors"
             >
-              Create First Flow
-            </CustomButton>
+              <Plus size={15} /> Create Flow
+            </button>
           </Box>
         )}
       </Box>

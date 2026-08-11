@@ -2,7 +2,6 @@
 import { Geist } from "next/font/google";
 import "@/app/globals.css";
 import ReduxProvider from "@/components/providers/ReduxProvider";
-import Header from "@/components/layout/Header";
 import Sidenav from "@/components/layout/Sidenav";
 import { Box } from "@mui/material";
 import { usePathname } from "next/navigation";
@@ -27,17 +26,10 @@ const pathsWithoutNav = [
 export default function RootLayout({ children }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const shouldShowNav = !pathsWithoutNav.includes(pathname);
 
-  // Derive title from pathname
-  const getPageTitle = () => {
-    if (pathname.startsWith("/studio/")) return "Flow Editor";
-    if (pathname === "/studio") return "Flow Studio";
-    if (pathname === "/knowledge") return "Knowledge Base";
-    if (pathname === "/knowledge-graph") return "Knowledge Graph";
-    if (pathname === "/settings") return "Settings";
-    return "Sify Aurora";
-  };
+  // Studio Canvas route (/studio/[id]) manages its own full-screen canvas and should NOT display the global sidebar
+  const isStudioCanvas = pathname.startsWith("/studio/") && pathname !== "/studio";
+  const shouldShowNav = !pathsWithoutNav.includes(pathname) && !isStudioCanvas;
 
   return (
     <html lang="en" className="h-full">
