@@ -23,6 +23,8 @@ import InputFieldConfiguration from "@/components/InputFieldConfiguration";
 import CustomButton from "@/components/Common/CustomButton";
 import VoiceConfigModal from "@/components/studio/VoiceConfigModal";
 import StudioHeader from "@/components/studio/StudioHeader";
+import FlowValidationModal from "@/components/studio/FlowValidationModal";
+import { validateFlowOutputVariables } from "@/utils/flowValidation";
 const drawerWidth = 280;
 
 const Studio = () => {
@@ -42,6 +44,8 @@ const Studio = () => {
     const [toggleViewMode, setToggleViewMode] = useState(false);
     const [renderFlow, setRenderFlow] = useState(false);
     const [output, setOutput] = useState(null);
+    const [validationModalOpen, setValidationModalOpen] = useState(false);
+    const [validationErrors, setValidationErrors] = useState([]);
     const params = useParams();
     const flowId = params.id;
     const flow = useSelector(state => state.studio.flow);
@@ -529,13 +533,27 @@ const Studio = () => {
         setFormattedOututParam(lastParam?.value);
     };
 
+    const runFlowValidation = useCallback(() => {
+        const result = validateFlowOutputVariables(nodes);
+        if (!result.isValid) {
+            setValidationErrors(result.errors);
+            setValidationModalOpen(true);
+            toast.error(`Validation Failed: ${result.errors.length} output variable conflict(s) detected.`);
+            return false;
+        }
+        return true;
+    }, [nodes]);
+
     const handleRunFlow = useCallback(() => {
-        dispatch(runFlow({ data: { agent_id: flow?.id }, onSuccess: () => handleOpenOutputModal(flow) }))
-    }, [flow, dispatch]);
+        if (!runFlowValidation()) return;
+        dispatch(runFlow({ data: { agent_id: flow?.id }, onSuccess: () => handleOpenOutputModal(flow) }));
+    }, [flow, dispatch, runFlowValidation]);
 
     const handleDeployFlow = useCallback(() => {
+        if (!runFlowValidation()) return;
         dispatch(updateSpecification());
-    }, [dispatch]);
+        toast.success("Workflow deployed successfully.");
+    }, [dispatch, runFlowValidation]);
 
     const onNodeClick = useCallback((event, node) => {
         setSelectedNode(node);
@@ -559,13 +577,23 @@ const Studio = () => {
     }, [dispatch, handleNodeDelete]);
 
     const handleSaveFlow = useCallback(() => {
+        if (!runFlowValidation()) return;
         setSaveFlow(false);
-        // console.log('save flow');
-        // console.log('Flow ID:', flowId);
-        // console.log('specification', specification);
-        // console.log('flow before saving', flow);
-        dispatch(updateFlow({ id: flowId, updatedData: specification, onSuccess: (value) => console.log("Saved Successfully") }));
-    }, [dispatch, flowId, specification, flow]);
+        dispatch(updateFlow({ 
+            id: flowId, 
+            updatedData: specification, 
+            onSuccess: () => toast.success("Workflow saved successfully") 
+        }));
+    }, [dispatch, flowId, specification, flow, runFlowValidation]);
+
+    const handleFixNode = useCallback((nodeId, targetNode) => {
+        setValidationModalOpen(false);
+        const foundNode = targetNode || nodes.find(n => n.id === nodeId);
+        if (foundNode) {
+            setSelectedNode(foundNode);
+            setModalOpen(true);
+        }
+    }, [nodes]);
 
     const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters, parameter) => {
         console.log(nodeId, 'NodeIdddd')
@@ -718,6 +746,14 @@ const Studio = () => {
                             }}
                             flow={flow}
                             onOpenExecutionOutput={handleOpenExecutionOutput}
+                        />
+
+                        {/* Flow Validation Collision Modal */}
+                        <FlowValidationModal
+                            open={validationModalOpen}
+                            onClose={() => setValidationModalOpen(false)}
+                            errors={validationErrors}
+                            onFixNode={handleFixNode}
                         />
                     </Box>
                 </Box>

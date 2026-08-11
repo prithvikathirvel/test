@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import {
@@ -15,6 +15,7 @@ import FlowDetailsModal from "@/components/studio/FlowDetailsModal";
 import { Box, Typography } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import InputBox from "@/components/Common/InputBox";
+import Pagination from "@/components/Common/Pagination";
 import { sortByField } from "@/utils/commonFunction";
 import FlowListingTableView from "@/components/StudioListing/FlowListingTableView";
 import FlowListingGridView from "@/components/StudioListing/FlowListingGridView";
@@ -30,6 +31,10 @@ const StudioListing = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [viewMode, setViewMode] = useState("list");
 
+  // Frontend Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(6);
+
   useEffect(() => {
     dispatch(getAllFlows());
     setFlowDetailsModalOpen(false);
@@ -37,6 +42,11 @@ const StudioListing = () => {
       router.push(`/studio/${newFlowId}`);
     }
   }, [newFlowId, dispatch, router]);
+
+  // Reset pagination when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const handleDeleteFlow = (flowId) => {
     dispatch(
@@ -90,18 +100,26 @@ const StudioListing = () => {
     setFlowDetailsModalOpen(true);
   };
 
-  const filteredFlows = sortByField(flows, "updatedAt", "desc").filter((flow) => {
-    const nameMatch = (flow.name || flow.agent_name || "").toLowerCase().includes(searchTerm.toLowerCase());
-    const descMatch = (flow.description || flow.agent_description || "").toLowerCase().includes(searchTerm.toLowerCase());
-    return nameMatch || descMatch;
-  });
+  const filteredFlows = useMemo(() => {
+    return sortByField(flows, "updatedAt", "desc").filter((flow) => {
+      const nameMatch = (flow.name || flow.agent_name || "").toLowerCase().includes(searchTerm.toLowerCase());
+      const descMatch = (flow.description || flow.agent_description || "").toLowerCase().includes(searchTerm.toLowerCase());
+      return nameMatch || descMatch;
+    });
+  }, [flows, searchTerm]);
+
+  // Slice flows for current page
+  const paginatedFlows = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredFlows.slice(startIndex, startIndex + pageSize);
+  }, [filteredFlows, currentPage, pageSize]);
 
   return (
     <Box className="min-h-screen bg-[#f8fafc]">
       {studioSaveFlowLoader && <BlurredLoader title="Creating Flow..." />}
 
       <Box className="px-6 lg:px-10 py-8">
-        {/* Page Header matching attached design */}
+        {/* Page Header */}
         <Box className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
@@ -122,7 +140,7 @@ const StudioListing = () => {
           </Box>
         </Box>
 
-        {/* Minimal Metric Cards matching screenshot */}
+        {/* Minimal Metric Cards */}
         <Grid container spacing={2.5} className="mb-8">
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Box className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
@@ -207,19 +225,34 @@ const StudioListing = () => {
 
         {/* Content Listing or Empty State */}
         {filteredFlows.length > 0 ? (
-          viewMode === "grid" ? (
-            <FlowListingGridView
-              flows={filteredFlows}
-              handleOpenStudio={handleOpenStudio}
-              handleDeleteFlow={handleDeleteFlow}
+          <div className="space-y-4">
+            {viewMode === "grid" ? (
+              <FlowListingGridView
+                flows={paginatedFlows}
+                handleOpenStudio={handleOpenStudio}
+                handleDeleteFlow={handleDeleteFlow}
+              />
+            ) : (
+              <FlowListingTableView
+                filteredFlows={paginatedFlows}
+                handleOpenStudio={handleOpenStudio}
+                handleDeleteFlow={handleDeleteFlow}
+              />
+            )}
+
+            {/* Reusable Pagination */}
+            <Pagination
+              currentPage={currentPage}
+              totalItems={filteredFlows.length}
+              pageSize={pageSize}
+              pageSizeOptions={[6, 12, 24, 48]}
+              onPageChange={setCurrentPage}
+              onPageSizeChange={(newSize) => {
+                setPageSize(newSize);
+                setCurrentPage(1);
+              }}
             />
-          ) : (
-            <FlowListingTableView
-              filteredFlows={filteredFlows}
-              handleOpenStudio={handleOpenStudio}
-              handleDeleteFlow={handleDeleteFlow}
-            />
-          )
+          </div>
         ) : (
           <Box className="flex flex-col items-center justify-center py-20 px-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
             <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 flex items-center justify-center mb-3">
