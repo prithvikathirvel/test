@@ -14,7 +14,7 @@ import {
   MicOff,
   Settings,
 } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const StudioHeader = ({
   flow,
@@ -31,17 +31,31 @@ const StudioHeader = ({
   isSavingFlow,
   onDeployFlow,
 }) => {
+  const router = useRouter();
+
+  const handleBackToFlows = (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    try {
+      router.push("/studio");
+    } catch {
+      window.location.href = "/studio";
+    }
+  };
+
   return (
     <Box className="w-full bg-white border-b border-gray-200/80 px-4 py-2 flex items-center justify-between min-h-[52px] z-30 shadow-2xs">
-      {/* Left: Breadcrumbs & Flow Identity */}
+      {/* Left: Back Navigation & Flow Identity */}
       <Box className="flex items-center gap-3 min-w-0">
-        <Link href="/studio" className="no-underline">
-          <Tooltip title="Back to Flows">
-            <button className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors">
-              <ArrowLeft size={16} />
-            </button>
-          </Tooltip>
-        </Link>
+        <Tooltip title="Back to All Flows">
+          <button
+            type="button"
+            onClick={handleBackToFlows}
+            className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            <ArrowLeft size={16} />
+          </button>
+        </Tooltip>
 
         <div className="h-4 w-px bg-slate-200 hidden sm:block" />
 
@@ -70,6 +84,7 @@ const StudioHeader = ({
         {/* View Mode Switcher */}
         <div className="flex items-center bg-slate-100/90 p-0.5 rounded-lg border border-slate-200/60">
           <button
+            type="button"
             onClick={() => toggleViewMode && onToggleViewMode()}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
               !toggleViewMode
@@ -80,6 +95,7 @@ const StudioHeader = ({
             <Workflow size={13} /> Canvas
           </button>
           <button
+            type="button"
             onClick={() => !toggleViewMode && onToggleViewMode()}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
               toggleViewMode
@@ -95,6 +111,7 @@ const StudioHeader = ({
         <div className="flex items-center gap-1 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
           <Tooltip title={voiceEnabled ? "Voice Agent Active" : "Enable Voice Agent Mode"}>
             <button
+              type="button"
               onClick={onVoiceToggle}
               className={`flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md transition-colors ${
                 voiceEnabled
@@ -120,6 +137,7 @@ const StudioHeader = ({
       {/* Right: Studio Primary Action Toolbar */}
       <Box className="flex items-center gap-2">
         <button
+          type="button"
           onClick={onConfigureInputsClick}
           className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors"
         >
@@ -127,6 +145,7 @@ const StudioHeader = ({
         </button>
 
         <button
+          type="button"
           onClick={onRunFlow}
           disabled={isFlowRunning}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors disabled:opacity-60"
@@ -136,6 +155,7 @@ const StudioHeader = ({
         </button>
 
         <button
+          type="button"
           onClick={onSaveFlow}
           disabled={isSavingFlow}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors disabled:opacity-60"
@@ -145,6 +165,7 @@ const StudioHeader = ({
         </button>
 
         <button
+          type="button"
           onClick={onDeployFlow}
           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
         >

@@ -32,7 +32,11 @@ import {
   Minimize2,
   Sliders,
   Sparkles,
-  Plus,
+  BookOpen,
+  Copy,
+  Check,
+  ArrowRight,
+  HelpCircle,
 } from 'lucide-react';
 import { getNodeColor } from '@/utils/commonFunction';
 import { getParameterComponent } from './InputParameterComponents';
@@ -40,7 +44,7 @@ import CustomAccordion from '@/components/Common/CustomAccordion';
 import OutputParameterComponents from './OutputParameterComponents';
 import JsonOutputDrawer from './JsonOutputDrawer';
 import { updateNode, runFlow } from '@/redux/slices/studioSlice';
-import CustomButton from '@/components/Common/CustomButton';
+import { getNodeDocs } from './nodeDocsData';
 
 const InfoItem = ({ label, value, icon }) => (
   <Box key={label} className="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
@@ -192,7 +196,7 @@ const ModalHeader = ({
             </IconButton>
           </Tooltip>
 
-          <Tooltip title={isDirty ? "Save Parameter Changes" : "No changes to save"}>
+          <Tooltip title={isDirty ? "Save Changes" : "No changes to save"}>
             <span>
               <IconButton
                 onClick={handleSaveChanges}
@@ -264,7 +268,7 @@ const NodeDetailsModal = ({
   onOpenExecutionOutput,
 }) => {
   const dispatch = useDispatch();
-  // Set big screen centered modal as the default
+  // Default to big screen centered modal
   const [isExpanded, setIsExpanded] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [localInputParams, setLocalInputParams] = useState([]);
@@ -272,6 +276,7 @@ const NodeDetailsModal = ({
   const [isDirty, setIsDirty] = useState(false);
   const [outputDrawerOpen, setOutputDrawerOpen] = useState(false);
   const [output, setOutput] = useState(null);
+  const [copiedExample, setCopiedExample] = useState(false);
   const isFlowRunning = useSelector((state) => state.studio.isFlowRunning);
 
   useEffect(() => {
@@ -281,6 +286,8 @@ const NodeDetailsModal = ({
       setIsDirty(false);
     }
   }, [node]);
+
+  const nodeDocs = getNodeDocs(node);
 
   const handleInputChange = (updatedParams) => {
     setLocalInputParams(updatedParams);
@@ -294,21 +301,12 @@ const NodeDetailsModal = ({
     setIsDirty(true);
   };
 
-  const handleOutputParamDelete = (index) => {
-    const updated = localOutputParams.filter((_, i) => i !== index);
-    setLocalOutputParams(updated);
-    setIsDirty(true);
-  };
-
-  const handleAddOutputParam = () => {
-    const newParam = {
-      key: `output_${localOutputParams.length + 1}`,
-      name: `output_${localOutputParams.length + 1}`,
-      type: 'text',
-      value: '',
-    };
-    setLocalOutputParams([...localOutputParams, newParam]);
-    setIsDirty(true);
+  const handleCopyExample = () => {
+    if (nodeDocs?.exampleConfig) {
+      navigator.clipboard.writeText(JSON.stringify(nodeDocs.exampleConfig, null, 2));
+      setCopiedExample(true);
+      setTimeout(() => setCopiedExample(false), 2000);
+    }
   };
 
   const handleTestClick = async () => {
@@ -438,7 +436,7 @@ const NodeDetailsModal = ({
 
           {/* Modal Center 2-Column Body */}
           <Box className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-0">
-            {/* Left Main Parameter Studio Area (8 Cols) */}
+            {/* Left Main Area (8 Cols) */}
             <Box className="lg:col-span-8 border-r border-slate-200/80 bg-white flex flex-col h-full overflow-hidden">
               <Box className="px-6 pt-3 border-b border-slate-100 flex items-center justify-between">
                 <Tabs
@@ -467,21 +465,25 @@ const NodeDetailsModal = ({
                     iconPosition="start"
                     label={`Outputs (${localOutputParams?.length || 0})`}
                   />
+                  <Tab
+                    icon={<BookOpen size={14} />}
+                    iconPosition="start"
+                    label="Docs & Examples"
+                  />
                 </Tabs>
               </Box>
 
               <Box className="flex-1 overflow-y-auto p-6 space-y-4">
+                {/* Tab 0: Input Parameters */}
                 {activeTab === 0 && (
                   <Box>
-                    <Box className="flex items-center justify-between mb-4">
-                      <div>
-                        <Typography className="!text-[13.5px] !font-bold !text-slate-800">
-                          Input Parameters
-                        </Typography>
-                        <Typography className="!text-[11.5px] !text-slate-400">
-                          Configure variable values and connectors for this node.
-                        </Typography>
-                      </div>
+                    <Box className="mb-4">
+                      <Typography className="!text-[13.5px] !font-bold !text-slate-800">
+                        Input Parameters
+                      </Typography>
+                      <Typography className="!text-[11.5px] !text-slate-400">
+                        Configure variable values and connectors for this node.
+                      </Typography>
                     </Box>
 
                     {localInputParams?.length > 0 ? (
@@ -489,16 +491,8 @@ const NodeDetailsModal = ({
                         {localInputParams.map((param, index) => (
                           <Box
                             key={index}
-                            className="p-3.5 bg-slate-50/70 rounded-xl border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all"
+                            className="p-4 bg-slate-50/60 rounded-xl border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all"
                           >
-                            <Box className="flex items-center justify-between mb-2">
-                              <span className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
-                                {param.key || `Parameter ${index + 1}`}
-                              </span>
-                              <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">
-                                {param.type || 'text'}
-                              </span>
-                            </Box>
                             {getParameterComponent(param, nodeColor, (params) => handleInputChange(params), localInputParams, 'inputParameters')}
                           </Box>
                         ))}
@@ -514,24 +508,16 @@ const NodeDetailsModal = ({
                   </Box>
                 )}
 
+                {/* Tab 1: Output Parameters */}
                 {activeTab === 1 && (
                   <Box>
-                    <Box className="flex items-center justify-between mb-4">
-                      <div>
-                        <Typography className="!text-[13.5px] !font-bold !text-slate-800">
-                          Output Parameters
-                        </Typography>
-                        <Typography className="!text-[11.5px] !text-slate-400">
-                          Edit output variable names exposed to subsequent nodes.
-                        </Typography>
-                      </div>
-
-                      <button
-                        onClick={handleAddOutputParam}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200/80 rounded-lg transition-colors"
-                      >
-                        <Plus size={13} /> Add Output Variable
-                      </button>
+                    <Box className="mb-4">
+                      <Typography className="!text-[13.5px] !font-bold !text-slate-800">
+                        Output Parameters
+                      </Typography>
+                      <Typography className="!text-[11.5px] !text-slate-400">
+                        Edit output variable names to map values into downstream nodes.
+                      </Typography>
                     </Box>
 
                     {localOutputParams?.length > 0 ? (
@@ -543,7 +529,6 @@ const NodeDetailsModal = ({
                             index={index}
                             color={nodeColor}
                             onUpdate={(updated) => handleOutputParamUpdate(index, updated)}
-                            onDelete={(idx) => handleOutputParamDelete(idx)}
                           />
                         ))}
                       </Stack>
@@ -553,12 +538,90 @@ const NodeDetailsModal = ({
                         <Typography className="!text-xs !font-semibold !text-slate-600">
                           No Output Parameters Configured
                         </Typography>
-                        <button
-                          onClick={handleAddOutputParam}
-                          className="mt-3 inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-white hover:bg-indigo-50 border border-indigo-200 rounded-lg shadow-2xs"
-                        >
-                          <Plus size={13} /> Add Output Variable
-                        </button>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
+                {/* Tab 2: Documentation & Interactive Examples */}
+                {activeTab === 2 && (
+                  <Box className="space-y-5">
+                    {/* Summary & When to Use */}
+                    <Box className="p-4 bg-indigo-50/40 rounded-xl border border-indigo-100">
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <Sparkles size={15} className="text-indigo-600" />
+                        <Typography className="!text-[13px] !font-bold !text-slate-800">
+                          {nodeDocs?.title || "Node Documentation"}
+                        </Typography>
+                      </div>
+                      <Typography className="!text-[12.5px] !text-slate-600 !leading-relaxed mb-3">
+                        {nodeDocs?.summary || description}
+                      </Typography>
+                      {nodeDocs?.whenToUse && (
+                        <div className="text-[12px] text-indigo-900/80 bg-white/80 p-2.5 rounded-lg border border-indigo-100/60">
+                          <strong className="text-indigo-950 font-semibold">When to use: </strong>
+                          {nodeDocs.whenToUse}
+                        </div>
+                      )}
+                    </Box>
+
+                    {/* Field Reference Guide */}
+                    {nodeDocs?.parameters?.length > 0 && (
+                      <Box>
+                        <Typography className="!text-[12.5px] !font-bold !text-slate-800 mb-2">
+                          Input Fields Reference
+                        </Typography>
+                        <div className="space-y-2">
+                          {nodeDocs.parameters.map((p, pIdx) => (
+                            <div key={pIdx} className="p-3 bg-slate-50/80 rounded-lg border border-slate-200 text-xs space-y-1">
+                              <div className="flex items-center justify-between">
+                                <span className="font-mono font-bold text-slate-800">{p.name}</span>
+                                <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-white text-slate-600 border border-slate-200">
+                                  {p.type} {p.required ? "• required" : "• optional"}
+                                </span>
+                              </div>
+                              <p className="text-slate-500 text-[11.5px]">{p.description}</p>
+                              {p.example && (
+                                <div className="mt-1 font-mono text-[11px] text-slate-600 bg-white px-2 py-1 rounded border border-slate-200/60">
+                                  <span className="text-slate-400">Example: </span>{p.example}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </Box>
+                    )}
+
+                    {/* Example Pipeline Workflow */}
+                    {nodeDocs?.exampleWorkflow && (
+                      <Box>
+                        <Typography className="!text-[12.5px] !font-bold !text-slate-800 mb-1.5">
+                          Recommended Flow Pipeline
+                        </Typography>
+                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs font-mono text-slate-700 flex items-center gap-1.5 overflow-x-auto">
+                          {nodeDocs.exampleWorkflow}
+                        </div>
+                      </Box>
+                    )}
+
+                    {/* Copyable Sample Payload */}
+                    {nodeDocs?.exampleConfig && (
+                      <Box>
+                        <div className="flex items-center justify-between mb-2">
+                          <Typography className="!text-[12.5px] !font-bold !text-slate-800">
+                            Sample Payload
+                          </Typography>
+                          <button
+                            onClick={handleCopyExample}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-md shadow-2xs transition-colors"
+                          >
+                            {copiedExample ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+                            <span>{copiedExample ? "Copied!" : "Copy Payload"}</span>
+                          </button>
+                        </div>
+                        <pre className="p-3.5 bg-slate-900 text-slate-200 rounded-xl text-xs font-mono overflow-auto max-h-48">
+                          <code>{JSON.stringify(nodeDocs.exampleConfig, null, 2)}</code>
+                        </pre>
                       </Box>
                     )}
                   </Box>
@@ -678,7 +741,6 @@ const NodeDetailsModal = ({
                       index={index}
                       color={nodeColor}
                       onUpdate={(updated) => handleOutputParamUpdate(index, updated)}
-                      onDelete={(idx) => handleOutputParamDelete(idx)}
                     />
                   ))}
                 </Stack>
