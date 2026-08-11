@@ -8,6 +8,7 @@ import {
   Settings,
   BookOpen,
   Share2,
+  BookMarked,
   Sparkles,
   PanelLeftClose,
   PanelLeftOpen,
@@ -29,6 +30,11 @@ const Menus = [
     title: "Knowledge Graph", 
     icon: <Share2 size={18} />, 
     path: "/knowledge-graph" 
+  },
+  { 
+    title: "Dictionary", 
+    icon: <BookMarked size={18} />, 
+    path: "/dictionary" 
   },
   { 
     title: "Settings", 
