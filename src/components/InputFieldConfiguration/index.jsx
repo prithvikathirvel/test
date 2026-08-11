@@ -253,7 +253,7 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
           </div>
           <div>
             <h2 className="text-base font-bold text-slate-800 tracking-tight flex items-center gap-2">
-              Configure Flow Input Variables
+              Flow Dictionary
               <span className="text-xs font-mono font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                 {fields.length} variables
               </span>

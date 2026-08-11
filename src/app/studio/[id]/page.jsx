@@ -11,7 +11,7 @@ import { Save, Rocket, Code, Workflow, Eye, Play, ChevronRight, List, Mic, MicOf
 import { useDispatch, useSelector } from "react-redux";
 import { toggleViewMode } from "@/redux/slices/flowSlice";
 import SideDrawer from "@/components/Common/SideDrawer";
-import { fetchTools, fetchAgents, fetchModels, getFlowById, updateFlow, setNodes, setEdges, deleteNode, updateNodeConnections, updateNode, runFlow, updateSpecification, getAllFlows, fetchMcpTools } from "@/redux/slices/studioSlice";
+import { fetchTools, fetchAgents, fetchModels, getFlowById, updateFlow, setNodes, setEdges, deleteNode, updateNodeConnections, updateNode, runFlow, updateSpecification, getAllFlows, fetchMcpTools, clearNewFlowId } from "@/redux/slices/studioSlice";
 import NodeDetailsModal from "@/components/studio/NodeDetailsModal";
 import { toast } from "react-toastify";
 import axios from "axios";
@@ -78,6 +78,7 @@ const Studio = () => {
                 dispatch(fetchAgents());
                 dispatch(getAllFlows());
                 dispatch(fetchMcpTools());
+                dispatch(clearNewFlowId());
             } catch (error) {
                 console.error("Error fetching initial flow data:", error);
             }

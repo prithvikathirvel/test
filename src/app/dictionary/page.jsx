@@ -315,20 +315,22 @@ export default function DictionaryPage() {
             <p className="text-xs text-slate-400 mt-1">Keys & array items</p>
           </div>
 
-          <div className="bg-indigo-50/40 p-5 rounded-2xl border border-indigo-100 shadow-2xs">
-            <p className="text-[11px] font-semibold text-indigo-900/60 uppercase tracking-wider">
-              RESOLVER LATENCY
-            </p>
-            <p className="text-3xl font-bold text-slate-800 mt-2">&lt;1ms</p>
-            <p className="text-xs text-slate-400 mt-1">In-memory parameter cache</p>
-          </div>
-
-          <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-              SYNTAX TEMPLATE
-            </p>
-            <p className="text-lg font-mono font-bold text-indigo-600 mt-3 truncate">{`{{global.KEY}}`}</p>
-            <p className="text-xs text-slate-400 mt-1">Cross-flow reference</p>
+          <div className="sm:col-span-2 bg-gradient-to-br from-indigo-50/60 to-slate-50 p-5 rounded-2xl border border-indigo-100/80 shadow-2xs">
+            <p className="text-[11px] font-semibold text-indigo-600 uppercase tracking-wider mb-3">HOW TO USE</p>
+            <div className="space-y-2.5">
+              <div className="flex items-start gap-2.5">
+                <span className="mt-0.5 flex-shrink-0 h-4 w-4 rounded bg-indigo-100 text-indigo-600 text-[10px] font-bold flex items-center justify-center">1</span>
+                <p className="text-xs text-slate-600">Create a variable with a unique key (e.g. <code className="font-mono text-indigo-600 bg-white px-1 rounded border border-indigo-100">API_CONFIG</code>)</p>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="mt-0.5 flex-shrink-0 h-4 w-4 rounded bg-indigo-100 text-indigo-600 text-[10px] font-bold flex items-center justify-center">2</span>
+                <p className="text-xs text-slate-600">Reference it in any flow node using <code className="font-mono text-indigo-600 bg-white px-1 rounded border border-indigo-100">{`{{global.API_CONFIG}}`}</code></p>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <span className="mt-0.5 flex-shrink-0 h-4 w-4 rounded bg-indigo-100 text-indigo-600 text-[10px] font-bold flex items-center justify-center">3</span>
+                <p className="text-xs text-slate-600">Update the value here—changes reflect instantly across all flows at runtime.</p>
+              </div>
+            </div>
           </div>
         </div>
 

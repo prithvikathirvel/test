@@ -328,6 +328,9 @@ const studioSlice = createSlice({
       //   ...action.payload
       // };
     },
+    clearNewFlowId: (state) => {
+      state.newFlowId = null;
+    },
 
   },
   extraReducers: (builder) => {
@@ -545,5 +548,5 @@ const generateSpecification = (flow, nodes, edges) => {
   return specification;
 };
 
-export const { updateSpecification, setNodes, setEdges, deleteNode, updateNodeConnections, updateNode } = studioSlice.actions;
+export const { updateSpecification, setNodes, setEdges, deleteNode, updateNodeConnections, updateNode, clearNewFlowId } = studioSlice.actions;
 export default studioSlice.reducer;

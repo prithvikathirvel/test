@@ -960,10 +960,10 @@ const StudioChatBot = ({
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="h-12 w-12 bg-slate-900 hover:bg-slate-800 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center focus:outline-none"
+          className="h-12 w-12 bg-white hover:bg-slate-50 border border-slate-200 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center focus:outline-none"
           aria-label="Open chat"
         >
-          <MessageCircle className="w-5 h-5" />
+          <MessageCircle className="w-5 h-5 text-indigo-400" />
         </button>
       )}
 
