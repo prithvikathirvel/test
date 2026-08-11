@@ -64,16 +64,16 @@ export default function KnowledgeGraphPage() {
   };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-6 sm:py-8 bg-gradient-to-b from-slate-50 to-gray-50 min-h-screen">
-      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4  mx-auto">
-        <div className="flex items-center gap-3.5">
-          <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-200/50">
-            <Waypoints  size={20} className="text-white" />
+    <div className="px-6 lg:px-10 py-8 bg-[#f8fafc] min-h-screen">
+      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
+            <span>Platform</span>
+            <span>/</span>
+            <span className="text-slate-700">Knowledge Graph</span>
           </div>
-          <div>
-            <h1 className="font-bold text-gray-800 leading-tight text-xl sm:text-2xl">Knowledge Graph</h1>
-            <p className="text-sm text-gray-400">Upload structured data and model it as a Neo4j knowledge graph</p>
-          </div>
+          <h1 className="font-bold text-slate-800 leading-tight text-2xl">Knowledge Graph</h1>
+          <p className="text-xs text-slate-400 mt-0.5">Model structured data into entity-relationship graphs for agent retrieval</p>
         </div>
         <HealthBadge />
       </div>

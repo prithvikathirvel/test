@@ -181,20 +181,20 @@ const StudioChatBot = ({
 
   const colorConfig = {
     blue: {
-      primary: "bg-blue-600 hover:bg-blue-700",
-      gradient: "from-blue-600 to-blue-700",
-      text: "text-blue-600",
-      border: "border-blue-200 hover:border-blue-300",
-      bg: "bg-blue-50",
-      userBubble: "bg-blue-600",
+      primary: "bg-indigo-600 hover:bg-indigo-700",
+      gradient: "from-slate-900 to-slate-800",
+      text: "text-indigo-600",
+      border: "border-slate-200 hover:border-slate-300",
+      bg: "bg-slate-50",
+      userBubble: "bg-indigo-600 text-white",
     },
     primary: {
-      primary: "bg-[var(--primary-color)] hover:bg-[var(--primary-color)]",
-      gradient: "from-[var(--primary-color)] to-[var(--primary-color)]",
-      text: "text-[var(--primary-color)]",
-      border: "border-[var(--primary-color)] hover:border-[var(--primary-color)]",
-      bg: "bg-[var(--primary-color)]",
-      userBubble: "bg-[var(--primary-color)]",
+      primary: "bg-indigo-600 hover:bg-indigo-700",
+      gradient: "from-slate-900 to-slate-800",
+      text: "text-indigo-600",
+      border: "border-slate-200 hover:border-slate-300",
+      bg: "bg-slate-50",
+      userBubble: "bg-indigo-600 text-white",
     },
   }
   const colors = colorConfig[primaryColor] || colorConfig.blue
@@ -960,44 +960,44 @@ const StudioChatBot = ({
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className={`${colors.primary} text-white rounded-full p-4 shadow-xl transition-all duration-300 hover:scale-110 focus:outline-none focus:ring-4 focus:ring-opacity-50`}
+          className="h-12 w-12 bg-slate-900 hover:bg-slate-800 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center focus:outline-none"
           aria-label="Open chat"
         >
-          <MessageCircle className="w-7 h-7" />
+          <MessageCircle className="w-5 h-5" />
         </button>
       )}
 
       {isOpen && (
-        <div className="bg-white rounded-lg shadow-2xl flex flex-col border border-gray-200 overflow-hidden" style={{ width, height }}>
+        <div className="bg-white rounded-2xl shadow-2xl flex flex-col border border-slate-200/80 overflow-hidden" style={{ width, height }}>
           {/* Header */}
-          <div className={`bg-gradient-to-r ${colors.gradient} text-white p-5 flex justify-between items-center`}>
+          <div className="bg-white border-b border-slate-100 px-5 py-3.5 flex justify-between items-center text-slate-800">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                <img src="https://images.scalebranding.com/chatbot-woman-logo-0a79f97c-1fde-4cf9-8796-dbbbac54bb34.jpg" alt="Chatbot Logo" className="w-10 h-10 rounded-full object-cover" />
+              <div className="w-8 h-8 bg-indigo-50 border border-indigo-100 rounded-lg flex items-center justify-center text-indigo-600">
+                <Bot className="w-4 h-4" />
               </div>
               <div>
-                <h3 className="font-semibold text-base">{botName}</h3>
-                <div className="flex items-center space-x-2">
-                  <span className={`w-2 h-2 rounded-full ${botStatus === 'Online' ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                  <p className="text-sm opacity-90">{botStatus}</p>
+                <h3 className="font-semibold text-sm text-slate-800 leading-tight">{botName || "Agent Assistant"}</h3>
+                <div className="flex items-center space-x-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  <p className="text-[11px] text-slate-400 font-medium">{botStatus}</p>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              {/* Mute/Unmute Toggle Button */}
+            <div className="flex items-center space-x-1">
               <button
                 onClick={toggleMute}
-                className="text-white hover:bg-white/20 p-2 rounded-full transition-colors focus:outline-none"
+                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-lg transition-colors focus:outline-none"
                 title={isMuted ? "Unmute" : "Mute"}
               >
-                {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </button>
 
-              <button onClick={() => setIsOpen(false)} className="text-white cursor-pointer hover:bg-opacity-20 rounded-full p-2 transition-colors focus:outline-none" aria-label="Close chat">
-                <X className="w-5 h-5" />
+              <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg p-1.5 transition-colors focus:outline-none" aria-label="Close chat">
+                <X className="w-4 h-4" />
               </button>
             </div>
+          </div>
           </div>
 
           {/* Messages */}

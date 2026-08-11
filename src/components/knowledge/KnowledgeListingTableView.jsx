@@ -1,7 +1,6 @@
 import React from "react";
-import { Box, Typography, Chip } from "@mui/material";
-import { FileText, Link2, ArrowUpRight, Trash2, Eye, Database, FileSpreadsheet, FileCode, Clock } from "lucide-react";
-import CustomTable from "../Common/CustomTable";
+import { Typography, Tooltip } from "@mui/material";
+import { FileText, Link2, Trash2, Eye, FileSpreadsheet, FileCode, Clock } from "lucide-react";
 import { timeAgo } from "@/utils/commonFunction";
 
 const getFileTypeBadge = (type) => {
@@ -22,117 +21,113 @@ const getFileTypeBadge = (type) => {
 };
 
 const KnowledgeListingTableView = ({
-  filteredFlows,
+  filteredFlows = [],
   handleOpenStudio,
   handleDeleteKnowledge
 }) => {
-  const columns = [
-    {
-      key: "knowledgeBase",
-      label: "Document Source",
-      render: (row) => {
-        const style = getFileTypeBadge(row.type || row.content_type);
-        return (
-          <Box className="flex items-center gap-3">
-            <Box className={`h-8 w-8 rounded-lg ${style.bg} border ${style.border} flex items-center justify-center shrink-0`}>
-              {style.icon}
-            </Box>
-            <Box className="min-w-0">
-              <Typography className="!text-[13px] !font-semibold !text-slate-900 !truncate">
-                {row.knowledgeBase || row.knowledge_base_name || row.filename || "Untitled Source"}
-              </Typography>
-              <Typography className="!text-[11px] !text-slate-400 !truncate">
-                {row.filename || row.knowledgeBase}
-              </Typography>
-            </Box>
-          </Box>
-        );
-      }
-    },
-    {
-      key: "type",
-      label: "Format",
-      render: (row) => {
-        const ext = (row.type || row.content_type || "txt").toUpperCase();
-        return (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200/60">
-            {ext}
-          </span>
-        );
-      }
-    },
-    {
-      key: "size",
-      label: "File Size",
-      render: (row) => (
-        <Typography className="!text-[13px] !text-slate-500">
-          {row.size || row.file_size || "—"}
-        </Typography>
-      )
-    },
-    {
-      key: "createdAt",
-      label: "Uploaded",
-      render: (row) => (
-        <Box className="flex items-center gap-1.5 text-[12px] text-slate-500">
-          <Clock size={13} className="text-slate-400" />
-          <span>{timeAgo(row.createdAt || row.uploaded_at || new Date().toISOString())}</span>
-        </Box>
-      )
-    },
-    {
-      key: "status",
-      label: "Index Status",
-      render: (row) => {
-        const status = row.status || "Indexed";
-        const isIndexed = status.toLowerCase() === "indexed";
-        const isProcessing = status.toLowerCase() === "processing";
-
-        return (
-          <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium border ${
-              isIndexed
-                ? "bg-emerald-50 text-emerald-700 border-emerald-200/60"
-                : isProcessing
-                ? "bg-amber-50 text-amber-700 border-amber-200/60"
-                : "bg-red-50 text-red-700 border-red-200/60"
-            }`}
-          >
-            <span
-              className={`h-1.5 w-1.5 rounded-full ${
-                isIndexed ? "bg-emerald-500" : isProcessing ? "bg-amber-500 animate-pulse" : "bg-red-500"
-              }`}
-            />
-            {status}
-          </span>
-        );
-      }
-    }
-  ];
-
-  const actions = [
-    {
-      icon: <Eye size={16} />,
-      tooltip: "Inspect Knowledge Metadata",
-      color: "primary",
-      onClick: (row) => handleOpenStudio && handleOpenStudio(row.id || row)
-    },
-    {
-      icon: <Trash2 size={16} />,
-      tooltip: "Delete Source",
-      color: "error",
-      onClick: (row) => handleDeleteKnowledge && handleDeleteKnowledge(row?.knowledgeBase || row?.id)
-    }
-  ];
-
   return (
-    <CustomTable
-      columns={columns}
-      rows={filteredFlows || []}
-      rowKey="id"
-      actions={actions}
-      emptyMessage="No knowledge sources found. Upload your documents above to get started."
-    />
+    <div className="w-full bg-white rounded-xl shadow-2xs overflow-hidden border border-slate-200/80">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-50/80 border-b border-slate-200/80">
+              <th className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Document Source
+              </th>
+              <th className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Format
+              </th>
+              <th className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Size
+              </th>
+              <th className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+                Uploaded
+              </th>
+              <th className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 bg-white">
+            {filteredFlows.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="py-12 text-center text-xs text-slate-400 font-medium">
+                  No knowledge sources uploaded yet.
+                </td>
+              </tr>
+            ) : (
+              filteredFlows.map((row, idx) => {
+                const style = getFileTypeBadge(row.type || row.content_type);
+                const status = row.status || "Indexed";
+                const isIndexed = status.toLowerCase() === "indexed";
+                const isProcessing = status.toLowerCase() === "processing";
+
+                return (
+                  <tr key={row.id || idx} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="px-5 py-3.5 whitespace-nowrap">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`h-7 w-7 rounded-md ${style.bg} border ${style.border} flex items-center justify-center shrink-0`}>
+                          {style.icon}
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-[13px] font-semibold text-slate-800 truncate block max-w-xs">
+                            {row.knowledgeBase || row.knowledge_base_name || row.filename || "Untitled Document"}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 whitespace-nowrap">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-mono font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                        {(row.type || row.content_type || "txt").toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 whitespace-nowrap text-xs text-slate-500">
+                      {row.size || row.file_size || "—"}
+                    </td>
+                    <td className="px-5 py-3.5 whitespace-nowrap text-xs text-slate-400">
+                      {timeAgo(row.createdAt || row.uploaded_at || new Date().toISOString())}
+                    </td>
+                    <td className="px-5 py-3.5 whitespace-nowrap">
+                      <span
+                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                          isIndexed
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200/60"
+                            : isProcessing
+                            ? "bg-amber-50 text-amber-700 border-amber-200/60"
+                            : "bg-red-50 text-red-700 border-red-200/60"
+                        }`}
+                      >
+                        <span
+                          className={`h-1.5 w-1.5 rounded-full ${
+                            isIndexed ? "bg-emerald-500" : isProcessing ? "bg-amber-500 animate-pulse" : "bg-red-500"
+                          }`}
+                        />
+                        {status}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Tooltip title="Delete Knowledge Base Source">
+                          <button
+                            onClick={() => handleDeleteKnowledge && handleDeleteKnowledge(row?.knowledgeBase || row?.id)}
+                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </Tooltip>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };
 

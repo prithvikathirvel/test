@@ -139,29 +139,34 @@ const KnowledgePage = () => {
     const isFormValid = selectedFiles.every(file => file.knowledgeBaseName.trim() !== "");
 
     return (
-        <Box className="px-4 sm:px-6 lg:px-10 py-8 bg-gradient-to-br from-slate-50 via-white to-blue-50/30 min-h-screen">
+        <Box className="px-6 lg:px-10 py-8 bg-[#f8fafc] min-h-screen">
             {/* Page Header */}
-            <Box className="mb-8 flex items-start gap-4">
-                <Box className="p-3 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg shadow-blue-200/50">
-                    <Database size={24} className="text-white" />
-                </Box>
-                <Box>
-                    <Typography variant="h5" className="!font-bold !text-gray-900 !tracking-tight">
-                        Knowledge Base
-                    </Typography>
-                    <Typography variant="body2" className="!text-slate-500 !mt-0.5">
-                        Upload and manage documents to power your AI agents with contextual knowledge.
-                    </Typography>
-                </Box>
+            <Box className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
+                        <span>Platform</span>
+                        <span>/</span>
+                        <span className="text-slate-700">Knowledge Base</span>
+                    </div>
+                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2.5">
+                        Documents & Sources
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                            {sources.length} Total
+                        </span>
+                    </h1>
+                    <p className="text-slate-500 text-sm mt-0.5">
+                        Upload and manage domain documents for agent RAG retrieval.
+                    </p>
+                </div>
             </Box>
 
             {/* Upload Section */}
-            <Box className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <Box className="px-6 py-4 border-b border-gray-100">
+            <Box className="bg-white rounded-xl border border-slate-200/80 shadow-2xs overflow-hidden mb-8">
+                <Box className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50">
                     <Box className="flex items-center gap-2">
-                        <Upload size={18} className="text-gray-500" />
-                        <Typography variant="subtitle1" className="!font-semibold !text-gray-800">
-                            Upload Sources
+                        <Upload size={16} className="text-slate-500" />
+                        <Typography variant="subtitle2" className="!font-bold !text-slate-800 !text-xs !uppercase !tracking-wider">
+                            Upload Documents
                         </Typography>
                     </Box>
                 </Box>
@@ -171,23 +176,20 @@ const KnowledgePage = () => {
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
-                        className={`transition-all duration-300 ease-in-out !bg-gradient-to-b !rounded-xl ${isDragging
-                                ? '!from-blue-50 !to-indigo-50 !border-blue-400 !shadow-lg !shadow-blue-100/50'
-                                : '!from-slate-50/50 !to-white !border-gray-200 hover:!border-blue-300 hover:!shadow-sm'
+                        className={`transition-all duration-200 !rounded-xl ${isDragging
+                                ? '!bg-indigo-50/40 !border-indigo-400'
+                                : '!bg-slate-50/50 !border-slate-200 hover:!border-slate-300'
                             }`}
                     >
-                        <Box className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                            <Box className={`p-5 rounded-2xl mb-5 transition-all duration-300 ${isDragging
-                                    ? 'bg-blue-100 scale-110'
-                                    : 'bg-gradient-to-br from-blue-50 to-indigo-50'
-                                }`}>
-                                <CloudUpload size={32} className={`transition-colors duration-300 ${isDragging ? 'text-blue-600' : 'text-blue-500'}`} />
+                        <Box className="flex flex-col items-center justify-center py-10 px-6 text-center">
+                            <Box className="p-4 rounded-xl bg-white border border-slate-200/80 mb-3 shadow-2xs">
+                                <CloudUpload size={26} className="text-slate-600" />
                             </Box>
-                            <Typography variant="subtitle1" className="!font-semibold !text-gray-700 !mb-1">
-                                {isDragging ? 'Release to upload files' : 'Drag & drop files here'}
+                            <Typography variant="subtitle1" className="!font-bold !text-slate-800 !text-sm !mb-1">
+                                {isDragging ? 'Drop files to upload' : 'Drag & drop document files here'}
                             </Typography>
-                            <Typography variant="body2" className="!text-slate-400 !mb-5">
-                                or click below to browse your files
+                            <Typography variant="body2" className="!text-slate-400 !text-xs !mb-4">
+                                or browse files from your computer
                             </Typography>
                             <Box className="flex flex-col items-center gap-3">
                                 <input
@@ -199,34 +201,24 @@ const KnowledgePage = () => {
                                     onChange={handleFileInput}
                                     multiple
                                 />
-                                <CustomButton
-                                    variant="contained"
-                                    color="primary"
+                                <button
                                     onClick={() => fileInputRef.current?.click()}
-                                    startIcon={<FolderOpen size={16} />}
-                                    className="!px-6 !py-2.5 !rounded-lg !shadow-md !shadow-blue-200/40 hover:!shadow-lg hover:!shadow-blue-200/50 !transition-all"
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
                                 >
-                                    Browse Files
-                                </CustomButton>
-                                <Box className="flex flex-wrap items-center justify-center gap-1.5 mt-2">
+                                    <FolderOpen size={14} /> Browse Files
+                                </button>
+                                <Box className="flex flex-wrap items-center justify-center gap-1.5 mt-1">
                                     {['PDF', 'DOCX', 'TXT', 'MD', 'JSON', 'CSV'].map((format) => (
-                                        <Chip
+                                        <span
                                             key={format}
-                                            label={format}
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{
-                                                fontSize: '11px',
-                                                height: '22px',
-                                                borderColor: '#e2e8f0',
-                                                color: '#64748b',
-                                                fontWeight: 500,
-                                            }}
-                                        />
+                                            className="px-1.5 py-0.2 rounded text-[10px] font-mono text-slate-400 bg-white border border-slate-200"
+                                        >
+                                            {format}
+                                        </span>
                                     ))}
-                                    <Typography variant="caption" className="!text-slate-400 !ml-1">
+                                    <span className="text-[10px] text-slate-400 ml-1">
                                         Max 15MB
-                                    </Typography>
+                                    </span>
                                 </Box>
                             </Box>
                         </Box>

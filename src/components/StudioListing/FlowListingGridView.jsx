@@ -1,9 +1,9 @@
 import React from 'react';
 import { Box, Card, Typography, Tooltip } from '@mui/material';
-import { Play, ArrowUpRight, Clock, Trash2, Workflow } from 'lucide-react';
+import { ArrowUpRight, Clock, Trash2, Workflow } from 'lucide-react';
 import { timeAgo } from "@/utils/commonFunction";
 
-const FlowListingGridView = ({ flows, handleRunFlow, handleOpenStudio, handleDeleteFlow }) => {
+const FlowListingGridView = ({ flows, handleOpenStudio, handleDeleteFlow }) => {
   return (
     <Box className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {flows.map((flow) => (
@@ -17,11 +17,11 @@ const FlowListingGridView = ({ flows, handleRunFlow, handleOpenStudio, handleDel
                 <div className="h-7 w-7 rounded-md bg-slate-100 flex items-center justify-center text-slate-700 shrink-0">
                   <Workflow size={14} />
                 </div>
-                <Typography className="!text-[13.5px] !font-bold !text-slate-900 !tracking-tight line-clamp-1">
+                <Typography className="!text-[13.5px] !font-bold !text-slate-800 !tracking-tight line-clamp-1">
                   {flow.name || flow.agent_name || "Unnamed Flow"}
                 </Typography>
               </Box>
-              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono text-slate-500 bg-slate-50 border border-slate-200">
+              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono text-slate-400 bg-slate-50 border border-slate-200">
                 v1.0
               </span>
             </Box>
@@ -38,29 +38,20 @@ const FlowListingGridView = ({ flows, handleRunFlow, handleOpenStudio, handleDel
 
           <Box className="flex items-center justify-between px-4 py-2.5 bg-slate-50/60 border-t border-slate-100 gap-2">
             <button
-              onClick={() => handleRunFlow(flow)}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 shadow-2xs transition-colors"
+              onClick={() => handleOpenStudio(flow.id)}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors"
             >
-              <Play size={11} className="fill-slate-700 text-slate-700" /> Run
+              Open Studio <ArrowUpRight size={13} />
             </button>
 
-            <div className="flex items-center gap-1.5">
+            <Tooltip title="Delete Flow">
               <button
-                onClick={() => handleOpenStudio(flow.id)}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 shadow-2xs transition-colors"
+                onClick={() => handleDeleteFlow(flow.id)}
+                className="p-1 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
               >
-                Open <ArrowUpRight size={12} />
+                <Trash2 size={14} />
               </button>
-
-              <Tooltip title="Delete Flow">
-                <button
-                  onClick={() => handleDeleteFlow(flow.id)}
-                  className="p-1 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </Tooltip>
-            </div>
+            </Tooltip>
           </Box>
         </Card>
       ))}

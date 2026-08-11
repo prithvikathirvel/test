@@ -5,16 +5,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import {
   Plus,
-  Play,
   Search,
   Grid3X3,
   List,
   Sparkles,
-  Workflow,
-  Activity,
-  Zap,
-  Cpu,
-  CheckCircle2,
 } from "lucide-react";
 import { getAllFlows, saveFlow, updateSpecification, deleteFlow } from "@/redux/slices/studioSlice";
 import FlowDetailsModal from "@/components/studio/FlowDetailsModal";
@@ -34,7 +28,7 @@ const StudioListing = () => {
   const newFlowId = useSelector((state) => state.studio.newFlowId);
   const studioSaveFlowLoader = useSelector((state) => state.studio.studioSaveFlowLoader);
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewMode, setViewMode] = useState("list"); // 'list' or 'grid'
+  const [viewMode, setViewMode] = useState("list");
 
   useEffect(() => {
     dispatch(getAllFlows());
@@ -92,10 +86,6 @@ const StudioListing = () => {
     router.push(`/studio/${flowId}`);
   };
 
-  const handleRunFlow = (flow) => {
-    console.log("Running flow:", flow);
-  };
-
   const handleCreateStudio = () => {
     setFlowDetailsModalOpen(true);
   };
@@ -108,89 +98,69 @@ const StudioListing = () => {
 
   return (
     <Box className="min-h-screen bg-[#f8fafc]">
-      {studioSaveFlowLoader && <BlurredLoader title="Provisioning New Agentic Flow..." />}
+      {studioSaveFlowLoader && <BlurredLoader title="Creating Flow..." />}
 
       <Box className="px-6 lg:px-10 py-8">
-        {/* Top Header */}
+        {/* Page Header matching attached design */}
         <Box className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
-              <span>Platform</span>
-              <span>/</span>
-              <span className="text-slate-700">Studio</span>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2.5">
-              Flows
-              <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
-                {flows.length}
-              </span>
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
+              Studio Flows
             </h1>
-            <p className="text-slate-500 text-sm mt-0.5">
-              Build, test, and orchestrate autonomous AI agent workflows.
+            <p className="text-slate-400 text-xs mt-0.5">
+              Manage and orchestrate AI agent workflows for your workspace
             </p>
           </div>
 
           <Box className="flex items-center gap-3">
             <button
               onClick={handleCreateStudio}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
             >
               <Plus size={15} /> Create Flow
             </button>
           </Box>
         </Box>
 
-        {/* Telemetry Metric Cards */}
-        <Grid container spacing={2} className="mb-8">
+        {/* Minimal Metric Cards matching screenshot */}
+        <Grid container spacing={2.5} className="mb-8">
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Box className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Flows</p>
-                <Workflow size={16} className="text-indigo-600" />
-              </div>
-              <p className="text-2xl font-bold text-slate-800 mt-2">{flows.length}</p>
-              <div className="flex items-center gap-1 mt-2 text-[11px] text-slate-500 font-medium">
-                <CheckCircle2 size={12} className="text-emerald-500" /> Production ready
-              </div>
+            <Box className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                TOTAL FLOWS
+              </p>
+              <p className="text-3xl font-bold text-slate-800 mt-2">{flows.length}</p>
+              <p className="text-xs text-slate-400 mt-1">All time</p>
             </Box>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Box className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Instances</p>
-                <Activity size={16} className="text-emerald-600" />
-              </div>
-              <p className="text-2xl font-bold text-slate-800 mt-2">{flows.length > 0 ? flows.length : 0}</p>
-              <div className="flex items-center gap-1.5 mt-2 text-[11px] text-slate-500">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Cluster operational
-              </div>
+            <Box className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                ACTIVE RUNS
+              </p>
+              <p className="text-3xl font-bold text-slate-800 mt-2">0</p>
+              <p className="text-xs text-slate-400 mt-1">0 running</p>
             </Box>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Box className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Reliability SLA</p>
-                <Zap size={16} className="text-amber-600" />
-              </div>
-              <p className="text-2xl font-bold text-slate-800 mt-2">99.9%</p>
-              <div className="mt-2 text-[11px] text-slate-500 font-medium">
-                Average latency: 240ms
-              </div>
+            <Box className="bg-indigo-50/40 p-5 rounded-2xl border border-indigo-100 shadow-2xs">
+              <p className="text-[11px] font-semibold text-indigo-900/60 uppercase tracking-wider">
+                AVG RESPONSE TIME
+              </p>
+              <p className="text-3xl font-bold text-slate-800 mt-2">0ms</p>
+              <p className="text-xs text-slate-400 mt-1">Per node execution</p>
             </Box>
           </Grid>
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Box className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Connected Tools</p>
-                <Cpu size={16} className="text-violet-600" />
-              </div>
-              <p className="text-2xl font-bold text-slate-800 mt-2">12 MCP</p>
-              <div className="mt-2 text-[11px] text-slate-500 font-medium">
-                OpenAI, Anthropic & Piper
-              </div>
+            <Box className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
+              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                SUCCESS RATE
+              </p>
+              <p className="text-3xl font-bold text-slate-800 mt-2">100%</p>
+              <p className="text-xs text-slate-400 mt-1">0 failed runs</p>
             </Box>
           </Grid>
         </Grid>
@@ -240,34 +210,32 @@ const StudioListing = () => {
           viewMode === "grid" ? (
             <FlowListingGridView
               flows={filteredFlows}
-              handleRunFlow={handleRunFlow}
               handleOpenStudio={handleOpenStudio}
               handleDeleteFlow={handleDeleteFlow}
             />
           ) : (
             <FlowListingTableView
               filteredFlows={filteredFlows}
-              handleRunFlow={handleRunFlow}
               handleOpenStudio={handleOpenStudio}
               handleDeleteFlow={handleDeleteFlow}
             />
           )
         ) : (
           <Box className="flex flex-col items-center justify-center py-20 px-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
-            <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+            <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 flex items-center justify-center mb-3">
               <Sparkles size={18} />
             </div>
             <Typography variant="h6" className="!font-bold !text-slate-800 !tracking-tight mb-1 !text-base">
               No Workflows Found
             </Typography>
-            <Typography variant="body2" className="!text-slate-500 !max-w-md mb-5 !text-xs">
+            <Typography variant="body2" className="!text-slate-400 !max-w-md mb-5 !text-xs">
               {searchTerm
                 ? "No agent flows match your search query."
                 : "Create your first AI workflow to connect nodes, models, and tools."}
             </Typography>
             <button
               onClick={handleCreateStudio}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
             >
               <Plus size={15} /> Create Flow
             </button>

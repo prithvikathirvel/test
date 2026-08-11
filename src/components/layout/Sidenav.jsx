@@ -82,11 +82,8 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
             </div>
             {isOpen && (
               <div className="overflow-hidden">
-                <Typography className="!text-[13.5px] !font-bold !text-slate-800 !leading-tight !tracking-tight">
+                <Typography className="!text-[14px] !font-bold !text-slate-800 !leading-tight !tracking-tight">
                   Aurora
-                </Typography>
-                <Typography className="!text-[11px] !text-slate-400 !leading-tight font-medium">
-                  Enterprise AI
                 </Typography>
               </div>
             )}
@@ -107,12 +104,6 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
 
         {/* Navigation Items */}
         <Box className={`py-3 ${isOpen ? 'px-3' : 'px-2 flex flex-col items-center'}`}>
-          {isOpen && (
-            <Typography className="!px-2 !pb-2 !text-[10.5px] !font-semibold !text-slate-400 !uppercase !tracking-wider">
-              Workspace
-            </Typography>
-          )}
-
           <div className="space-y-1 w-full flex flex-col items-center">
             {Menus.map((menu) => {
               const isActive = pathname === menu.path || pathname?.startsWith(menu.path + "/");
@@ -163,26 +154,16 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
       </Box>
 
       {/* Bottom Section */}
-      <Box className={`p-3 border-t border-gray-100 ${isOpen ? '' : 'flex justify-center'}`}>
-        {!isOpen ? (
-          <Tooltip title="Expand sidebar" placement="right">
-            <IconButton
-              onClick={handleToggle}
-              size="small"
-              className="!text-slate-400 hover:!text-slate-700 hover:!bg-slate-100 !p-1.5 !rounded-md"
-            >
-              <PanelLeftOpen size={16} />
-            </IconButton>
-          </Tooltip>
-        ) : (
-          <div className="flex items-center justify-between px-1 text-[11px] text-slate-400">
-            <span className="flex items-center gap-1.5 font-medium text-slate-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              v2.4.0
-            </span>
-            <span className="text-slate-400">Enterprise</span>
-          </div>
-        )}
+      <Box className={`p-2.5 border-t border-gray-100 ${isOpen ? 'flex justify-end' : 'flex justify-center'}`}>
+        <Tooltip title={isOpen ? "Collapse sidebar" : "Expand sidebar"} placement="right">
+          <IconButton
+            onClick={handleToggle}
+            size="small"
+            className="!text-slate-400 hover:!text-slate-700 hover:!bg-slate-100 !p-1.5 !rounded-md"
+          >
+            {isOpen ? <PanelLeftClose size={15} /> : <PanelLeftOpen size={15} />}
+          </IconButton>
+        </Tooltip>
       </Box>
     </Drawer>
   );
