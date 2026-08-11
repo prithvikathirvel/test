@@ -1,27 +1,30 @@
-// Enterprise SaaS Minimal Color System
+// Enterprise SaaS Minimal Color System - Muted Iris / Deep Indigo Theme
 const colors = {
-  primary: '#0f172a',       // Deep Slate 900 for primary elements
-  primaryAccent: '#2563eb', // Precision Blue for rare critical triggers
-  slateCanvas: '#f8fafc',   // Slate 50
-  slateSurface: '#ffffff',  // Pure White
-  slateBorder: '#e2e8f0',   // Slate 200
-  slateText: '#0f172a',     // Slate 900
+  primary: '#4f46e5',       // Refined Indigo (600)
+  primaryHover: '#4338ca',  // Indigo (700)
+  primarySubtle: '#eef2ff', // Indigo (50)
+  
+  slateCanvas: '#f8fafc',   // Soft Canvas Background
+  slateSurface: '#ffffff',  // Clean Surface
+  slateBorder: '#e2e8f0',   // Subtle Border
+  slateText: '#1e293b',     // Slate 800 (Soft Charcoal, not harsh black)
   slateMuted: '#64748b',    // Slate 500
   
   success: '#059669',       // Emerald
   warning: '#d97706',       // Amber
   danger: '#dc2626',        // Red
+  violet: '#7c3aed',        // Violet
 };
 
 const chatbotTheme = {
   background: '#f8fafc',
   fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-  headerBgColor: '#0f172a',
+  headerBgColor: '#1e293b',
   headerFontColor: '#ffffff',
   headerFontSize: '14px',
   botBubbleColor: '#f1f5f9',
-  botFontColor: '#0f172a',
-  userBubbleColor: '#0f172a',
+  botFontColor: '#1e293b',
+  userBubbleColor: '#4f46e5',
   userFontColor: '#ffffff',
 };
 

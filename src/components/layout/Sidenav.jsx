@@ -61,7 +61,7 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
           width: isOpen ? 240 : 64,
           boxSizing: "border-box",
           backgroundColor: "#ffffff",
-          color: "#0f172a",
+          color: "#1e293b",
           borderRight: "1px solid #e5e7eb",
           transition: "width 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
           overflowX: "hidden",
@@ -77,12 +77,12 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
         {/* Brand Header */}
         <Box className={`flex items-center min-h-[56px] border-b border-gray-100 ${isOpen ? 'px-4 justify-between' : 'justify-center px-2'}`}>
           <Link href="/studio" className="flex items-center gap-2.5 no-underline overflow-hidden">
-            <div className="h-8 w-8 rounded-lg bg-slate-900 flex items-center justify-center text-white shrink-0 shadow-xs">
+            <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-xs">
               <Sparkles size={16} />
             </div>
             {isOpen && (
               <div className="overflow-hidden">
-                <Typography className="!text-[13.5px] !font-bold !text-slate-900 !leading-tight !tracking-tight">
+                <Typography className="!text-[13.5px] !font-bold !text-slate-800 !leading-tight !tracking-tight">
                   Aurora
                 </Typography>
                 <Typography className="!text-[11px] !text-slate-400 !leading-tight font-medium">
@@ -124,8 +124,8 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
                       <div
                         className={`h-10 w-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
                           isActive
-                            ? "bg-slate-900 text-white shadow-2xs font-medium"
-                            : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                            ? "bg-indigo-50 text-indigo-600 border border-indigo-200/80 shadow-2xs font-medium"
+                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                         }`}
                       >
                         {menu.icon}
@@ -140,16 +140,16 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
                   <div
                     className={`flex items-center gap-3 w-full rounded-lg px-3 py-2 transition-all cursor-pointer ${
                       isActive
-                        ? "bg-slate-100 text-slate-900 font-semibold border border-slate-200/80 shadow-2xs"
-                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                        ? "bg-indigo-50/70 text-indigo-900 font-semibold border border-indigo-100/90 shadow-2xs"
+                        : "text-slate-600 hover:text-slate-800 hover:bg-slate-50"
                     }`}
                   >
-                    <div className={isActive ? "text-slate-900" : "text-slate-400"}>
+                    <div className={isActive ? "text-indigo-600" : "text-slate-400"}>
                       {menu.icon}
                     </div>
                     <Typography
                       className={`!text-[13px] !tracking-tight ${
-                        isActive ? "!font-semibold !text-slate-900" : "!font-medium !text-slate-700"
+                        isActive ? "!font-semibold !text-indigo-950" : "!font-medium !text-slate-700"
                       }`}
                     >
                       {menu.title}

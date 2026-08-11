@@ -13,7 +13,6 @@ import {
   Mic,
   MicOff,
   Settings,
-  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -38,7 +37,7 @@ const StudioHeader = ({
       <Box className="flex items-center gap-3 min-w-0">
         <Link href="/studio" className="no-underline">
           <Tooltip title="Back to Flows">
-            <button className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors">
+            <button className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors">
               <ArrowLeft size={16} />
             </button>
           </Tooltip>
@@ -47,12 +46,12 @@ const StudioHeader = ({
         <div className="h-4 w-px bg-slate-200 hidden sm:block" />
 
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="h-7 w-7 rounded-md bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-2xs">
+          <div className="h-7 w-7 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0 shadow-2xs">
             <Workflow size={14} />
           </div>
 
           <div className="min-w-0 flex items-center gap-2">
-            <Typography className="!text-[13.5px] !font-semibold !text-slate-900 !tracking-tight !truncate max-w-[180px] sm:max-w-[280px]">
+            <Typography className="!text-[13.5px] !font-semibold !text-slate-800 !tracking-tight !truncate max-w-[180px] sm:max-w-[280px]">
               {flow?.name || "Agent Workflow"}
             </Typography>
             <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono text-slate-500 bg-slate-100 border border-slate-200">
@@ -74,7 +73,7 @@ const StudioHeader = ({
             onClick={() => toggleViewMode && onToggleViewMode()}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
               !toggleViewMode
-                ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                ? "bg-white text-slate-800 font-semibold shadow-2xs"
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
@@ -84,7 +83,7 @@ const StudioHeader = ({
             onClick={() => !toggleViewMode && onToggleViewMode()}
             className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-medium transition-all ${
               toggleViewMode
-                ? "bg-white text-slate-900 font-semibold shadow-2xs"
+                ? "bg-white text-slate-800 font-semibold shadow-2xs"
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
@@ -130,16 +129,16 @@ const StudioHeader = ({
         <button
           onClick={onRunFlow}
           disabled={isFlowRunning}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors disabled:opacity-60"
         >
-          {isFlowRunning ? <CircularProgress size={12} color="inherit" /> : <Play size={13} className="fill-slate-800 text-slate-800" />}
+          {isFlowRunning ? <CircularProgress size={12} color="inherit" /> : <Play size={13} className="fill-slate-700 text-slate-700" />}
           <span>{isFlowRunning ? "Running..." : "Test Run"}</span>
         </button>
 
         <button
           onClick={onSaveFlow}
           disabled={isSavingFlow}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-800 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors disabled:opacity-60"
         >
           {isSavingFlow ? <CircularProgress size={12} color="inherit" /> : <Save size={13} />}
           <span>{isSavingFlow ? "Saving..." : "Save"}</span>
@@ -147,7 +146,7 @@ const StudioHeader = ({
 
         <button
           onClick={onDeployFlow}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 shadow-xs transition-colors"
+          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
         >
           <Rocket size={13} /> Deploy
         </button>

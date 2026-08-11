@@ -17,7 +17,6 @@ const CustomButton = ({
   className = '',
   ...props
 }) => {
-  // Base enterprise button styling
   const baseStyles = {
     textTransform: 'none',
     fontSize: '13px',
@@ -35,27 +34,26 @@ const CustomButton = ({
     '& .MuiButton-startIcon': {
       marginRight: '6px',
       '& > *:nth-of-type(1)': {
-        fontSize: '16px',
+        fontSize: '15px',
       },
     },
     '& .MuiButton-endIcon': {
       marginLeft: '6px',
       '& > *:nth-of-type(1)': {
-        fontSize: '16px',
+        fontSize: '15px',
       },
     },
   };
 
-  // Variant styling
   const variantStyles = {
     contained: {
-      backgroundColor: '#2563eb',
+      backgroundColor: '#4f46e5',
       color: '#ffffff',
       border: '1px solid transparent',
-      boxShadow: '0 1px 2px 0 rgba(37, 99, 235, 0.2)',
+      boxShadow: '0 1px 2px 0 rgba(79, 70, 229, 0.2)',
       '&:hover': {
-        backgroundColor: '#1d4ed8',
-        boxShadow: '0 2px 4px 0 rgba(37, 99, 235, 0.3)',
+        backgroundColor: '#4338ca',
+        boxShadow: '0 2px 4px 0 rgba(79, 70, 229, 0.25)',
       },
       '&:disabled': {
         backgroundColor: '#f1f5f9',
@@ -67,7 +65,7 @@ const CustomButton = ({
       backgroundColor: '#ffffff',
       color: '#334155',
       border: '1px solid #e2e8f0',
-      boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
+      boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.02)',
       '&:hover': {
         backgroundColor: '#f8fafc',
         borderColor: '#cbd5e1',
@@ -92,7 +90,6 @@ const CustomButton = ({
     },
   };
 
-  // Size variations
   const sizeStyles = {
     small: {
       fontSize: '12px',
@@ -104,13 +101,13 @@ const CustomButton = ({
       fontSize: '13px',
       padding: '6px 16px',
       minWidth: '64px',
-      height: '38px',
+      height: '36px',
     },
     large: {
       fontSize: '14px',
       padding: '8px 22px',
       minWidth: '72px',
-      height: '44px',
+      height: '42px',
     },
   };
 

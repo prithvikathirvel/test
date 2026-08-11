@@ -119,7 +119,7 @@ const StudioListing = () => {
               <span>/</span>
               <span className="text-slate-700">Studio</span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2.5">
               Flows
               <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
                 {flows.length}
@@ -133,7 +133,7 @@ const StudioListing = () => {
           <Box className="flex items-center gap-3">
             <button
               onClick={handleCreateStudio}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
             >
               <Plus size={15} /> Create Flow
             </button>
@@ -146,9 +146,9 @@ const StudioListing = () => {
             <Box className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Flows</p>
-                <Workflow size={16} className="text-slate-400" />
+                <Workflow size={16} className="text-indigo-600" />
               </div>
-              <p className="text-2xl font-bold text-slate-900 mt-2">{flows.length}</p>
+              <p className="text-2xl font-bold text-slate-800 mt-2">{flows.length}</p>
               <div className="flex items-center gap-1 mt-2 text-[11px] text-slate-500 font-medium">
                 <CheckCircle2 size={12} className="text-emerald-500" /> Production ready
               </div>
@@ -159,9 +159,9 @@ const StudioListing = () => {
             <Box className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Instances</p>
-                <Activity size={16} className="text-slate-400" />
+                <Activity size={16} className="text-emerald-600" />
               </div>
-              <p className="text-2xl font-bold text-slate-900 mt-2">{flows.length > 0 ? flows.length : 0}</p>
+              <p className="text-2xl font-bold text-slate-800 mt-2">{flows.length > 0 ? flows.length : 0}</p>
               <div className="flex items-center gap-1.5 mt-2 text-[11px] text-slate-500">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Cluster operational
               </div>
@@ -172,9 +172,9 @@ const StudioListing = () => {
             <Box className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Reliability SLA</p>
-                <Zap size={16} className="text-slate-400" />
+                <Zap size={16} className="text-amber-600" />
               </div>
-              <p className="text-2xl font-bold text-slate-900 mt-2">99.9%</p>
+              <p className="text-2xl font-bold text-slate-800 mt-2">99.9%</p>
               <div className="mt-2 text-[11px] text-slate-500 font-medium">
                 Average latency: 240ms
               </div>
@@ -185,9 +185,9 @@ const StudioListing = () => {
             <Box className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Connected Tools</p>
-                <Cpu size={16} className="text-slate-400" />
+                <Cpu size={16} className="text-violet-600" />
               </div>
-              <p className="text-2xl font-bold text-slate-900 mt-2">12 MCP</p>
+              <p className="text-2xl font-bold text-slate-800 mt-2">12 MCP</p>
               <div className="mt-2 text-[11px] text-slate-500 font-medium">
                 OpenAI, Anthropic & Piper
               </div>
@@ -215,8 +215,8 @@ const StudioListing = () => {
                 onClick={() => setViewMode("list")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   viewMode === "list"
-                    ? "bg-slate-100 text-slate-900 font-semibold"
-                    : "text-slate-500 hover:text-slate-900"
+                    ? "bg-slate-100 text-slate-800 font-semibold"
+                    : "text-slate-500 hover:text-slate-800"
                 }`}
               >
                 <List size={14} /> Table
@@ -225,8 +225,8 @@ const StudioListing = () => {
                 onClick={() => setViewMode("grid")}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
                   viewMode === "grid"
-                    ? "bg-slate-100 text-slate-900 font-semibold"
-                    : "text-slate-500 hover:text-slate-900"
+                    ? "bg-slate-100 text-slate-800 font-semibold"
+                    : "text-slate-500 hover:text-slate-800"
                 }`}
               >
                 <Grid3X3 size={14} /> Grid
@@ -254,10 +254,10 @@ const StudioListing = () => {
           )
         ) : (
           <Box className="flex flex-col items-center justify-center py-20 px-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
-            <div className="h-10 w-10 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mb-3">
+            <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
               <Sparkles size={18} />
             </div>
-            <Typography variant="h6" className="!font-bold !text-slate-900 !tracking-tight mb-1 !text-base">
+            <Typography variant="h6" className="!font-bold !text-slate-800 !tracking-tight mb-1 !text-base">
               No Workflows Found
             </Typography>
             <Typography variant="body2" className="!text-slate-500 !max-w-md mb-5 !text-xs">
@@ -267,7 +267,7 @@ const StudioListing = () => {
             </Typography>
             <button
               onClick={handleCreateStudio}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
             >
               <Plus size={15} /> Create Flow
             </button>
