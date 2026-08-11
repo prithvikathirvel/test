@@ -1,16 +1,15 @@
 "use client";
 import React from "react";
-import { Box, Typography, Tooltip } from "@mui/material";
+import { Tooltip } from "@mui/material";
 import { HelpCircle } from "lucide-react";
-import { convertToTitleCase } from "@/utils/commonFunction";
 
 const ParameterHeader = ({ title, icon, description, type }) => (
-  <Box className="flex items-center justify-between gap-2 mb-2">
+  <div className="flex items-center justify-between gap-2 mb-2">
     <div className="flex items-center gap-1.5 min-w-0">
       {icon}
-      <Typography className="!text-[12px] !font-semibold !text-slate-800 !tracking-tight">
-        {convertToTitleCase(title)}
-      </Typography>
+      <span className="text-[11.5px] font-bold text-slate-700 uppercase tracking-wider truncate">
+        {title || "Parameter"}
+      </span>
       {description && (
         <Tooltip title={description} placement="top" arrow>
           <span className="text-slate-400 hover:text-slate-600 cursor-help inline-flex items-center">
@@ -21,11 +20,11 @@ const ParameterHeader = ({ title, icon, description, type }) => (
     </div>
 
     {type && (
-      <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-500 border border-slate-200">
+      <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100/80">
         {type}
       </span>
     )}
-  </Box>
+  </div>
 );
 
 export default ParameterHeader;

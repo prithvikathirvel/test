@@ -1,10 +1,9 @@
 "use client";
 import React from 'react';
 import { Box, Switch } from '@mui/material';
-import { Code } from 'lucide-react';
 import ParameterHeader from './common/ParameterHeader';
 
-const BooleanParameter = ({ param = {}, color, onUpdate, parameters, parameter }) => {
+const BooleanParameter = ({ param = {}, color = '#4f46e5', onUpdate, parameters, parameter }) => {
   const handleChange = (event) => {
     if (onUpdate) {
       const updatedParams = parameters.map(p => 
@@ -16,26 +15,25 @@ const BooleanParameter = ({ param = {}, color, onUpdate, parameters, parameter }
 
   return (
     <Box className="w-full">
-      <Box className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
         <ParameterHeader
-          title={param.key}
+          title={param.key || param.name}
           description={param.description}
-          icon={<Code size={16} />}
+          type={param.type || 'boolean'}
         />
         <Switch
-          checked={param.value || false}
+          checked={Boolean(param.value)}
           onChange={handleChange}
           sx={{
             '& .MuiSwitch-switchBase.Mui-checked': {
               color: color,
-              '&:hover': { backgroundColor: `${color}14` },
             },
             '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
               backgroundColor: color,
             },
           }}
         />
-      </Box>
+      </div>
     </Box>
   );
 };

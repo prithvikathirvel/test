@@ -22,16 +22,16 @@ const StringParameter = ({ param = {}, color, onUpdate, parameters, parameter })
   return (
     <Box className="w-full">
       <ParameterHeader
-        title={param.key}
+        title={param.key || param.name}
         description={param.description}
+        type={param.type || 'text'}
       />
       <InputBox
-        placeholder={`Enter ${param.key}`}
-        className="mb-4"
+        placeholder={`Enter ${param.key || 'value'}...`}
         icon={""}
         color={color}
         value={localValue}
-        label={param.key}
+        label=""
         isShowLabel={false}
         onChange={handleChange}
       />

@@ -5,8 +5,7 @@ import ReduxProvider from "@/components/providers/ReduxProvider";
 import Sidenav from "@/components/layout/Sidenav";
 import { Box } from "@mui/material";
 import { usePathname } from "next/navigation";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from "sonner";
 import ProtectedRoute from "@/components/Routes/ProtectedRoute";
 import { useState } from "react";
 
@@ -36,16 +35,10 @@ export default function RootLayout({ children }) {
       <body className={`${inter.className} h-full overflow-hidden bg-[#f8fafc] text-slate-900 antialiased`}>
         <ReduxProvider>
           <Box className="flex h-full w-full bg-[#f8fafc]">
-            <ToastContainer 
+            <Toaster 
               position="top-right"
-              autoClose={3000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
+              richColors
+              closeButton
               theme="light"
             />
             

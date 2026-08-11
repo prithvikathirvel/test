@@ -1,7 +1,6 @@
 "use client";
 import React from 'react';
 import { Box } from '@mui/material';
-import { Code } from 'lucide-react';
 import InputBox from '@/components/Common/InputBox';
 import ParameterHeader from './common/ParameterHeader';
 
@@ -18,23 +17,20 @@ const NumberParameter = ({ param = {}, color, onUpdate, parameters, parameter })
   return (
     <Box className="w-full">
       <ParameterHeader
-        title={param.key}
+        title={param.key || param.name}
         description={param.description}
-        icon={<Code size={16} />}
+        type={param.type || 'number'}
       />
-      <Box className="w-full">
-        <InputBox
-          type="number"
-          placeholder={`Enter ${param.key}`}
-          className="mb-4"
-          icon={""}
-          color={color}
-          value={param.value || ''}
-          label={param.key}
-          isShowLabel={false}
-          onChange={handleChange}
-        />
-      </Box>
+      <InputBox
+        type="number"
+        placeholder={`Enter ${param.key || 'number'}...`}
+        icon={""}
+        color={color}
+        value={param.value ?? ''}
+        label=""
+        isShowLabel={false}
+        onChange={handleChange}
+      />
     </Box>
   );
 };

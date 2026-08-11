@@ -1,145 +1,145 @@
-"use client"
+"use client";
 
-import { Box, Container } from "@mui/material"
-import { Sparkles, ArrowRight, Workflow, Bot, Cpu, BrainCircuit, Database, MessageSquare } from "lucide-react"
-import CustomGradientButton from "@/components/Common/CustomGradientButton"
-
+import React from "react";
+import { Box, Container } from "@mui/material";
+import {
+  Sparkles,
+  ArrowRight,
+  Workflow,
+  Bot,
+  Cpu,
+  Database,
+  CheckCircle2,
+  Play,
+  Layers,
+  Zap,
+} from "lucide-react";
 
 export default function HeroSection({ handleDrawerOpen }) {
-
   return (
-    <Box className="relative overflow-hidden bg-transparent min-h-[calc(100vh-60px)] flex items-center">
-      {/* Section background blurs */}
-      <div className="pointer-events-none absolute top-10 -left-40 w-[500px] h-[500px] rounded-full bg-blue-100/50 blur-[100px]" />
-      <div className="pointer-events-none absolute -bottom-20 -right-20 w-[400px] h-[400px] rounded-full bg-indigo-100/40 blur-[100px]" />
+    <Box className="relative overflow-hidden bg-[#f8fafc] pt-16 pb-20 lg:pt-24 lg:pb-32">
+      {/* Ambient background mesh lighting */}
+      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-indigo-100/40 rounded-full blur-[120px]" />
 
-      <Container maxWidth="lg" className="!px-4 w-full">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center py-10 lg:py-0">
-          <div className="animate-fade-in-up">
-            <div className="inline-flex items-center gap-2 bg-[var(--primary-color)]/10 text-[var(--primary-color)] px-3 py-1 rounded-full mb-4">
-              <Sparkles size={14} />
-              <span className="text-xs font-semibold tracking-wide">
-                Future of AI Agent Development
-              </span>
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl  !text-slate-900 !leading-tight">
-              Build Intelligent
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-[var(--primary-color)]">
-                AI Agents Effortlessly
-              </span>
-            </h1>
-
-            <p className="text-[15px] text-slate-700 mt-4">
-              Transform your ideas into powerful AI agents with our intuitive visual builder.
-            </p>
-            <p className="text-[15px] text-slate-700">
-              No coding required—just drag, drop, and deploy intelligent automation solutions.
-            </p>
-
-            <ul className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-slate-700">
-              <li className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[var(--primary-color)]" />
-                Visual node-based builder
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[var(--primary-color)]" />
-                Reusable workflows & templates
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[var(--primary-color)]" />
-                Multi-tool integrations
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-[var(--primary-color)]" />
-                One-click deploy
-              </li>
-            </ul>
-
-            <div className="mt-8 flex items-center gap-4">
-              <CustomGradientButton text="Start Building" onClick={handleDrawerOpen} />
-              <button className="flex items-center gap-2 text-[14px] font-medium text-slate-600 hover:text-[var(--primary-color)] transition-colors">
-                Watch Demo
-                <ArrowRight size={14} />
-              </button>
-            </div>
+      <Container maxWidth="lg" className="!px-4 relative z-10">
+        <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16">
+          {/* Top Pill Tag */}
+          <div className="inline-flex items-center gap-2 bg-white border border-slate-200/90 shadow-2xs px-3.5 py-1.5 rounded-full mb-6">
+            <span className="h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
+            <span className="text-xs font-semibold text-slate-700 tracking-tight">
+              Enterprise Agentic Orchestration
+            </span>
+            <span className="text-slate-300">•</span>
+            <span className="text-xs text-indigo-600 font-medium">v2.4 Studio</span>
           </div>
 
-          {/* Animated Orbital Visual */}
-          <div className="hidden lg:flex items-center justify-center">
-            <div className="relative w-[380px] h-[380px]">
-              {/* Outer ring */}
-              <div className="absolute inset-0 rounded-full border-2 border-dashed border-[var(--primary-color)]/15 animate-pulse-ring" />
-              {/* Middle ring */}
-              <div className="absolute inset-8 rounded-full border border-[var(--primary-color)]/10" />
-              {/* Inner ring */}
-              <div className="absolute inset-20 rounded-full border border-blue-200/40" />
+          {/* Main Title */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-slate-900 tracking-tight leading-[1.15]">
+            Build & Orchestrate Autonomous
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-indigo-800">
+              AI Agent Workflows
+            </span>
+          </h1>
 
-              {/* Center core */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="relative">
-                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-blue-600 to-[var(--primary-color)] flex items-center justify-center shadow-xl shadow-blue-500/25 animate-float-slow">
-                    <BrainCircuit size={36} className="text-white" />
+          {/* Subtitle */}
+          <p className="text-base sm:text-lg text-slate-500 mt-6 max-w-2xl leading-relaxed">
+            Design multi-agent pipelines with visual graph execution, native MCP tool connectors, 
+            and contextual knowledge retrieval—built for enterprise reliability.
+          </p>
+
+          {/* Call to Actions */}
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
+            <button
+              onClick={handleDrawerOpen}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition-all shadow-xs shadow-indigo-500/20 flex items-center justify-center gap-2"
+            >
+              <span>Get Started Free</span>
+              <ArrowRight size={14} />
+            </button>
+            <button
+              onClick={handleDrawerOpen}
+              className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-all flex items-center justify-center gap-2"
+            >
+              <Play size={13} className="fill-slate-700" />
+              <span>Explore Live Studio</span>
+            </button>
+          </div>
+
+          {/* Feature Badges */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500">
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 size={14} className="text-emerald-600" /> Visual Canvas
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 size={14} className="text-emerald-600" /> Native MCP Servers
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 size={14} className="text-emerald-600" /> Zero Code Deployment
+            </span>
+          </div>
+        </div>
+
+        {/* Interactive Canvas Mockup */}
+        <div className="relative max-w-4xl mx-auto">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden">
+            {/* Window Topbar */}
+            <div className="bg-slate-50/80 px-4 py-3 border-b border-slate-200/80 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="h-3 w-3 rounded-full bg-slate-200" />
+                <span className="h-3 w-3 rounded-full bg-slate-200" />
+                <span className="h-3 w-3 rounded-full bg-slate-200" />
+                <span className="text-xs font-mono text-slate-400 ml-2">studio/customer-support-triage</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                  Execution: 42ms
+                </span>
+              </div>
+            </div>
+
+            {/* Canvas Body Mockup */}
+            <div className="p-8 bg-[#fafbfc] min-h-[320px] flex items-center justify-center">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl items-center relative">
+                {/* Node 1 */}
+                <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800">User Query Trigger</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">INPUT</span>
                   </div>
-                  {/* Core glow */}
-                  <div className="absolute -inset-3 rounded-2xl bg-blue-500/10 blur-xl" />
+                  <p className="text-[11px] text-slate-400 font-mono bg-slate-50 p-1.5 rounded">
+                    `How do I connect database?`
+                  </p>
+                </div>
+
+                {/* Node 2 (Center Agent) */}
+                <div className="p-4 bg-white rounded-xl border-2 border-indigo-500 shadow-md space-y-2 relative">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800">Support Agent</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 font-bold">GPT-4O</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 leading-snug">
+                    Autonomous reasoning loop with document retrieval.
+                  </p>
+                  <div className="flex items-center gap-1 text-[10px] text-emerald-600 font-semibold">
+                    <Zap size={11} /> 2 tools evaluated
+                  </div>
+                </div>
+
+                {/* Node 3 */}
+                <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800">Knowledge RAG</span>
+                    <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">TOOL</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-mono bg-slate-50 p-1.5 rounded">
+                    docs/db-integration.md (0.94 score)
+                  </p>
                 </div>
               </div>
-
-              {/* Orbiting node 1 - Bot */}
-              <div className="absolute inset-0 animate-orbit">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="h-14 w-14 rounded-xl bg-white border border-blue-200 shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
-                    <Bot size={22} className="text-[var(--primary-color)]" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Orbiting node 2 - Workflow */}
-              <div className="absolute inset-0 animate-orbit" style={{ animationDelay: "-4s" }}>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="h-14 w-14 rounded-xl bg-white border border-purple-200 shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
-                    <Workflow size={22} className="text-purple-600" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Orbiting node 3 - Cpu */}
-              <div className="absolute inset-0 animate-orbit" style={{ animationDelay: "-8s" }}>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="h-14 w-14 rounded-xl bg-white border border-green-200 shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
-                    <Cpu size={22} className="text-green-600" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Inner orbiting node 1 - Database */}
-              <div className="absolute inset-0 animate-orbit-reverse">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="h-10 w-10 rounded-lg bg-white border border-amber-200 shadow-md flex items-center justify-center">
-                    <Database size={16} className="text-amber-600" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Inner orbiting node 2 - MessageSquare */}
-              <div className="absolute inset-0 animate-orbit-reverse" style={{ animationDelay: "-5s" }}>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                  <div className="h-10 w-10 rounded-lg bg-white border border-rose-200 shadow-md flex items-center justify-center">
-                    <MessageSquare size={16} className="text-rose-500" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Floating particles */}
-              <div className="absolute top-6 right-12 h-2 w-2 rounded-full bg-blue-400/50 animate-float" />
-              <div className="absolute bottom-12 left-8 h-1.5 w-1.5 rounded-full bg-purple-400/40 animate-float-slow" />
-              <div className="absolute top-1/3 left-4 h-2.5 w-2.5 rounded-full bg-[var(--primary-color)]/20 animate-float" style={{ animationDelay: "-2s" }} />
-              <div className="absolute bottom-8 right-16 h-2 w-2 rounded-full bg-green-400/30 animate-float-slow" style={{ animationDelay: "-1s" }} />
             </div>
           </div>
         </div>
       </Container>
     </Box>
-  )
+  );
 }

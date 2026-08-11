@@ -1,26 +1,23 @@
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 import { lighten, darken } from '@mui/material/styles';
 import { File, Image, Video, AudioLines, FileText } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 
 const showToaster = (type, message) => {
+  const text = typeof message === 'object' ? (message.text || message.message || JSON.stringify(message)) : message;
   switch (type) {
     case 'success':
-      toast.success(message);
+      toast.success(text);
       break;
     case 'error':
-      toast.error(message.text, {
-        toastId: message.code,
-      });
+      toast.error(text);
       break;
     case 'warning':
-      toast.warning(message);
+      toast.warning(text);
       break;
     case 'info':
-      toast.info(message);
-      break;
     default:
-      toast.info(message);
+      toast.info(text);
       break;
   }
 };

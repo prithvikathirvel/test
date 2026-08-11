@@ -1,7 +1,14 @@
 import React from 'react';
 import { Box, Tooltip } from '@mui/material';
-import { Workflow, ArrowUpRight, Trash2 } from 'lucide-react';
+import { Workflow, ArrowUpRight, Trash2, Info } from 'lucide-react';
 import { timeAgo } from '@/utils/commonFunction';
+
+const getFirst5Words = (text) => {
+  if (!text) return "No description available";
+  const words = text.trim().split(/\s+/);
+  if (words.length <= 5) return text;
+  return words.slice(0, 5).join(' ') + '...';
+};
 
 const FlowListingTableView = ({ filteredFlows, handleOpenStudio, handleDeleteFlow }) => {
   return (
@@ -9,10 +16,10 @@ const FlowListingTableView = ({ filteredFlows, handleOpenStudio, handleDeleteFlo
       <table className="w-full text-left border-collapse table-fixed">
         <thead>
           <tr className="bg-slate-50/80 border-b border-slate-200/80">
-            <th className="w-[30%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <th className="w-[32%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Flow Name
             </th>
-            <th className="w-[42%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <th className="w-[40%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Description
             </th>
             <th className="w-[14%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
@@ -25,7 +32,9 @@ const FlowListingTableView = ({ filteredFlows, handleOpenStudio, handleDeleteFlo
         </thead>
         <tbody className="divide-y divide-slate-100 bg-white">
           {filteredFlows.map((flow) => {
-            const desc = flow?.description || flow?.agent_description || "No description provided";
+            const fullDesc = flow?.description || flow?.agent_description || "No description available";
+            const shortDesc = getFirst5Words(fullDesc);
+
             return (
               <tr key={flow.id || flow.agent_id} className="hover:bg-slate-50/60 transition-colors">
                 <td className="px-5 py-3.5 align-middle">
@@ -38,13 +47,46 @@ const FlowListingTableView = ({ filteredFlows, handleOpenStudio, handleDeleteFlo
                     </span>
                   </div>
                 </td>
+
                 <td className="px-5 py-3.5 align-middle">
-                  <Tooltip title={desc} placement="top-start" arrow>
-                    <span className="text-[12.5px] text-slate-500 line-clamp-1 block cursor-default">
-                      {desc}
+                  <Tooltip
+                    title={
+                      <div className="p-1 space-y-1 max-w-xs">
+                        <div className="text-[10.5px] font-semibold text-slate-300 uppercase tracking-wider">
+                          Full Description
+                        </div>
+                        <div className="text-[12px] text-white leading-relaxed">
+                          {fullDesc}
+                        </div>
+                      </div>
+                    }
+                    placement="top-start"
+                    arrow
+                    slotProps={{
+                      popper: {
+                        sx: {
+                          '& .MuiTooltip-tooltip': {
+                            backgroundColor: '#0f172a',
+                            borderRadius: '10px',
+                            padding: '8px 12px',
+                            border: '1px solid #334155',
+                            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)',
+                          },
+                          '& .MuiTooltip-arrow': {
+                            color: '#0f172a',
+                          },
+                        },
+                      },
+                    }}
+                  >
+                    <span className="text-[12.5px] text-slate-600 hover:text-slate-900 cursor-pointer inline-flex items-center gap-1 group">
+                      <span className="font-medium underline decoration-slate-300 underline-offset-2 group-hover:decoration-indigo-500">
+                        {shortDesc}
+                      </span>
                     </span>
                   </Tooltip>
                 </td>
+
                 <td className="px-5 py-3.5 align-middle whitespace-nowrap">
                   <span className="text-[12px] text-slate-400">{timeAgo(flow?.updatedAt)}</span>
                 </td>
