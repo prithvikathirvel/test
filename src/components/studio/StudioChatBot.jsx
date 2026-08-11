@@ -998,7 +998,6 @@ const StudioChatBot = ({
               </button>
             </div>
           </div>
-          </div>
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-5 space-y-4 bg-gray-50">

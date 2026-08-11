@@ -139,7 +139,7 @@ const KnowledgePage = () => {
     const isFormValid = selectedFiles.every(file => file.knowledgeBaseName.trim() !== "");
 
     return (
-        <Box className="px-6 lg:px-10 py-8 bg-[#f8fafc] min-h-screen">
+        <Box className="px-6 lg:px-8 py-8 bg-[#f8fafc] min-h-screen">
             {/* Page Header */}
             <Box className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>

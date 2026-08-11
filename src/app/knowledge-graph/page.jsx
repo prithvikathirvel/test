@@ -64,7 +64,7 @@ export default function KnowledgeGraphPage() {
   };
 
   return (
-    <div className="px-6 lg:px-10 py-8 bg-[#f8fafc] min-h-screen">
+    <div className="px-6 lg:px-8 py-8 bg-[#f8fafc] min-h-screen">
       <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">

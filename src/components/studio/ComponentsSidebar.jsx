@@ -25,7 +25,7 @@ import {
   Folder,
   GripVertical,
   X,
-  Sparkles,
+  BookOpenText,
   Server,
   Code2,
 } from "lucide-react";
@@ -184,7 +184,7 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
       <Box className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 bg-slate-50/50">
         <div className="flex items-center gap-2">
           <div className="h-6 w-6 rounded-md bg-blue-50 text-blue-600 flex items-center justify-center">
-            <Sparkles size={14} />
+            <BookOpenText size={14} />
           </div>
           <div>
             <Typography className="!text-[13px] !font-bold !text-slate-900 !leading-tight">

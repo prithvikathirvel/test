@@ -100,7 +100,7 @@ const StudioListing = () => {
     <Box className="min-h-screen bg-[#f8fafc]">
       {studioSaveFlowLoader && <BlurredLoader title="Creating Flow..." />}
 
-      <Box className="px-6 lg:px-10 py-8">
+      <Box className="px-6 lg:px-8 py-8">
         {/* Page Header matching attached design */}
         <Box className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>

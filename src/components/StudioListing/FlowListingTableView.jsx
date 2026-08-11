@@ -19,10 +19,10 @@ const FlowListingTableView = ({ filteredFlows, handleOpenStudio, handleDeleteFlo
             <th className="w-[32%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Flow Name
             </th>
-            <th className="w-[40%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <th className="w-[30%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
               Description
             </th>
-            <th className="w-[14%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
+            <th className="w-[20%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
               Last Updated
             </th>
             <th className="w-[14%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">
