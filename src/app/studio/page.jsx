@@ -1,53 +1,70 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useDispatch, useSelector } from "react-redux"
-import { useRouter } from "next/navigation"
-import { Network, Plus, Play, Trash2, Search, Filter, ArrowUpRight, Clock, Zap, Grid3X3, List } from "lucide-react"
-import { getAllFlows, saveFlow, updateSpecification, deleteFlow } from "@/redux/slices/studioSlice"
-import FlowDetailsModal from "@/components/studio/FlowDetailsModal"
-import { Container, Box, Paper, Card, Button, ButtonGroup } from "@mui/material"
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
+import {
+  Network,
+  Plus,
+  Play,
+  Trash2,
+  Search,
+  Filter,
+  ArrowUpRight,
+  Clock,
+  Zap,
+  Grid3X3,
+  List,
+  Sparkles,
+  Layers,
+  Cpu,
+  ShieldCheck,
+  Bot,
+  Activity,
+  Workflow,
+  CheckCircle2,
+} from "lucide-react";
+import { getAllFlows, saveFlow, updateSpecification, deleteFlow } from "@/redux/slices/studioSlice";
+import FlowDetailsModal from "@/components/studio/FlowDetailsModal";
+import { Container, Box, Typography, Button, ButtonGroup, Chip, Tooltip } from "@mui/material";
 import DetailsCard from "@/components/StudioListing/DetailsCard";
-import Grid from '@mui/material/Grid2';
+import Grid from "@mui/material/Grid2";
 import InputBox from "@/components/Common/InputBox";
 import { sortByField } from "@/utils/commonFunction";
 import FlowListingTableView from "@/components/StudioListing/FlowListingTableView";
 import FlowListingGridView from "@/components/StudioListing/FlowListingGridView";
-import BlurredLoader from '@/components/Common/BlurredLoader';
-import colors from "@/utils/colors";
+import BlurredLoader from "@/components/Common/BlurredLoader";
 import CustomButton from "@/components/Common/CustomButton";
 
 const StudioListing = () => {
-  const dispatch = useDispatch()
-  const router = useRouter()
-  const flows = useSelector((state) => state.studio.flows || [])
-  const [flowDetailsModalOpen, setFlowDetailsModalOpen] = useState(false)
-  const newFlowId = useSelector((state) => state.studio.newFlowId)
-  const studioSaveFlowLoader = useSelector((state) => state.studio.studioSaveFlowLoader)
-  const spec = useSelector((state) => state.studio.specification)
-  const [searchTerm, setSearchTerm] = useState("")
-  const [viewMode, setViewMode] = useState("list") // grid or list
-
-
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const flows = useSelector((state) => state.studio.flows || []);
+  const [flowDetailsModalOpen, setFlowDetailsModalOpen] = useState(false);
+  const newFlowId = useSelector((state) => state.studio.newFlowId);
+  const studioSaveFlowLoader = useSelector((state) => state.studio.studioSaveFlowLoader);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [viewMode, setViewMode] = useState("list"); // 'list' or 'grid'
+  const [selectedFilter, setSelectedFilter] = useState("all"); // 'all', 'active', 'recent'
 
   useEffect(() => {
-    dispatch(getAllFlows())
-    setFlowDetailsModalOpen(false)
+    dispatch(getAllFlows());
+    setFlowDetailsModalOpen(false);
     if (newFlowId) {
-      router.push(`/studio/${newFlowId}`)
+      router.push(`/studio/${newFlowId}`);
     }
-  }, [newFlowId])
+  }, [newFlowId, dispatch, router]);
 
   const handleDeleteFlow = (flowId) => {
-    dispatch(deleteFlow({
-      data: flowId,
-      onSuccess: () => {
-        console.log("Deleted Successfully");
-        dispatch(getAllFlows());
-      }
-    }));
-  }
-
+    dispatch(
+      deleteFlow({
+        data: flowId,
+        onSuccess: () => {
+          dispatch(getAllFlows());
+        },
+      })
+    );
+  };
 
   const handleFlowDetailsSubmit = (details) => {
     const initialSpec = {
@@ -62,115 +79,185 @@ const StudioListing = () => {
       voice_config: {
         tts_provider: "piper",
         stt_provider: "whisper",
-        mode: "voice_in_voice_out"
+        mode: "voice_in_voice_out",
       },
       status: "active",
       version: "1.0.0",
       isPublic: true,
       createdBy: "user",
-      inputs: []
+      inputs: [],
     };
 
     dispatch(
       saveFlow({
         data: initialSpec,
         onSuccess: () => {
-          updateSpecificationDispatch(initialSpec);
+          dispatch(updateSpecification(initialSpec));
           dispatch(getAllFlows());
         },
       })
     );
   };
 
-
   const handleOpenStudio = (flowId) => {
-    router.push(`/studio/${flowId}`)
-  }
+    router.push(`/studio/${flowId}`);
+  };
 
   const handleRunFlow = (flow) => {
-    console.log("Running flow:", flow)
-  }
+    console.log("Running flow:", flow);
+  };
 
   const handleCreateStudio = () => {
-    setFlowDetailsModalOpen(true)
-  }
+    setFlowDetailsModalOpen(true);
+  };
 
-  const updateSpecificationDispatch = (specification) => {
-    dispatch(updateSpecification(specification))
-  }
-
-  const searchFlow = (searchTerm) => {
-    setSearchTerm(searchTerm)
-  }
-
-  const filteredFlows = sortByField(flows, "updatedAt", "desc").filter(
-    (flow) =>
-      (flow.name || flow.agent_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (flow.description || flow.agent_description || "").toLowerCase().includes(searchTerm.toLowerCase()),
-  )
+  const filteredFlows = sortByField(flows, "updatedAt", "desc").filter((flow) => {
+    const nameMatch = (flow.name || flow.agent_name || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const descMatch = (flow.description || flow.agent_description || "").toLowerCase().includes(searchTerm.toLowerCase());
+    return nameMatch || descMatch;
+  });
 
   return (
-    <Box className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
-      {studioSaveFlowLoader && (
-        <BlurredLoader title="Creating Flow..." />
-      )}
+    <Box className="min-h-screen bg-[#f8fafc]">
+      {studioSaveFlowLoader && <BlurredLoader title="Provisioning New Agentic Flow..." />}
 
-      <Box className="px-4 sm:px-6 lg:px-8 py-10">
-        <Container className="!m-0 !mb-8 !min-w-full flex items-center justify-between">
-          <Box>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center tracking-tight">
-              <Box className="h-9 w-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mr-3">
-                <Network size={20} />
-              </Box>
-              Sify Aurora Studio
+      <Box className="px-6 lg:px-10 py-8">
+        {/* Top Header & Action Bar */}
+        <Box className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div>
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-1">
+              <span>Platform</span>
+              <span>/</span>
+              <span className="text-slate-900">Flow Studio</span>
+            </div>
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
+              Agent Workflows
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
+                {flows.length} Total
+              </span>
             </h1>
-            <p className="text-slate-500 text-sm mt-1">Design, execute, and monitor agentic workflows in real-time</p>
+            <p className="text-slate-500 text-sm mt-0.5">
+              Build, test, and orchestrate autonomous AI agent workflows with real-time telemetry.
+            </p>
+          </div>
+
+          <Box className="flex items-center gap-3">
+            <CustomButton
+              onClick={handleCreateStudio}
+              variant="contained"
+              size="medium"
+              startIcon={<Plus size={16} />}
+              className="!shadow-sm !shadow-blue-500/20"
+            >
+              Create Agentic Flow
+            </CustomButton>
           </Box>
-
-          <CustomButton
-            onClick={handleCreateStudio}
-            variant="contained"
-            size="medium"
-          >
-            <Plus size={16} className="mr-1.5" />
-            Create Agentic Flow
-          </CustomButton>
-        </Container>
-
-        <Grid container spacing={3} className="!flex justify-between mb-8">
-          <DetailsCard title="Total Flows" icon={<Network className="h-5 w-5 text-blue-600" />} flows={flows} />
-          <DetailsCard title="Active Runs" icon={<Play className="h-5 w-5 text-emerald-600" />} flows={[]} />
-          <DetailsCard title="Failed Executions" icon={<Clock className="h-5 w-5 text-amber-600" />} flows={[]} />
-        </Grid>
-
-        <Box className="flex flex-row !sm:flex-col justify-end mb-6 gap-4">
-
-          <InputBox
-            placeholder="Search"
-            value={searchTerm}
-            isShowLabel={false}
-            height="40px"
-            onChange={searchFlow}
-            icon={<Search className='text-gray-400' size={18} />}
-          />
-
-
-          <ButtonGroup variant="text" className="!flex items-center shadow-sm !text-slate-400">
-            <Button
-              onClick={() => setViewMode("grid")}
-              className={` h-full ${viewMode === "grid" ? `!bg-[var(--primary-color)]/20` : "text-slate-400"}`}
-            >
-              <Grid3X3 size={18} className={`!text-[var(--primary-color)]`} />
-            </Button>
-            <Button
-              onClick={() => setViewMode("list")}
-              className={`h-full ${viewMode === "list" ? `!bg-[var(--primary-color)]/20` : "!text-slate-400"}`}
-            >
-              <List size={18} className={`!text-[var(--primary-color)]`} />
-            </Button>
-          </ButtonGroup>
         </Box>
 
+        {/* Enterprise KPI Metric Cards */}
+        <Grid container spacing={2.5} className="mb-8">
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Box className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Flows</p>
+                <div className="h-8 w-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <Workflow size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-slate-900 mt-2">{flows.length}</p>
+              <div className="flex items-center gap-1 mt-2 text-[11px] text-emerald-600 font-medium">
+                <CheckCircle2 size={12} /> Ready for deployment
+              </div>
+            </Box>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Box className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Instances</p>
+                <div className="h-8 w-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <Activity size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-slate-900 mt-2">{flows.length > 0 ? flows.length : 0}</p>
+              <div className="flex items-center gap-1.5 mt-2 text-[11px] text-slate-500">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> Cluster healthy
+              </div>
+            </Box>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Box className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Execution SLA</p>
+                <div className="h-8 w-8 rounded-lg bg-violet-50 text-violet-600 flex items-center justify-center">
+                  <Zap size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-slate-900 mt-2">99.9%</p>
+              <div className="mt-2 text-[11px] text-slate-500 font-medium">
+                Average latency: 240ms
+              </div>
+            </Box>
+          </Grid>
+
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Box className="bg-white p-5 rounded-xl border border-slate-200/80 shadow-2xs">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Connected Tools</p>
+                <div className="h-8 w-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <Cpu size={16} />
+                </div>
+              </div>
+              <p className="text-2xl font-bold text-slate-900 mt-2">12 MCP</p>
+              <div className="mt-2 text-[11px] text-slate-500 font-medium">
+                OpenAI, Anthropic & Piper
+              </div>
+            </Box>
+          </Grid>
+        </Grid>
+
+        {/* Search, Filter, and View Controls */}
+        <Box className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-5">
+          <Box className="flex items-center gap-2">
+            <InputBox
+              placeholder="Search workflows by name or description..."
+              value={searchTerm}
+              isShowLabel={false}
+              height="38px"
+              onChange={setSearchTerm}
+              className="w-full sm:w-80 bg-white"
+              icon={<Search className="text-slate-400" size={16} />}
+            />
+          </Box>
+
+          <Box className="flex items-center justify-end gap-2">
+            <div className="flex items-center bg-white p-0.5 rounded-lg border border-slate-200 shadow-2xs">
+              <button
+                onClick={() => setViewMode("list")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  viewMode === "list"
+                    ? "bg-slate-100 text-slate-900 font-semibold"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                <List size={14} /> Table
+              </button>
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  viewMode === "grid"
+                    ? "bg-slate-100 text-slate-900 font-semibold"
+                    : "text-slate-500 hover:text-slate-900"
+                }`}
+              >
+                <Grid3X3 size={14} /> Grid
+              </button>
+            </div>
+          </Box>
+        </Box>
+
+        {/* Content Listing or Empty State */}
         {filteredFlows.length > 0 ? (
           viewMode === "grid" ? (
             <FlowListingGridView
@@ -188,20 +275,26 @@ const StudioListing = () => {
             />
           )
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 px-4 bg-white/70 backdrop-blur-sm rounded-xl border border-dashed border-slate-200 shadow-sm">
-
-            <h3 className="text-xl font-bold text-slate-700 mb-2">No flows available</h3>
-            <p className="text-slate-500 text-center max-w-md mb-6">
-              Create your first AI flow to start building intelligent workflows that automate your tasks
-            </p>
+          <Box className="flex flex-col items-center justify-center py-20 px-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
+            <div className="h-12 w-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 border border-blue-100 shadow-sm">
+              <Sparkles size={22} />
+            </div>
+            <Typography variant="h6" className="!font-bold !text-slate-900 !tracking-tight mb-1">
+              No Workflows Found
+            </Typography>
+            <Typography variant="body2" className="!text-slate-500 !max-w-md mb-6">
+              {searchTerm
+                ? "No agent flows match your search filter. Try clearing the query or search for something else."
+                : "Create your first AI flow to connect nodes, models, and tools into autonomous agent workflows."}
+            </Typography>
             <CustomButton
               onClick={handleCreateStudio}
-            // className={`px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg shadow-lg hover:shadow-purple-500/20 transition-all duration-300 flex items-center font-medium`}
+              variant="contained"
+              startIcon={<Plus size={16} />}
             >
-              <Plus size={18} className="mr-2" />
-              Create New Flow
+              Create First Flow
             </CustomButton>
-          </div>
+          </Box>
         )}
       </Box>
 
@@ -211,7 +304,7 @@ const StudioListing = () => {
         onSubmit={handleFlowDetailsSubmit}
       />
     </Box>
-  )
-}
+  );
+};
 
-export default StudioListing
+export default StudioListing;

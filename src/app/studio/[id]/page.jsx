@@ -22,6 +22,7 @@ import FlowOutputModal from "@/components/studio/FlowOutputModal";
 import InputFieldConfiguration from "@/components/InputFieldConfiguration";
 import CustomButton from "@/components/Common/CustomButton";
 import VoiceConfigModal from "@/components/studio/VoiceConfigModal";
+import StudioHeader from "@/components/studio/StudioHeader";
 const drawerWidth = 280;
 
 const Studio = () => {
@@ -623,7 +624,7 @@ const Studio = () => {
 
     return (
         <>
-            <div className="h-full w-full overflow-hidden">
+            <div className="h-full w-full overflow-hidden flex flex-col bg-[#f8fafc]">
                 <StudioChatBot 
                     className='!z-100' 
                     opened={true} 
@@ -638,145 +639,89 @@ const Studio = () => {
                     config={voiceConfig}
                     onSave={handleVoiceConfigSave}
                 />
-                <Box className="h-full w-full">
-                    {inputConfigOpen && (
-                        <InputFieldConfiguration
-                            open={inputConfigOpen}
-                            onClose={() => setInputConfigOpen(false)}
-                            onSave={handleInputConfigSave}
-                        />
-                    )}
-                    <Grid container spacing={0} className="h-full">
-                        {sidebarOpen && (
-                            <Grid size={2.5} className="h-full overflow-auto transition-all duration-900 ease-in-out" >
-                                <ComponentsSidebar minimizeSideBar={!sidebarOpen} handleMinimizeSideBar={handleMinimizeSideBar} />
-                            </Grid>
-                        )}
-                        <Grid size={sidebarOpen ? 9.5 : 12}>
-                            <Box className="p-2 absolute top-0 right-0 flex !justify-end z-10">
-                                <Box className="!flex gap-2">
-                                    <ButtonGroup variant="outlined" size="small" sx={{ mr: 2 }}>
-                                        <Tooltip title="Toggle View Mode">
-                                            <Button onClick={handleToggleViewMode}>
-                                                {toggleViewMode ? <Code size={18} /> : <Workflow size={18} />}
-                                            </Button>
-                                        </Tooltip>
-                                    </ButtonGroup>
+                {inputConfigOpen && (
+                    <InputFieldConfiguration
+                        open={inputConfigOpen}
+                        onClose={() => setInputConfigOpen(false)}
+                        onSave={handleInputConfigSave}
+                    />
+                )}
 
-                                    <ButtonGroup variant="outlined" size="small" sx={{ mr: 2 }}>
-                                        <Tooltip title={voiceEnabled ? "Voice Enabled" : "Voice Disabled"}>
-                                            <Button 
-                                                onClick={handleVoiceToggle}
-                                                sx={{ 
-                                                    color: voiceEnabled ? '#4CAF50' : 'inherit',
-                                                    borderColor: voiceEnabled ? '#4CAF50 !important' : 'inherit'
-                                                }}
-                                            >
-                                                {voiceEnabled ? <Mic size={18} /> : <MicOff size={18} />}
-                                            </Button>
-                                        </Tooltip>
-                                        {voiceEnabled && (
-                                            <Tooltip title="Voice Settings">
-                                                <Button onClick={() => setIsVoiceModalOpen(true)}>
-                                                    <Settings size={18} />
-                                                </Button>
-                                            </Tooltip>
-                                        )}
-                                    </ButtonGroup>
+                {/* Unified Enterprise Studio Top Header */}
+                <StudioHeader
+                    flow={flow}
+                    flowId={flowId}
+                    toggleViewMode={toggleViewMode}
+                    onToggleViewMode={handleToggleViewMode}
+                    voiceEnabled={voiceEnabled}
+                    onVoiceToggle={handleVoiceToggle}
+                    onVoiceSettingsClick={() => setIsVoiceModalOpen(true)}
+                    onConfigureInputsClick={() => setInputConfigOpen(true)}
+                    onRunFlow={handleRunFlow}
+                    isFlowRunning={isFlowRunning}
+                    onSaveFlow={handleSaveFlow}
+                    isSavingFlow={studioUpdateFlowLoader}
+                    onDeployFlow={handleDeployFlow}
+                />
 
-
-                                    <CustomButton
-                                        variant="contained"
-                                        onClick={() => setInputConfigOpen(true)}
-                                    >
-                                        Configure Inputs
-                                    </CustomButton>
-
-
-                                    <CustomButton
-                                        variant="contained"
-                                        startIcon={isFlowRunning ? <CircularProgress size={16} /> : <Play size={16} />}
-                                        onClick={handleRunFlow}
-                                        loading={isFlowRunning}
-                                        disabled={isFlowRunning}
-                                    >
-                                        {isFlowRunning ? 'Running...' : 'Run'}
-                                    </CustomButton>
-
-                                    <CustomButton
-                                        variant="contained"
-                                        startIcon={studioUpdateFlowLoader ? <CircularProgress size={16} /> : <Save size={16} />}
-                                        onClick={handleSaveFlow}
-                                        loading={studioUpdateFlowLoader}
-                                        disabled={studioUpdateFlowLoader}
-                                    >
-                                        {studioUpdateFlowLoader ? 'Saving Flow...' : 'Save'}
-                                    </CustomButton>
-
-                                    <CustomButton
-                                        variant="contained"
-                                        startIcon={<Rocket size={16} />}
-                                        onClick={handleDeployFlow}
-                                    >
-                                        Deploy
-                                    </CustomButton>
-                                </Box>
-                            </Box>
-                            {!toggleViewMode ? (
-                                <div className="h-full w-full">
-                                    <ReactFlow {...reactFlowProps}>
-                                        <Background />
-                                        <Controls />
-                                    </ReactFlow>
-                                </div>
-                            ) : (
-                                <div className="h-full overflow-auto">
-                                    <JsonSpecView />
-                                </div>
-                            )}
-                            <SideDrawer />
-                            <NodeDetailsModal
-                                flowId={flow?.id}
-                                open={modalOpen}
-                                onClose={() => {
-                                    setModalOpen(false);
-                                    setSelectedNode(null);
-                                }}
-                                node={selectedNode}
-                                onDelete={handleDeleteNode}
-                                onUpdateParameters={handleUpdateNodeParameters}
-                                sections={{
-                                    displayBasicInformation: true,
-                                    displayInputParameters: !!selectedNode?.data?.inputParameters.length > 0,
-                                    displayOutputParameters: !!selectedNode?.data?.outputParameters.length > 0
-                                }}
-                                flow={flow}
-                                onOpenExecutionOutput={handleOpenExecutionOutput}
+                {/* Studio Main Workspace (Sidebar + Canvas) */}
+                <Box className="flex-1 flex overflow-hidden relative">
+                    {sidebarOpen ? (
+                        <Box className="w-[280px] h-full shrink-0 transition-all duration-200 ease-in-out border-r border-slate-200/80">
+                            <ComponentsSidebar
+                                minimizeSideBar={!sidebarOpen}
+                                handleMinimizeSideBar={handleMinimizeSideBar}
                             />
-                        </Grid>
-                    </Grid>
+                        </Box>
+                    ) : (
+                        <Box className="absolute top-3 left-3 z-20">
+                            <Tooltip title="Expand Components Panel">
+                                <button
+                                    onClick={handleMinimizeSideBar}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-lg shadow-sm border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                                >
+                                    <List size={14} /> Components
+                                </button>
+                            </Tooltip>
+                        </Box>
+                    )}
+
+                    <Box className="flex-1 h-full overflow-hidden relative bg-[#f8fafc]">
+                        {!toggleViewMode ? (
+                            <div className="h-full w-full">
+                                <ReactFlow {...reactFlowProps}>
+                                    <Background color="#cbd5e1" gap={16} size={1} />
+                                    <Controls className="!bg-white !border !border-slate-200 !rounded-lg !shadow-xs" />
+                                </ReactFlow>
+                            </div>
+                        ) : (
+                            <div className="h-full overflow-auto p-4">
+                                <JsonSpecView />
+                            </div>
+                        )}
+
+                        <SideDrawer />
+                        <NodeDetailsModal
+                            flowId={flow?.id}
+                            open={modalOpen}
+                            onClose={() => {
+                                setModalOpen(false);
+                                setSelectedNode(null);
+                            }}
+                            node={selectedNode}
+                            onDelete={handleDeleteNode}
+                            onUpdateParameters={handleUpdateNodeParameters}
+                            sections={{
+                                displayBasicInformation: true,
+                                displayInputParameters: !!selectedNode?.data?.inputParameters?.length > 0,
+                                displayOutputParameters: !!selectedNode?.data?.outputParameters?.length > 0,
+                            }}
+                            flow={flow}
+                            onOpenExecutionOutput={handleOpenExecutionOutput}
+                        />
+                    </Box>
                 </Box>
             </div>
-            {!sidebarOpen && (
-                <Box
-                    sx={{
-                        position: 'fixed',
-                        marginLeft: 2,
-                        top: 10,
-                        zIndex: 9999,
-                    }}
-                >
-
-                    <CustomButton
-                        onClick={handleMinimizeSideBar}
-                        variant="outlined"
-                        color="primary"
-                        size="small"                        // className="flex items-center justify-center w-12 h-12 bg-white rounded-full shadow-lg border border-gray-200 hover:shadow-xl transition-all duration-200 hover:scale-105 group"
-                    >
-                        <List size={20} className="text-gray-600 group-hover: 'var(--primary-color)' transition-colors duration-200" />
-                    </CustomButton>
-                </Box>
-            )}
         </>
     );
 };
