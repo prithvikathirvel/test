@@ -72,15 +72,19 @@ const getChipStyles = (baseColor) => ({
 const getNodeColor = (nodeType) => {
   switch (nodeType?.toLowerCase()) {
     case 'tool':
-      return '#6c5ce7';
+      return '#7c3aed';
     case 'agent':
-      return '#00b894';
+      return '#059669';
     case 'model':
-      return '#0984e3';
+      return '#2563eb';
     case 'input':
-      return '#0284e3';
+      return '#0284c7';
+    case 'output':
+      return '#ea580c';
+    case 'decision':
+      return '#d97706';
     default:
-      return '#6c5ce7';
+      return '#475569';
   }
 };
 

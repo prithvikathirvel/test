@@ -1,21 +1,20 @@
-"use client"
+"use client";
 import React from 'react';
 import { Box, InputBase, Typography } from '@mui/material';
 import { Search } from 'lucide-react';
 import { convertToTitleCase } from '@/utils/commonFunction';
 
 const InputBox = ({
-  placeholder = "Enter",
+  placeholder = "Enter text...",
   isShowLabel = true,
   label = "",
   onChange,
   className = "",
-  icon = <Search size={18} className="text-gray-400" />,
-  color = 'var(--primary-color)',
+  icon = null,
   value = '',
   disabled = false,
   width = '100%',
-  height = '40px',
+  height = '38px',
   type = 'text',
   error = false,
   ...props
@@ -25,39 +24,49 @@ const InputBox = ({
   };
 
   return (
-    <Box className={className}>
-      {isShowLabel && (
+    <Box className={className} style={{ width }}>
+      {isShowLabel && label && (
         <Typography
-          className={`!mb-2 !font-bold !text-[13px] ${error ? '!text-red-500' : ''}`}
+          className={`!mb-1.5 !font-semibold !text-[12px] !tracking-tight ${
+            error ? '!text-red-600' : '!text-slate-700'
+          }`}
         >
           {convertToTitleCase(label)}
         </Typography>
       )}
       <Box
-        className={`flex items-center gap-2 px-2 border rounded-md ${className} m-0`}
+        className={`flex items-center gap-2 px-3 border rounded-lg bg-white transition-all duration-150 ${
+          disabled ? 'bg-slate-50 opacity-60' : ''
+        }`}
         sx={{
-          borderColor: error ? '#f44336' : '#d1d5db',
+          borderColor: error ? '#ef4444' : '#e2e8f0',
+          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.02)',
+          '&:hover': {
+            borderColor: error ? '#ef4444' : '#cbd5e1',
+          },
           '&:focus-within': {
-            borderWidth: 1.5,
-            borderColor: error ? '#f44336' : color,
-            boxShadow: error ? '0 0 0 2px rgba(244, 67, 54, 0.1)' : '0 0 0 2px rgba(108, 92, 231, 0.1)',
+            borderColor: error ? '#ef4444' : '#2563eb',
+            boxShadow: error
+              ? '0 0 0 3px rgba(239, 68, 68, 0.15)'
+              : '0 0 0 3px rgba(37, 99, 235, 0.15)',
           },
         }}
-        style={{ width, height }}
+        style={{ height }}
         {...props}
       >
         {icon}
         <InputBase
           placeholder={placeholder}
           value={value}
-          onChange={(e) => handleChange(e)}
+          onChange={handleChange}
           className="flex-1 outline-none"
           disabled={disabled}
           type={type}
           sx={{
-            fontSize: '14px',
+            fontSize: '13px',
+            color: '#0f172a',
             '& input::placeholder': {
-              color: '#9ca3af',
+              color: '#94a3b8',
               opacity: 1,
             },
           }}

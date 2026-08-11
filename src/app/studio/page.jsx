@@ -116,34 +116,31 @@ const StudioListing = () => {
       )}
 
       <Box className="px-4 sm:px-6 lg:px-8 py-10">
-        <Container className="!m-0 !mb-10 !min-w-full flex items-center justify-between">
+        <Container className="!m-0 !mb-8 !min-w-full flex items-center justify-between">
           <Box>
-            <h1 className="text-3xl font-extrabold bg-clip-text flex items-center">
-              <Box className="text-[var(--primary-color)]">
-                <Network className="mr-3 text-[var(--primary-color)]" size={36} />
+            <h1 className="text-2xl font-bold text-slate-900 flex items-center tracking-tight">
+              <Box className="h-9 w-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 mr-3">
+                <Network size={20} />
               </Box>
-              Sify Aurora
+              Sify Aurora Studio
             </h1>
-            <p className="text-slate-500 mt-1">Build, manage, and deploy intelligent workflows</p>
+            <p className="text-slate-500 text-sm mt-1">Design, execute, and monitor agentic workflows in real-time</p>
           </Box>
 
           <CustomButton
             onClick={handleCreateStudio}
             variant="contained"
-            color="primary"
             size="medium"
-          // className={`px-5 py-2.5 !bg-[var(--primary-color)] hover:cursor-pointer text-white rounded-lg flex items-center font-medium`}
           >
-            <Plus size={18} className="mr-2" />
+            <Plus size={16} className="mr-1.5" />
             Create Agentic Flow
           </CustomButton>
         </Container>
 
-        <Grid container spacing={4} className="!flex justify-between  mb-10 ">
-          <DetailsCard title="Total Flows" icon={<Network className={`h-5 w-5 !text-[${colors.primary}]`} />} flows={flows} />
-          <DetailsCard title="Active Runs" icon={<Play className={`h-5 w-5 !text-[${colors.primary}]`} />} flows={[]} />
-          <DetailsCard title="Total Failed" icon={<Clock className={`h-5 w-5 !text-[${colors.primary}]`} />} flows={[]} />
-
+        <Grid container spacing={3} className="!flex justify-between mb-8">
+          <DetailsCard title="Total Flows" icon={<Network className="h-5 w-5 text-blue-600" />} flows={flows} />
+          <DetailsCard title="Active Runs" icon={<Play className="h-5 w-5 text-emerald-600" />} flows={[]} />
+          <DetailsCard title="Failed Executions" icon={<Clock className="h-5 w-5 text-amber-600" />} flows={[]} />
         </Grid>
 
         <Box className="flex flex-row !sm:flex-col justify-end mb-6 gap-4">

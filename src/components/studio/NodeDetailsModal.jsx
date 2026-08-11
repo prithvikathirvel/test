@@ -89,7 +89,7 @@ const TagsSection = ({ tags, color }) => (
   </Box>
 );
 
-const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName,handleSaveChanges,isDirty,disabled,loading,handleTestClick }) => {
+const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName, handleSaveChanges, isDirty, disabled, loading, handleTestClick }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(title || 'Undefined Node');
 
@@ -112,8 +112,8 @@ const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName,handl
   };
 
   return (
-    <Box className="flex justify-between items-center p-4">
-      <Box className="flex gap-4 justify-between min-w-65  items-center">
+    <Box className="flex justify-between items-center px-5 py-3.5 border-b border-slate-200/80 bg-slate-50/60">
+      <Box className="flex gap-3 items-center">
         {isEditing ? (
           <TextField
             value={editedName}
@@ -124,64 +124,61 @@ const ModalHeader = ({ title, type, color, onClose, onDelete, onUpdateName,handl
             className="min-w-[200px]"
           />
         ) : (
-          <Typography className="font-bold">{editedName || 'Undefined Node'}</Typography>
+          <Typography className="!font-bold !text-[15px] !text-slate-900">{editedName || 'Undefined Node'}</Typography>
         )}
-        {/* <Chip
-          label={convertToTitleCase(type)}
-          size="medium"
-          className="font-bold text-[0.7rem]"
-          sx={{ color: '#f5f5f7', ml: 2, backgroundColor: color }}
-        /> */}
       </Box>
-      <Box className="flex items-center !gap-1 !m-2">
-
-      <Tooltip title={isEditing ? "Test" : "Test"}>
+      <Box className="flex items-center gap-1.5 bg-white p-1 rounded-lg border border-slate-200 shadow-2xs">
+        <Tooltip title="Test Execution">
           <IconButton
             onClick={handleTestClick}
-            color={isEditing ? "primary" : "default"}
-            aria-label={isEditing ? "Test" : "Test"}
             disabled={loading}
+            size="small"
+            className="!p-1.5 !text-slate-600 hover:!text-emerald-700 hover:!bg-emerald-50 !rounded-md"
           >
-            <PlayIcon size={18} color={'green'}/>
+            <PlayIcon size={16} className="text-emerald-600" />
           </IconButton>
         </Tooltip>
         
-        <Tooltip title={isEditing ? "Save Changes" : "Save Changes"}>
+        <Tooltip title="Save Changes">
           <IconButton
             onClick={handleSaveChanges}
-            color={isEditing ? "primary" : "default"}
-            aria-label={isEditing ? "Save Changes" : "Save Changes"}
             disabled={!isDirty || disabled || loading}
+            size="small"
+            className="!p-1.5 !text-slate-600 hover:!text-blue-700 hover:!bg-blue-50 !rounded-md"
           >
-            <SaveIcon size={18} color={'blue'}/>
+            <SaveIcon size={16} className="text-blue-600" />
           </IconButton>
         </Tooltip>
 
         <Tooltip title={isEditing ? "Save Name" : "Edit Name"}>
           <IconButton
             onClick={handleEditClick}
-            color={isEditing ? "primary" : "default"}
-            aria-label={isEditing ? "Save Name" : "Edit Name"}
+            size="small"
+            className="!p-1.5 !text-slate-600 hover:!text-slate-900 hover:!bg-slate-100 !rounded-md"
           >
-            <EditIcon size={18} color={'grey'}/>
+            <EditIcon size={16} className="text-slate-600" />
           </IconButton>
         </Tooltip>
+
         <Tooltip title="Delete Node">
           <IconButton
             onClick={onDelete}
-            color="error"
-            aria-label="Delete Node"
+            size="small"
+            className="!p-1.5 !text-slate-400 hover:!text-red-600 hover:!bg-red-50 !rounded-md"
           >
-            <DeleteIcon size={18} color={'red'}/>
+            <DeleteIcon size={16} className="text-red-500" />
           </IconButton>
         </Tooltip>
+
+        <div className="h-4 w-px bg-slate-200 mx-0.5" />
+
         <Tooltip title="Close">
           <IconButton
             onClick={onClose}
-            aria-label="Close"
-            sx={{ color: 'black',marginRight: '10px' }}
+            size="small"
+            className="!p-1.5 !text-slate-400 hover:!text-slate-700 hover:!bg-slate-100 !rounded-md"
           >
-            <CloseIcon size={18} />
+            <CloseIcon size={16} />
           </IconButton>
         </Tooltip>
       </Box>

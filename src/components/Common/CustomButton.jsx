@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { CircularProgress } from '@mui/material';
-import { Button } from '@mui/material';
+import { CircularProgress, Button } from '@mui/material';
 
 const CustomButton = ({
   children,
@@ -15,19 +14,22 @@ const CustomButton = ({
   size = 'medium',
   fullWidth = false,
   sx = {},
+  className = '',
   ...props
 }) => {
-  // Base button styles
+  // Base enterprise button styling
   const baseStyles = {
     textTransform: 'none',
-    fontSize: '14px',
-    py: 0.75,
+    fontSize: '13px',
+    py: 0.8,
     px: 2,
-    borderRadius: '4px',
+    borderRadius: '8px',
     fontWeight: 500,
-    transition: 'all 0.2s ease-in-out',
+    boxShadow: 'none',
+    letterSpacing: '-0.01em',
+    transition: 'all 0.15s cubic-bezier(0.16, 1, 0.3, 1)',
     '&:disabled': {
-      opacity: 0.7,
+      opacity: 0.6,
       cursor: 'not-allowed',
     },
     '& .MuiButton-startIcon': {
@@ -44,70 +46,74 @@ const CustomButton = ({
     },
   };
 
-  // Variant styles
+  // Variant styling
   const variantStyles = {
     contained: {
-      backgroundColor: 'var(--primary-color)',
-      color: '#fff',
-      border: 'none',
+      backgroundColor: '#2563eb',
+      color: '#ffffff',
+      border: '1px solid transparent',
+      boxShadow: '0 1px 2px 0 rgba(37, 99, 235, 0.2)',
       '&:hover': {
-        // backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        boxShadow: 'none',
+        backgroundColor: '#1d4ed8',
+        boxShadow: '0 2px 4px 0 rgba(37, 99, 235, 0.3)',
       },
       '&:disabled': {
-        backgroundColor: 'rgba(0, 0, 0, 0.12)',
-        color: 'rgba(0, 0, 0, 0.26)',
+        backgroundColor: '#f1f5f9',
+        color: '#94a3b8',
+        boxShadow: 'none',
       },
     },
     outlined: {
-      backgroundColor: 'transparent',
-      color: 'var(--primary-color)',
-      border: '1px solid var(--primary-color)',
+      backgroundColor: '#ffffff',
+      color: '#334155',
+      border: '1px solid #e2e8f0',
+      boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
       '&:hover': {
-        backgroundColor: 'rgba(108, 92, 231, 0.04)',
-        border: '1px solid var(--primary-color)',
+        backgroundColor: '#f8fafc',
+        borderColor: '#cbd5e1',
+        color: '#0f172a',
       },
       '&:disabled': {
-        border: '1px solid rgba(0, 0, 0, 0.12)',
-        color: 'rgba(0, 0, 0, 0.26)',
+        border: '1px solid #f1f5f9',
+        color: '#cbd5e1',
       },
     },
     text: {
       backgroundColor: 'transparent',
-      color: 'var(--primary-color)',
+      color: '#475569',
       border: 'none',
       '&:hover': {
-        backgroundColor: 'rgba(108, 92, 231, 0.04)',
+        backgroundColor: '#f1f5f9',
+        color: '#0f172a',
       },
       '&:disabled': {
-        color: 'rgba(0, 0, 0, 0.26)',
+        color: '#cbd5e1',
       },
     },
   };
 
-  // Size styles
+  // Size variations
   const sizeStyles = {
     small: {
-      fontSize: '0.8125rem',
+      fontSize: '12px',
       padding: '4px 10px',
-      minWidth: '64px',
+      minWidth: '60px',
       height: '32px',
     },
     medium: {
-      fontSize: '0.875rem',
+      fontSize: '13px',
       padding: '6px 16px',
       minWidth: '64px',
-      height: '36px',
+      height: '38px',
     },
     large: {
-      fontSize: '0.9375rem',
+      fontSize: '14px',
       padding: '8px 22px',
-      minWidth: '64px',
-      height: '42px',
+      minWidth: '72px',
+      height: '44px',
     },
   };
 
-  // Merge all styles
   const buttonStyles = {
     ...baseStyles,
     ...(variantStyles[variant] || variantStyles.contained),
@@ -119,14 +125,15 @@ const CustomButton = ({
   return (
     <Button
       variant={variant}
-      startIcon={loading ? <CircularProgress size={16} color="inherit" /> : startIcon}
+      startIcon={loading ? <CircularProgress size={14} color="inherit" /> : startIcon}
       endIcon={endIcon}
       onClick={onClick}
       disabled={disabled || loading}
       sx={buttonStyles}
+      className={className}
       {...props}
     >
-      {loading && !startIcon && <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />}
+      {loading && !startIcon && <CircularProgress size={14} color="inherit" sx={{ mr: 1 }} />}
       {children}
     </Button>
   );
