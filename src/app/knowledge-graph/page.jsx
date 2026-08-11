@@ -64,15 +64,15 @@ export default function KnowledgeGraphPage() {
   };
 
   return (
-    <div className="px-6 lg:px-8 py-8 bg-[#f8fafc] min-h-screen">
+    <div className="px-6 lg:px-5 py-5 bg-[#f8fafc] min-h-screen">
       <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
+          {/* <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
             <span>Platform</span>
             <span>/</span>
             <span className="text-slate-700">Knowledge Graph</span>
-          </div>
-          <h1 className="font-bold text-slate-800 leading-tight text-2xl">Knowledge Graph</h1>
+          </div> */}
+          <h1 className="font-bold text-slate-800 leading-tight text-md">Knowledge Graph</h1>
           <p className="text-xs text-slate-400 mt-0.5">Model structured data into entity-relationship graphs for agent retrieval</p>
         </div>
         <HealthBadge />

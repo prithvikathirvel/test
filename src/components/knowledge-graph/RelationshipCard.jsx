@@ -38,7 +38,7 @@ export default function RelationshipCard({ rel, idx, sourceTables, entities, ent
     <div className={`bg-white border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 ${
       rErr ? 'border-red-200' : isSelfRel ? 'border-amber-200' : 'border-gray-200/80'
     }`}>
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 px-4 py-4">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 px-5 py-5">
         <NodePill value={rel.from_table} onChangeValue={(v) => onUpdate({ ...rel, from_table: v })} bg={fromColor} />
 
         <div className="flex-1 flex flex-col items-center gap-2 min-w-0">

@@ -193,7 +193,7 @@ const CustomNode = memo(function CustomNode({ data, type }) {
 
       {/* Question/Options Content */}
       {shouldShowOptionsUI && (
-        <div className="px-4 py-4 border-b border-gray-100">
+        <div className="px-5 py-5 border-b border-gray-100">
           {questionData.questionText && !isDynamic(questionData.questionText) && (
             <p className="text-sm text-gray-700 font-medium leading-relaxed mb-4 break-words">
               {questionData.questionText.length > 40 
@@ -229,7 +229,7 @@ const CustomNode = memo(function CustomNode({ data, type }) {
 
       {/* Condition Content */}
       {(nodeType === "conditions" || nodeType === "condition") && Array.isArray(conditionData.conditions) && conditionData.conditions.length > 0 && (
-        <div className="px-4 py-4 border-b border-gray-100">
+        <div className="px-5 py-5 border-b border-gray-100">
           <p className="text-sm text-gray-700 font-medium leading-relaxed mb-4">
             {conditionData.conditions.length} condition{conditionData.conditions.length !== 1 ? 's' : ''}
           </p>

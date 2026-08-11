@@ -185,7 +185,7 @@ export default function Step3Confirm({ session, onBack, onSessionExpired, onRese
           )}
           <div
             ref={logRef}
-            className={`bg-gray-950 px-4 py-4 max-h-52 overflow-y-auto ${ingesting ? 'rounded-b-xl' : 'rounded-xl'}`}
+            className={`bg-gray-950 px-5 py-5 max-h-52 overflow-y-auto ${ingesting ? 'rounded-b-xl' : 'rounded-xl'}`}
           >
             {log.map((l, i) => (
               <p key={i} className={`font-mono text-[11px] leading-5 ${LOG_CLS[l.variant] || 'text-gray-500'}`}>{l.text}</p>

@@ -139,22 +139,22 @@ const KnowledgePage = () => {
     const isFormValid = selectedFiles.every(file => file.knowledgeBaseName.trim() !== "");
 
     return (
-        <Box className="px-6 lg:px-8 py-8 bg-[#f8fafc] min-h-screen">
+        <Box className="px-6 lg:px-5 py-5 bg-[#f8fafc] min-h-screen">
             {/* Page Header */}
             <Box className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
+                    {/* <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
                         <span>Platform</span>
                         <span>/</span>
                         <span className="text-slate-700">Knowledge Base</span>
-                    </div>
-                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2.5">
+                    </div> */}
+                    <h1 className="text-md font-bold text-slate-800 tracking-tight flex items-center gap-2.5">
                         Documents & Sources
                         <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
                             {sources.length} Total
                         </span>
                     </h1>
-                    <p className="text-slate-500 text-sm mt-0.5">
+                    <p className="text-slate-500 text-xs mt-0.5">
                         Upload and manage domain documents for agent RAG retrieval.
                     </p>
                 </div>

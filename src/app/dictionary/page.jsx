@@ -269,16 +269,16 @@ export default function DictionaryPage() {
 
   return (
     <Box className="min-h-screen bg-[#f8fafc]">
-      <Box className="px-6 lg:px-10 py-8">
+      <Box className="px-5 lg:px-5 py-5">
         {/* Top Page Header */}
         <Box className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
+            {/* <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
               <span>Platform</span>
               <span>/</span>
               <span className="text-slate-700">Dictionary</span>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2.5">
+            </div> */}
+            <h1 className="text-md font-bold text-slate-800 tracking-tight flex items-center gap-2.5">
               Global Dictionary & Variables
               <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
                 {dictionaries.length} Stores
