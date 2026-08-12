@@ -1,31 +1,48 @@
 "use client";
-import { Box, Typography, Button, ButtonGroup, Tooltip, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, CircularProgress } from "@mui/material";
-import Grid from "@mui/material/Grid2";
-import { useCallback, useState, useEffect, useMemo, useRef } from "react";
-import ReactFlow, { Background, Controls, useNodesState, useEdgesState, addEdge } from "reactflow";
+import { Box, Tooltip } from "@mui/material";
+import { useCallback, useState, useEffect, useRef } from "react";
+import { ReactFlowProvider, useNodesState, useEdgesState, addEdge } from "reactflow";
 import "reactflow/dist/style.css";
 import { useNodeTypes } from "@/components/FlowNodes";
 import ComponentsSidebar from "@/components/studio/ComponentsSidebar";
 import JsonSpecView from "@/components/studio/JsonSpecView";
-import { Save, Rocket, Code, Workflow, Eye, Play, ChevronRight, List, Mic, MicOff, Settings } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
-import { toggleViewMode } from "@/redux/slices/flowSlice";
+import FlowCanvas from "@/components/studio/FlowCanvas";
+import { List } from "lucide-react";
+import { useDispatch, useSelector, useStore } from "react-redux";
 import SideDrawer from "@/components/Common/SideDrawer";
-import { fetchTools, fetchAgents, fetchModels, getFlowById, updateFlow, setNodes, setEdges, deleteNode, updateNodeConnections, updateNode, runFlow, updateSpecification, getAllFlows, fetchMcpTools, clearNewFlowId } from "@/redux/slices/studioSlice";
+import {
+    fetchTools,
+    fetchAgents,
+    fetchModels,
+    getFlowById,
+    updateFlow,
+    setNodes,
+    setEdges,
+    deleteNode,
+    updateNodeConnections,
+    updateNode,
+    runFlow,
+    updateSpecification,
+    getAllFlows,
+    fetchMcpTools,
+    clearNewFlowId,
+} from "@/redux/slices/studioSlice";
 import NodeDetailsModal from "@/components/studio/NodeDetailsModal";
 import { toast } from "react-toastify";
-import axios from "axios";
-import { useParams } from 'next/navigation';
+import { useParams } from "next/navigation";
 import StudioChatBot from "@/components/studio/StudioChatBot";
 import { getLastOutputParameter } from "@/utils/commonFunction";
-import FlowOutputModal from "@/components/studio/FlowOutputModal";
 import InputFieldConfiguration from "@/components/InputFieldConfiguration";
-import CustomButton from "@/components/Common/CustomButton";
 import VoiceConfigModal from "@/components/studio/VoiceConfigModal";
 import StudioHeader from "@/components/studio/StudioHeader";
 import FlowValidationModal from "@/components/studio/FlowValidationModal";
 import { validateFlowOutputVariables } from "@/utils/flowValidation";
-const drawerWidth = 280;
+import {
+    buildEdgesFromGraphSpec,
+    buildNodesFromGraphSpec,
+    getEdgeStrokeColor,
+    FLOW_EDGE_TYPE,
+} from "@/utils/flowLayout";
 
 const Studio = () => {
 
@@ -43,23 +60,31 @@ const Studio = () => {
     const [formattedOututParam, setFormattedOututParam] = useState(null);
     const [toggleViewMode, setToggleViewMode] = useState(false);
     const [renderFlow, setRenderFlow] = useState(false);
-    const [output, setOutput] = useState(null);
     const [validationModalOpen, setValidationModalOpen] = useState(false);
     const [validationErrors, setValidationErrors] = useState([]);
     const params = useParams();
     const flowId = params.id;
     const flow = useSelector(state => state.studio.flow);
-    const loading = useSelector(state => state.studio.studioLoader);
-    const specification = useSelector(state => state.studio.specification);
+    // NOTE: `studioLoader` / `flowOutput` are intentionally *not* subscribed to
+    // here. They changed on every chat/stream tick and re-rendered the whole
+    // studio page (canvas included) without being read anywhere.
+    // `specification` is only ever read at save time, so we grab it from the
+    // store imperatively instead of subscribing (it changes on every node edit).
+    const store = useStore();
     const studioUpdateFlowLoader = useSelector(state => state.studio.studioUpdateFlowLoader);
-    const flowOutput = useSelector(state => state.studio.flowOutput);
     const isFlowRunning = useSelector(state => state.studio.isFlowRunning);
     const nodeTypes = useNodeTypes();
 
+    // Refs are kept in sync inside an effect (never during render) so React's
+    // concurrent renderer can safely discard a render pass.
     const nodesRef = useRef(nodes);
-    nodesRef.current = nodes;
     const flowRef = useRef(flow);
-    flowRef.current = flow;
+    useEffect(() => {
+        nodesRef.current = nodes;
+    }, [nodes]);
+    useEffect(() => {
+        flowRef.current = flow;
+    }, [flow]);
 
     const [voiceEnabled, setVoiceEnabled] = useState(false);
     const [voiceConfig, setVoiceConfig] = useState({
@@ -86,277 +111,27 @@ const Studio = () => {
         fetchInitialData();
     }, [flowId, dispatch]);
 
+    // graphSpec -> canvas. The (pure) layout maths lives in `@/utils/flowLayout`
+    // so it is not re-created on every render of this component.
     useEffect(() => {
         if (!flow?.graphSpec?.nodes || !flow?.graphSpec?.edges) return;
-        
+
         // Sync voice settings from flow if present
         if (flow?.voice_enabled !== undefined) setVoiceEnabled(flow.voice_enabled);
         if (flow?.voice_config) setVoiceConfig(flow.voice_config);
 
-        console.log("Processing flow data");
-        const adjacencyList = {};
-        flow.graphSpec.edges.forEach(edge => {
-            if (!adjacencyList[edge.from]) adjacencyList[edge.from] = [];
-            adjacencyList[edge.from].push(edge.to);
-        });
-
-        const nodeMap = {};
-        flow.graphSpec.nodes.forEach(node => {
-            nodeMap[node.node_id] = node;
-        });
-
-        const incomingEdges = {};
-        flow.graphSpec.edges.forEach(edge => {
-            incomingEdges[edge.to] = (incomingEdges[edge.to] || 0) + 1;
-        });
-
-        const rootNodes = flow.graphSpec.nodes
-            .filter(node => !incomingEdges[node.node_id])
-            .map(node => node.node_id);
-
-        const horizontalSpacing = 300;
-        const baseVerticalSpacing = 280;
-        const baseNodeHeight = 75;
-
-        // Function to calculate dynamic node height based on type and content
-        const calculateNodeHeight = (node) => {
-            const nodeType = node.type?.toLowerCase();
-            let height = baseNodeHeight;
-
-            // Question nodes have additional content
-            if (nodeType === 'question') {
-                // Base height + question content + options
-                height = 140; // Header + question text (increased from 120)
-                const optionsParam = node.inputParameters?.find(param => param.key === 'options');
-                const optionsCount = optionsParam?.value ? Object.keys(optionsParam.value).length : 0;
-                height += Math.max(optionsCount * 45, 70); // Each option adds ~45px, minimum 70px for options section
-            }
-            // Decision/Condition nodes have additional content
-            else if (nodeType === 'decision' || nodeType === 'conditions' || nodeType === 'condition') {
-                height = 140; // Header + condition content (increased from 120)
-                const conditionParam = node.inputParameters?.find(param => param.type === 'condition');
-                const conditionsCount = conditionParam?.value ? conditionParam.value.length : 0;
-                height += Math.max(conditionsCount * 50, 70); // Each condition adds ~50px, minimum 70px for conditions section
-            }
-            // Iterator nodes are slightly taller due to multiple handles
-            else if (nodeType === 'iterator') {
-                height = 110; // Increased from 95
-            }
-            // Tool nodes
-            else if (nodeType === 'tool') {
-                height = 100; // Increased from base 75
-            }
-            // Agent nodes
-            else if (nodeType === 'agent') {
-                height = 105; // Increased from base 75
-            }
-            // Model nodes
-            else if (nodeType === 'model') {
-                height = 95; // Increased from base 75
-            }
-            // Input nodes
-            else if (nodeType === 'inputs' || nodeType === 'input') {
-                height = 90; // Increased from base 75
-            }
-            // Output nodes
-            else if (nodeType === 'output') {
-                height = 90; // Increased from base 75
-            }
-            // AgentFlow nodes
-            else if (nodeType === 'agentflow') {
-                height = 100; // Increased from base 75
-            }
-            // All other nodes get increased base height
-            else {
-                height = 85; // Increased from base 75
-            }
-
-            return height;
-        };
-
-        // Function to calculate dynamic vertical spacing between nodes
-        const calculateVerticalSpacing = (node1, node2) => {
-            const height1 = calculateNodeHeight(node1);
-            const height2 = calculateNodeHeight(node2);
-            const maxHeight = Math.max(height1, height2);
-
-            // Ensure minimum spacing based on the taller node
-            return Math.max(baseVerticalSpacing, maxHeight + 120); // 120px buffer between nodes (increased from 80px)
-        };
-
-
-        const calculatePositions = () => {
-            const positions = {};
-            const processedNodes = new Set();
-            const levelSpaceUsed = {};
-
-            const processNode = (nodeId, level = 0, verticalPosition = 0) => {
-                if (processedNodes.has(nodeId)) return;
-                processedNodes.add(nodeId);
-
-                if (!levelSpaceUsed[level]) levelSpaceUsed[level] = 0;
-
-                const currentNode = nodeMap[nodeId];
-                const children = adjacencyList[nodeId] || [];
-
-                positions[nodeId] = {
-                    x: level * horizontalSpacing,
-                    y: verticalPosition
-                };
-
-                if (children.length > 0) {
-                    const nextLevel = level + 1;
-                    if (!levelSpaceUsed[nextLevel]) levelSpaceUsed[nextLevel] = 0;
-
-                    // Calculate dynamic spacing for each child
-                    let childrenSpacing = [];
-                    children.forEach((childId) => {
-                        const childNode = nodeMap[childId];
-                        const spacing = calculateVerticalSpacing(currentNode, childNode);
-                        childrenSpacing.push(spacing);
-                    });
-
-                    // Use the maximum spacing needed
-                    const maxSpacing = Math.max(...childrenSpacing, baseVerticalSpacing);
-                    const totalStackHeight = (children.length - 1) * maxSpacing;
-                    const startY = verticalPosition - totalStackHeight / 2;
-
-                    children.forEach((childId, index) => {
-                        const childY = startY + index * maxSpacing;
-                        processNode(childId, nextLevel, childY);
-                    });
-                }
-            };
-
-            rootNodes.forEach((rootId, index) => {
-                const rootNode = nodeMap[rootId];
-                const rootNodeHeight = calculateNodeHeight(rootNode);
-                const rootSpacing = Math.max(baseVerticalSpacing * 2, rootNodeHeight + 160); // Extra spacing for root nodes (increased from 120)
-                const rootY = index * rootSpacing;
-                processNode(rootId, 0, rootY);
-                levelSpaceUsed[0] = rootY + rootSpacing;
-            });
-
-
-            flow.graphSpec.nodes.forEach(node => {
-                if (!processedNodes.has(node.node_id)) {
-                    const disconnectedLevel = Object.keys(levelSpaceUsed).length;
-                    if (!levelSpaceUsed[disconnectedLevel]) levelSpaceUsed[disconnectedLevel] = 0;
-
-                    const verticalPos = levelSpaceUsed[disconnectedLevel];
-                    positions[node.node_id] = {
-                        x: disconnectedLevel * horizontalSpacing,
-                        y: verticalPos
-                    };
-
-                    const nodeHeight = calculateNodeHeight(node);
-                    const nodeSpacing = Math.max(baseVerticalSpacing, nodeHeight + 120); // Increased from 80px to 120px
-                    levelSpaceUsed[disconnectedLevel] += nodeSpacing;
-                    processedNodes.add(node.node_id);
-
-                    const children = adjacencyList[node.node_id] || [];
-                    if (children.length > 0) {
-                        // Calculate dynamic spacing for disconnected node children
-                        let childrenSpacing = [];
-                        children.forEach((childId) => {
-                            const childNode = nodeMap[childId];
-                            const spacing = calculateVerticalSpacing(node, childNode);
-                            childrenSpacing.push(spacing);
-                        });
-
-                        const maxSpacing = Math.max(...childrenSpacing, baseVerticalSpacing);
-                        children.forEach((childId, index) => {
-                            const childY = verticalPos - (children.length - 1) * maxSpacing / 2 + index * maxSpacing;
-                            processNode(childId, disconnectedLevel + 1, childY);
-                        });
-                    }
-                }
-            });
-
-            return positions;
-        };
-
-        const positions = calculatePositions();
-
-        const nodesWithPositions = flow.graphSpec.nodes.map(node => {
-            const calculatedPosition = positions[node.node_id] || { x: 0, y: 0 };
-            const nodeData = {
-                ...node,
-                id: node.node_id,
-                key: node.node_id,
-                data: {
-                    label: node.name || "Unnamed Node",
-                    name: node.name || "Unnamed Node",
-                    type: node.type || "default",
-                    displayName: node.displayName || node.name,
-                    description: node.description || "",
-                    inputParameters: node.inputParameters || [],
-                    outputParameters: node.outputParameters || [],
-                    next: node.next || [],
-                },
-                position: {
-                    x: node.position?.x ?? calculatedPosition.x,
-                    y: node.position?.y ?? calculatedPosition.y,
-                },
-            };
-
-            if (node.type === 'decision' || node.data?.type === 'decision') {
-                nodeData.conditionMetPath = node.conditionMetPath || null;
-                nodeData.conditionNotMetPath = node.conditionNotMetPath || null;
-                nodeData.data.conditionMetPath = node.conditionMetPath || null;
-                nodeData.data.conditionNotMetPath = node.conditionNotMetPath || null;
-            }
-
-            if (node.type === 'question' || node.data?.type === 'question') {
-                nodeData.interrupt = node.interrupt || false;
-                nodeData.data.interrupt = node.interrupt || false;
-            }
-
-            return nodeData;
-        });
-
-        setNodesState(nodesWithPositions);
-
-        const edgeSet = new Set();
-        const uniqueEdges = flow.graphSpec.edges
-            .filter(edge => edge.from && edge.to)
-            .map((edge) => {
-                let handleType = edge.condition;
-                if (edge.condition === 'conditionMet') {
-                    handleType = 'true';
-                } else if (edge.condition === 'conditionNotMet') {
-                    handleType = 'false';
-                }
-
-                const edgeId = `${edge.from}-${edge.to}-${handleType || ''}`;
-                if (edgeSet.has(edgeId)) return null;
-                edgeSet.add(edgeId);
-
-                return {
-                    id: edgeId,
-                    source: edge.from,
-                    target: edge.to,
-                    sourceHandle: handleType,
-                    // animated: true,
-                    style: {
-                        stroke: handleType === 'true' ? '#4CAF50' :
-                            handleType === 'false' ? '#F44336' : '#555'
-                    },
-                };
-            })
-            .filter(Boolean);
-
-        setEdgesState(uniqueEdges);
+        setNodesState(buildNodesFromGraphSpec(flow.graphSpec));
+        setEdgesState(buildEdgesFromGraphSpec(flow.graphSpec));
 
         if (renderFlow) {
             setRenderFlow(false);
         }
-    }, [flow?.graphSpec, renderFlow]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [flow?.graphSpec, renderFlow, setNodesState, setEdgesState]);
 
 
     useEffect(() => {
         if (renderFlow) {
-            console.log("Refreshing flow data due to renderFlow change");
             dispatch(getFlowById({ id: flowId }));
         }
     }, [renderFlow, flowId, dispatch]);
@@ -377,8 +152,8 @@ const Studio = () => {
         (params) => {
             const edge = {
                 ...params,
-                type: 'bezier',
-                style: { stroke: params.sourceHandle === 'true' ? '#4CAF50' : params.sourceHandle === 'false' ? '#F44336' : '#555' },
+                type: FLOW_EDGE_TYPE,
+                style: { stroke: getEdgeStrokeColor(params.sourceHandle) },
             };
 
             setEdgesState((eds) => addEdge(edge, eds));
@@ -392,82 +167,85 @@ const Studio = () => {
         [dispatch, setEdgesState]
     );
 
-    const onDrop = useCallback(
-        (event) => {
-            event.preventDefault();
-            const type = event.dataTransfer.getData("application/reactflow");
+    /**
+     * Creates a node from a sidebar/palette spec at an already projected flow
+     * position. `connectFrom` is set when the node was created by dropping a
+     * connection on empty canvas.
+     */
+    const handleAddSpecNode = useCallback(
+        ({ spec, type, position, connectFrom }) => {
+            if (!spec) {
+                console.error("No node spec found in drop data");
+                return;
+            }
 
-            try {
-                const spec = JSON.parse(event.dataTransfer.getData("application/node-spec"));
-                console.log(spec, 'speckyy')
-                if (!spec) {
-                    console.error("No node spec found in drop data");
-                    return;
+            if (type === "agentflow") {
+                const flowInputs = spec?.inputs || [];
+
+                if (flowInputs.length > 0) {
+                    const updatedConfig = {
+                        ...flowRef.current,
+                        inputs: [...(flowRef.current?.inputs || []), ...flowInputs]
+                    };
+
+                    dispatch(updateSpecification(updatedConfig));
                 }
+            }
 
-                const type = event.dataTransfer.getData("application/reactflow");
+            const newNodeId = `${spec?.name}_node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-                if (type === "agentflow") {
-                    const flowInputs = spec?.inputs || [];
-                    console.log('flow 1', flowInputs);
-
-                    if (flowInputs.length > 0) {
-                        const updatedConfig = {
-                            ...flowRef.current,
-                            inputs: [...(flowRef.current?.inputs || []), ...flowInputs]
-                        };
-                        console.log(updatedConfig, 'flow 2')
-
-
-                        dispatch(updateSpecification(updatedConfig));
-                    }
-                }
-
-                const newNodeId = `${spec?.name}_node-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-                const position = {
-                    x: event.clientX - drawerWidth,
-                    y: event.clientY - 100,
-                };
-
-                const newNode = {
-                    id: spec.type === "agentflow" ? spec.id : newNodeId,
+            const newNode = {
+                id: spec.type === "agentflow" ? spec.id : newNodeId,
+                name: spec.name,
+                key: newNodeId,
+                type: spec.type,
+                description: spec.description,
+                interrupt: spec.interrupt || false,
+                next: [],
+                position,
+                data: {
+                    label: spec.name,
                     name: spec.name,
-                    key: newNodeId,
                     type: spec.type,
                     description: spec.description,
-                    interrupt: spec.interrupt || false,
+                    inputParameters: spec.inputParameters || [],
+                    outputParameters: spec.type === 'agentflow' ? [{ key: "output", value: "", type: "text" }] : spec.outputParameters || [],
                     next: [],
-                    position,
-                    data: {
-                        label: spec.name,
-                        name: spec.name,
-                        type: spec.type,
-                        description: spec.description,
-                        inputParameters: spec.inputParameters || [],
-                        outputParameters: spec.type === 'agentflow' ? [{ key: "output", value: "", type: "text" }] : spec.outputParameters || [],
-                        next: [],
-                        // inputs: spec.inputs || [],
-                    },
-                };
+                },
+            };
 
-                setNodesState((nds) => [...nds, newNode]);
-                dispatch(setNodes({ nodes: [...nodesRef.current, newNode], flow: flowRef.current }));
+            setNodesState((nds) => [...nds, newNode]);
+            dispatch(setNodes({ nodes: [...nodesRef.current, newNode], flow: flowRef.current }));
 
-            } catch (error) {
-                console.error("Error handling node drop:", error);
+            if (connectFrom?.source) {
+                onConnect({
+                    source: connectFrom.source,
+                    sourceHandle: connectFrom.sourceHandle ?? null,
+                    target: newNode.id,
+                    targetHandle: null,
+                });
             }
+        },
+        [dispatch, setNodesState, onConnect]
+    );
+
+    /** Adds already-built nodes (duplicate / paste) to the canvas + Redux. */
+    const handleAddNodes = useCallback(
+        (newNodes) => {
+            if (!newNodes || newNodes.length === 0) return;
+            setNodesState((nds) => [...nds, ...newNodes]);
+            dispatch(setNodes({ nodes: [...nodesRef.current, ...newNodes], flow: flowRef.current }));
         },
         [dispatch, setNodesState]
     );
 
-    const handleRenderFlow = () => {
-        setRenderFlow(!renderFlow);
-    }
+    const handleRenderFlow = useCallback(() => {
+        setRenderFlow(prev => !prev);
+    }, []);
 
-    const handleOpenExecutionOutput = () => {
+    const handleOpenExecutionOutput = useCallback(() => {
         setOutputModalOpen(true);
-    }
+    }, []);
 
     const syncTimeoutRef = useRef(null);
     const prevNodesLenRef = useRef(0);
@@ -480,19 +258,19 @@ const Studio = () => {
 
         if (structuralChange) {
             // Immediate sync for add/remove node
-            dispatch(setNodes({ nodes: nodes, flow: flow }));
+            dispatch(setNodes({ nodes: nodes, flow: flowRef.current }));
         } else {
             // Debounced sync for position-only changes (drag)
             if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
             syncTimeoutRef.current = setTimeout(() => {
-                dispatch(setNodes({ nodes: nodes, flow: flow }));
+                dispatch(setNodes({ nodes: nodes, flow: flowRef.current }));
             }, 300);
         }
 
         return () => {
             if (syncTimeoutRef.current) clearTimeout(syncTimeoutRef.current);
         };
-    }, [nodes]);
+    }, [nodes, dispatch]);
 
     const edgeSyncTimeoutRef = useRef(null);
 
@@ -503,39 +281,40 @@ const Studio = () => {
 
         if (structuralChange) {
             // Immediate sync for add/remove edge
-            dispatch(setEdges({ edges: edges, flow: flow }));
+            dispatch(setEdges({ edges: edges, flow: flowRef.current }));
         } else {
             // Debounced sync for non-structural changes
             if (edgeSyncTimeoutRef.current) clearTimeout(edgeSyncTimeoutRef.current);
             edgeSyncTimeoutRef.current = setTimeout(() => {
-                dispatch(setEdges({ edges: edges, flow: flow }));
+                dispatch(setEdges({ edges: edges, flow: flowRef.current }));
             }, 300);
         }
 
         return () => {
             if (edgeSyncTimeoutRef.current) clearTimeout(edgeSyncTimeoutRef.current);
         };
-    }, [edges]);
+    }, [edges, dispatch]);
 
-
-    const onDragOver = useCallback((event) => {
-        event.preventDefault();
-        event.dataTransfer.dropEffect = "move";
-    }, []);
 
     const handleToggleViewMode = useCallback(() => {
         setToggleViewMode(prev => !prev);
     }, []);
 
-    const handleOpenOutputModal = (flow) => {
+    const handleOpenOutputModal = useCallback((targetFlow) => {
         setOutputModalOpen(true);
-        const lastParam = getLastOutputParameter(flow);
-        console.log(lastParam, 'lastparamss')
+        const lastParam = getLastOutputParameter(targetFlow);
         setFormattedOututParam(lastParam?.value);
-    };
+    }, []);
 
+    const nodesValidationRef = useRef(nodes);
+    useEffect(() => {
+        nodesValidationRef.current = nodes;
+    }, [nodes]);
+
+    // Reads the latest nodes through a ref so the identity of this callback (and
+    // therefore of every handler depending on it) stays stable across renders.
     const runFlowValidation = useCallback(() => {
-        const result = validateFlowOutputVariables(nodes);
+        const result = validateFlowOutputVariables(nodesValidationRef.current);
         if (!result.isValid) {
             setValidationErrors(result.errors);
             setValidationModalOpen(true);
@@ -543,12 +322,13 @@ const Studio = () => {
             return false;
         }
         return true;
-    }, [nodes]);
+    }, []);
 
     const handleRunFlow = useCallback(() => {
         if (!runFlowValidation()) return;
-        dispatch(runFlow({ data: { agent_id: flow?.id }, onSuccess: () => handleOpenOutputModal(flow) }));
-    }, [flow, dispatch, runFlowValidation]);
+        const currentFlow = flowRef.current;
+        dispatch(runFlow({ data: { agent_id: currentFlow?.id }, onSuccess: () => handleOpenOutputModal(currentFlow) }));
+    }, [dispatch, runFlowValidation, handleOpenOutputModal]);
 
     const handleDeployFlow = useCallback(() => {
         if (!runFlowValidation()) return;
@@ -561,117 +341,135 @@ const Studio = () => {
         setModalOpen(true);
     }, []);
 
+    const handleOpenNodeDetails = useCallback((node) => {
+        setSelectedNode(node);
+        setModalOpen(true);
+    }, []);
+
     const handleNodeDelete = useCallback((nodeId) => {
-        setNodesState((nodes) => nodes.filter(node => node.id !== nodeId));
-        setEdgesState((edges) => edges.filter(edge =>
+        setNodesState((nds) => nds.filter(node => node.id !== nodeId));
+        setEdgesState((eds) => eds.filter(edge =>
             edge.source !== nodeId && edge.target !== nodeId
         ));
     }, [setNodesState, setEdgesState]);
 
     const handleDeleteNode = useCallback((node) => {
         if (node && node.id) {
-            dispatch(deleteNode({ flow: flow, nodeId: node.id }));
+            dispatch(deleteNode({ flow: flowRef.current, nodeId: node.id }));
             handleNodeDelete(node.id);
             setModalOpen(false);
             setSelectedNode(null);
         }
     }, [dispatch, handleNodeDelete]);
 
+    const selectedNodeIdRef = useRef(null);
+    useEffect(() => {
+        selectedNodeIdRef.current = selectedNode?.id ?? null;
+    }, [selectedNode]);
+
+    /** Canvas-driven deletion (Del key, context menu, selection). */
+    const handleNodesDeleted = useCallback((deletedNodes) => {
+        if (!deletedNodes || deletedNodes.length === 0) return;
+        deletedNodes.forEach((node) => {
+            dispatch(deleteNode({ flow: flowRef.current, nodeId: node.id }));
+        });
+        setSelectedNode((current) =>
+            current && deletedNodes.some((node) => node.id === current.id) ? null : current
+        );
+        setModalOpen((open) =>
+            open && deletedNodes.some((node) => node.id === selectedNodeIdRef.current) ? false : open
+        );
+    }, [dispatch]);
+
+    const handleEdgesDeleted = useCallback(() => {
+        // Edge removal is already reflected in local state by React Flow; the
+        // debounced `edges` effect above pushes the new list to Redux.
+    }, []);
+
     const handleSaveFlow = useCallback(() => {
         if (!runFlowValidation()) return;
         setSaveFlow(false);
-        dispatch(updateFlow({ 
-            id: flowId, 
-            updatedData: specification, 
-            onSuccess: () => toast.success("Workflow saved successfully") 
+        dispatch(updateFlow({
+            id: flowId,
+            updatedData: store.getState().studio.specification,
+            onSuccess: () => toast.success("Workflow saved successfully")
         }));
-    }, [dispatch, flowId, specification, flow, runFlowValidation]);
+    }, [dispatch, flowId, runFlowValidation, store]);
 
     const handleFixNode = useCallback((nodeId, targetNode) => {
         setValidationModalOpen(false);
-        const foundNode = targetNode || nodes.find(n => n.id === nodeId);
+        const foundNode = targetNode || nodesValidationRef.current.find(n => n.id === nodeId);
         if (foundNode) {
             setSelectedNode(foundNode);
             setModalOpen(true);
         }
-    }, [nodes]);
+    }, []);
 
     const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters, parameter) => {
-        console.log(nodeId, 'NodeIdddd')
-        console.log(updatedParameters, 'updateddd')
-        console.log(parameter, 'parameterrr')
-        dispatch(updateNode({ flow: flow, nodeId: nodeId, updatedNode: updatedParameters, parameter: parameter }));
-
+        dispatch(updateNode({ flow: flowRef.current, nodeId: nodeId, updatedNode: updatedParameters, parameter: parameter }));
     }, [dispatch]);
 
-    const handleInputConfigSave = (configurations) => {
-        console.log('Input configurations:', configurations);
+    const handleInputConfigSave = useCallback(() => {
         toast.success('Input configurations saved successfully');
-    };
+    }, []);
 
-    const handleVoiceToggle = () => {
-        const newState = !voiceEnabled;
-        setVoiceEnabled(newState);
-        dispatch(updateSpecification({ voice_enabled: newState, voice_config: voiceConfig }));
-        if (newState) setIsVoiceModalOpen(true);
-    };
+    const voiceConfigRef = useRef(voiceConfig);
+    useEffect(() => {
+        voiceConfigRef.current = voiceConfig;
+    }, [voiceConfig]);
 
-    const handleVoiceConfigSave = (newConfig) => {
+    const voiceEnabledRef = useRef(voiceEnabled);
+    useEffect(() => {
+        voiceEnabledRef.current = voiceEnabled;
+    }, [voiceEnabled]);
+
+    const handleVoiceToggle = useCallback(() => {
+        setVoiceEnabled((prev) => {
+            const newState = !prev;
+            dispatch(updateSpecification({ voice_enabled: newState, voice_config: voiceConfigRef.current }));
+            if (newState) setIsVoiceModalOpen(true);
+            return newState;
+        });
+    }, [dispatch]);
+
+    const handleVoiceConfigSave = useCallback((newConfig) => {
         setVoiceConfig(newConfig);
-        dispatch(updateSpecification({ voice_enabled: voiceEnabled, voice_config: newConfig }));
-    };
+        dispatch(updateSpecification({ voice_enabled: voiceEnabledRef.current, voice_config: newConfig }));
+    }, [dispatch]);
 
-    const reactFlowProps = useMemo(() => ({
-        nodes,
-        edges,
-        onNodesChange,
-        onEdgesChange,
-        onConnect,
-        nodeTypes,
-        onDrop,
-        onDragOver,
-        onNodeClick,
-        fitView: true,
-        style: { backgroundColor: "#F7F9FB" },
-        defaultEdgeOptions: {
-            // type: "bezier",
-            // animated: true,
-            style: { stroke: 'var(--primary-color)', strokeWidth: 2 }
-        }
-    }), [
-        nodes,
-        edges,
-        onNodesChange,
-        onEdgesChange,
-        onConnect,
-        nodeTypes,
-        onDrop,
-        onDragOver,
-        onNodeClick
-    ]);
+    const handleCloseNodeModal = useCallback(() => {
+        setModalOpen(false);
+        setSelectedNode(null);
+    }, []);
+
+    const handleCloseVoiceModal = useCallback(() => setIsVoiceModalOpen(false), []);
+    const handleOpenVoiceModal = useCallback(() => setIsVoiceModalOpen(true), []);
+    const handleCloseInputConfig = useCallback(() => setInputConfigOpen(false), []);
+    const handleOpenInputConfig = useCallback(() => setInputConfigOpen(true), []);
+    const handleCloseValidationModal = useCallback(() => setValidationModalOpen(false), []);
 
 
     return (
         <>
             <div className="h-full w-full overflow-hidden flex flex-col bg-[#f8fafc]">
-                <StudioChatBot 
-                    className='!z-100' 
-                    opened={true} 
-                    flow={flow} 
-                    handleRenderFlow={handleRenderFlow} 
+                <StudioChatBot
+                    className='!z-100'
+                    opened={true}
+                    flow={flow}
+                    handleRenderFlow={handleRenderFlow}
                     voiceEnabled={voiceEnabled}
                     voiceConfig={voiceConfig}
                 />
-                <VoiceConfigModal 
+                <VoiceConfigModal
                     isOpen={isVoiceModalOpen}
-                    onClose={() => setIsVoiceModalOpen(false)}
+                    onClose={handleCloseVoiceModal}
                     config={voiceConfig}
                     onSave={handleVoiceConfigSave}
                 />
                 {inputConfigOpen && (
                     <InputFieldConfiguration
                         open={inputConfigOpen}
-                        onClose={() => setInputConfigOpen(false)}
+                        onClose={handleCloseInputConfig}
                         onSave={handleInputConfigSave}
                     />
                 )}
@@ -684,8 +482,8 @@ const Studio = () => {
                     onToggleViewMode={handleToggleViewMode}
                     voiceEnabled={voiceEnabled}
                     onVoiceToggle={handleVoiceToggle}
-                    onVoiceSettingsClick={() => setIsVoiceModalOpen(true)}
-                    onConfigureInputsClick={() => setInputConfigOpen(true)}
+                    onVoiceSettingsClick={handleOpenVoiceModal}
+                    onConfigureInputsClick={handleOpenInputConfig}
                     onRunFlow={handleRunFlow}
                     isFlowRunning={isFlowRunning}
                     onSaveFlow={handleSaveFlow}
@@ -718,10 +516,21 @@ const Studio = () => {
                     <Box className="flex-1 h-full overflow-hidden relative bg-[#f8fafc]">
                         {!toggleViewMode ? (
                             <div className="h-full w-full">
-                                <ReactFlow {...reactFlowProps}>
-                                    <Background color="#cbd5e1" gap={16} size={1} />
-                                    <Controls className="!bg-white !border !border-slate-200 !rounded-lg !shadow-xs" />
-                                </ReactFlow>
+                                <FlowCanvas
+                                    flowId={flowId}
+                                    nodes={nodes}
+                                    edges={edges}
+                                    onNodesChange={onNodesChange}
+                                    onEdgesChange={onEdgesChange}
+                                    nodeTypes={nodeTypes}
+                                    onConnect={onConnect}
+                                    onNodeClick={onNodeClick}
+                                    onNodesDeleted={handleNodesDeleted}
+                                    onEdgesDeleted={handleEdgesDeleted}
+                                    onAddSpecNode={handleAddSpecNode}
+                                    onAddNodes={handleAddNodes}
+                                    onOpenNodeDetails={handleOpenNodeDetails}
+                                />
                             </div>
                         ) : (
                             <div className="h-full overflow-auto p-4">
@@ -733,10 +542,7 @@ const Studio = () => {
                         <NodeDetailsModal
                             flowId={flow?.id}
                             open={modalOpen}
-                            onClose={() => {
-                                setModalOpen(false);
-                                setSelectedNode(null);
-                            }}
+                            onClose={handleCloseNodeModal}
                             node={selectedNode}
                             onDelete={handleDeleteNode}
                             onUpdateParameters={handleUpdateNodeParameters}
@@ -752,7 +558,7 @@ const Studio = () => {
                         {/* Flow Validation Collision Modal */}
                         <FlowValidationModal
                             open={validationModalOpen}
-                            onClose={() => setValidationModalOpen(false)}
+                            onClose={handleCloseValidationModal}
                             errors={validationErrors}
                             onFixNode={handleFixNode}
                         />
@@ -764,7 +570,11 @@ const Studio = () => {
 };
 
 export default function StudioPage() {
+    // The provider must sit *above* the component that calls `useReactFlow()` /
+    // `useStore()`, otherwise the hooks resolve to a throwaway store.
     return (
-        <Studio />
+        <ReactFlowProvider>
+            <Studio />
+        </ReactFlowProvider>
     );
 }

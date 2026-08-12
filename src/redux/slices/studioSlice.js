@@ -168,7 +168,6 @@ const studioSlice = createSlice({
         });
         if (Array.isArray(state.nodes) && Array.isArray(state.edges)) {
           state.specification = generateSpecification(flow, state.nodes, state.edges);
-          console.log("specification inside slice", state.specification);
         } else {
           state.specification = {};
         }
@@ -314,8 +313,11 @@ const studioSlice = createSlice({
         return node;
       });
 
-      state.specification = generateSpecification(flow, state.nodes, state.edges);
-      state.flow = generateSpecification(flow, state.nodes, state.edges)
+      // Built once and shared: this used to run the (O(nodes + edges)) spec
+      // generator twice for every single parameter edit.
+      const specification = generateSpecification(flow, state.nodes, state.edges);
+      state.specification = specification;
+      state.flow = specification;
     },
     updateSpecification: (state, action) => {
       state.specification = {

@@ -1,4 +1,4 @@
-import { Handle, Position } from "reactflow";
+import { Handle, Position, useUpdateNodeInternals } from "reactflow";
 import { 
   Bot, 
   Workflow, 
@@ -12,12 +12,46 @@ import {
   Dot
 } from 'lucide-react';
 import { useSelector } from "react-redux";
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo } from "react";
 import { Tooltip } from "@mui/material";
+import { createSelector } from "@reduxjs/toolkit";
 
-const getNodeIcon = (type, tools, agents, models, inputs, outputs, agentflows) => {
-  const item = [...tools, ...agents, ...models, ...inputs, ...outputs, ...agentflows].find((item) => item.type === type);
-  
+const EMPTY_LIST = [];
+
+/**
+ * The catalog lookups below used to spread every Redux catalog and run `.find()`
+ * inside each node on every render (O(nodes x catalog) per frame while dragging).
+ * The catalogs are only ever used to answer "is this node type a known catalog
+ * type?", so a single memoized Set is enough and keeps the identity stable
+ * between renders.
+ */
+const selectCatalogTypes = createSelector(
+  [
+    (state) => state.studio.tools || EMPTY_LIST,
+    (state) => state.studio.agents || EMPTY_LIST,
+    (state) => state.studio.models || EMPTY_LIST,
+    (state) => state.studio.inputs || EMPTY_LIST,
+    (state) => state.studio.outputs || EMPTY_LIST,
+    (state) => state.studio.flows || EMPTY_LIST,
+  ],
+  (tools, agents, models, inputs, outputs, agentflows) => {
+    const types = new Set();
+    [tools, agents, models, inputs, outputs, agentflows].forEach((list) => {
+      if (!Array.isArray(list)) return;
+      list.forEach((item) => {
+        if (item?.type) types.add(item.type);
+      });
+    });
+    return types;
+  }
+);
+
+/** Sorted list of every node type that has to resolve to `CustomNode`. */
+const selectNodeTypeKeys = createSelector([selectCatalogTypes], (types) =>
+  [...types].sort()
+);
+
+const getNodeIcon = (type, catalogTypes) => {
   switch (type?.toLowerCase()) {
     case "decision": return <GitBranch size={16} />;
     case "iterator": return <RotateCcw size={16} />;
@@ -28,10 +62,10 @@ const getNodeIcon = (type, tools, agents, models, inputs, outputs, agentflows) =
     case "condition": return <GitBranch size={16} />;
     case "start": return <Circle size={16} />;
   }
-  
-  if (!item) return <Workflow size={16} />;
 
-  switch (item.type?.toLowerCase()) {
+  if (!catalogTypes.has(type)) return <Workflow size={16} />;
+
+  switch (type?.toLowerCase()) {
     case "tool": return <Workflow size={16} />;
     case "agent": return <Bot size={16} />;
     case "model": return <Database size={16} />;
@@ -40,10 +74,8 @@ const getNodeIcon = (type, tools, agents, models, inputs, outputs, agentflows) =
   }
 };
 
-const getNodeAccent = (type, tools, agents, models, inputs, outputs, agentflows) => {
-  const item = [...tools, ...agents, ...models, ...inputs, ...outputs, ...agentflows].find((item) => item.type === type);
-  
-  switch (item?.type?.toLowerCase() || type?.toLowerCase()) {
+const getNodeAccent = (type) => {
+  switch (type?.toLowerCase()) {
     case "tool": return "bg-gradient-to-r from-blue-500 to-blue-600";
     case "agent": return "bg-gradient-to-r from-emerald-500 to-emerald-600";
     case "model": return "bg-gradient-to-r from-purple-500 to-purple-600";
@@ -60,7 +92,8 @@ const getNodeAccent = (type, tools, agents, models, inputs, outputs, agentflows)
   }
 };
 
-const getOptionColors = () => [
+/** Module scope: a new array literal per render would defeat every memo below. */
+const OPTION_COLORS = [
   { bg: 'bg-blue-500', hex: '#3B82F6' },
   { bg: 'bg-emerald-500', hex: '#10B981' },
   { bg: 'bg-orange-500', hex: '#F97316' },
@@ -71,18 +104,21 @@ const getOptionColors = () => [
   { bg: 'bg-pink-500', hex: '#EC4899' }
 ];
 
-const CustomNode = memo(function CustomNode({ data, type }) {
-  const tools = useSelector((state) => state.studio.tools);
-  const agents = useSelector((state) => state.studio.agents);
-  const models = useSelector((state) => state.studio.models);
-  const inputs = useSelector((state) => state.studio.inputs);
-  const outputs = useSelector((state) => state.studio.outputs);
-  const agentflows = useSelector((state) => state.studio.flows);
-  
-  const accent = getNodeAccent(type, tools, agents, models, inputs, outputs, agentflows);
-  const icon = getNodeIcon(type, tools, agents, models, inputs, outputs, agentflows);
+/** Helper to detect dynamic template variables. */
+const isDynamic = (val) => {
+  if (!val) return false;
+  const str = String(val).trim();
+  return str.startsWith('{{') && str.endsWith('}}');
+};
+
+const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
+  // One memoized selector instead of six raw catalog subscriptions per node.
+  const catalogTypes = useSelector(selectCatalogTypes);
+
+  const accent = getNodeAccent(type);
+  const icon = useMemo(() => getNodeIcon(type, catalogTypes), [type, catalogTypes]);
   const nodeType = type?.toLowerCase() || data?.type?.toLowerCase();
-  const optionColors = getOptionColors();
+  const optionColors = OPTION_COLORS;
 
   // Extract condition data from inputParameters for condition nodes
   const conditionData = useMemo(() => {
@@ -151,15 +187,30 @@ const CustomNode = memo(function CustomNode({ data, type }) {
     return opts;
   }, [questionData.options]);
 
-  // Helper to detect dynamic template variables
-  const isDynamic = (val) => {
-    if (!val) return false;
-    const str = String(val).trim();
-    return str.startsWith('{{') && str.endsWith('}}');
-  };
+  // Condition nodes render one source Handle per condition, so the handle set
+  // changes at runtime. React Flow caches handle bounds when a node mounts and
+  // will keep using stale positions (edges detach / land on the wrong row)
+  // unless we tell it to re-measure. Keyed on the count so it only fires when
+  // handles are actually added or removed, never on every render.
+  const conditionCount = conditionData.conditions.length;
+  const updateNodeInternals = useUpdateNodeInternals();
+  useEffect(() => {
+    if (!id) return;
+    if (nodeType !== "conditions" && nodeType !== "condition") return;
+    updateNodeInternals(id);
+  }, [id, nodeType, conditionCount, updateNodeInternals]);
 
+  // `backdrop-blur-sm` was a no-op behind the opaque `bg-white` but still
+  // forced a GPU compositing layer for every node, and `transition-all`
+  // animated the drag transform. Both are narrowed to what is visible.
   return (
-    <div className="relative min-w-[250px] bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200/60 backdrop-blur-sm">
+    <div
+      className={`relative min-w-[250px] bg-white rounded-xl shadow-lg hover:shadow-xl transition-[box-shadow,border-color] duration-300 ${
+        selected
+          ? "border border-indigo-500 ring-2 ring-indigo-400/40"
+          : "border border-gray-200/60"
+      }`}
+    >
       
       {/* Header */}
       <div className={`flex items-center gap-3 px-4 py-3.5 !rounded-md ${accent} relative overflow-hidden`}>
@@ -361,13 +412,12 @@ const CustomNode = memo(function CustomNode({ data, type }) {
 });
 
 export const useNodeTypes = () => {
-  const tools = useSelector((state) => state.studio.tools);
-  const agents = useSelector((state) => state.studio.agents);
-  const models = useSelector((state) => state.studio.models);
-  const inputs = useSelector((state) => state.studio.inputs);
-  const outputs = useSelector((state) => state.studio.outputs);
-  const flows = useSelector((state) => state.studio.flows);
-    
+  const typeKeys = useSelector(selectNodeTypeKeys);
+  // A joined signature keeps the map identity stable even when a refetch returns
+  // a brand new (but identical) array. An unstable `nodeTypes` map makes React
+  // Flow re-create every node component on each render (dev error #002).
+  const typeSignature = typeKeys.join("|");
+
   return useMemo(() => {
     const nodeTypes = {
       decision: CustomNode,
@@ -378,23 +428,17 @@ export const useNodeTypes = () => {
       inputs: CustomNode,
       start: CustomNode,
     };
-        
-    [...tools, ...agents, ...models, ...inputs, ...outputs].forEach(item => {
-      if (item && item.type) {
-        nodeTypes[item.type] = CustomNode;
-      }
-    });
-    
-    if (Array.isArray(flows)) {
-      flows.forEach(flow => {
-        if (flow && flow.type) {
-          nodeTypes[flow.type] = CustomNode;
-        }
+
+    typeSignature
+      .split("|")
+      .filter(Boolean)
+      .forEach((type) => {
+        nodeTypes[type] = CustomNode;
       });
-    }
-        
+
     return nodeTypes;
-  }, [tools, agents, models, inputs, outputs, flows]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typeSignature]);
 };
 
 export default CustomNode;

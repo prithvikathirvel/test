@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { memo, useState, useCallback, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -39,7 +39,12 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
   const inputNodes = useSelector((state) => state.studio.inputs || []);
   const outputNodes = useSelector((state) => state.studio.outputs || []);
   const prebuiltFlows1 = useSelector((state) => state.studio.prebuiltFlows || []);
-  const prebuiltFlows = sortByField(prebuiltFlows1, "updatedAt", "desc");
+  // `sortByField` returns a new array; memoizing it keeps the `nodeTypes` memo
+  // below from being invalidated on every single render of the sidebar.
+  const prebuiltFlows = useMemo(
+    () => sortByField(prebuiltFlows1, "updatedAt", "desc"),
+    [prebuiltFlows1]
+  );
   const mcpServers = useSelector((state) => state.studio.mcpTools || {});
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -252,7 +257,7 @@ export default function ComponentsSidebar({ minimizeSideBar, handleMinimizeSideB
   );
 }
 
-function ComponentSection({ section, isFirstSection, onDragStart }) {
+const ComponentSection = memo(function ComponentSection({ section, isFirstSection, onDragStart }) {
   const [expanded, setExpanded] = useState(isFirstSection);
 
   const totalCount = useMemo(() => {
@@ -330,9 +335,9 @@ function ComponentSection({ section, isFirstSection, onDragStart }) {
       </AccordionDetails>
     </Accordion>
   );
-}
+});
 
-function NodeTile({ node, accentColor, onDragStart }) {
+const NodeTile = memo(function NodeTile({ node, accentColor, onDragStart }) {
   return (
     <Box
       draggable
@@ -357,4 +362,4 @@ function NodeTile({ node, accentColor, onDragStart }) {
       )}
     </Box>
   );
-}
+});

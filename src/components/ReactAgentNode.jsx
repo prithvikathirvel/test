@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 import { Bot, Wrench, Settings2, Plus } from 'lucide-react';
 
-export default function ReActAgentNode({ id, data, selected }) {
+function ReActAgentNode({ id, data, selected }) {
     return (
         <div className={`w-80 bg-white rounded-2xl shadow-xl transition-all ${selected ? 'ring-4 ring-indigo-500' : 'border border-gray-200'}`}>
             {/* Input Handle (Top) */}
@@ -64,3 +64,6 @@ export default function ReActAgentNode({ id, data, selected }) {
         </div>
     );
 }
+
+// Custom nodes are re-rendered on every store update unless memoized.
+export default memo(ReActAgentNode);

@@ -8,12 +8,14 @@ export const useFlow = () => {
   const [nodes, setNodesState, onNodesChange] = useNodesState([]);
   const [edges, setEdgesState, onEdgesChange] = useEdgesState([]);
 
+  // Functional update: keeps the callback identity stable so consumers passing
+  // it to <ReactFlow onConnect> do not re-run the store updater on every edge
+  // change.
   const onConnect = useCallback(
     (params) => {
-      const newEdges = addEdge(params, edges);
-      setEdgesState(newEdges);
+      setEdgesState((eds) => addEdge(params, eds));
     },
-    [edges, setEdgesState]
+    [setEdgesState]
   );
 
   const updateNodes = (newNodes) => {

@@ -93,7 +93,12 @@ body {
     border: 1px solid #e2e8f0;
     background-color: #ffffff;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Only the hover affordances are animated. `transition: all` also animated
+       the `transform` React Flow writes on every drag frame, so nodes visibly
+       lagged behind the cursor and every frame produced extra compositing
+       work. */
+    transition: box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .react-flow__node:hover {
@@ -133,4 +138,23 @@ body {
     background-color: #f8fafc;
     color: #4f46e5;
   }
+}
+
+/* Animated dashed connection line used while dragging a new connection. */
+@keyframes studio-connection-dash {
+  from {
+    stroke-dashoffset: 20;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.studio-connection-line {
+  animation: studio-connection-dash 0.5s linear infinite;
+}
+
+/* The hover hit area of a custom edge must stay clickable. */
+.react-flow__edge .react-flow__edge-interaction {
+  pointer-events: stroke;
 }
