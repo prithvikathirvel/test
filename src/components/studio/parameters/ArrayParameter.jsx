@@ -6,6 +6,7 @@ import ParameterHeader from "./common/ParameterHeader";
 import DashedBox from "@/components/Common/DashedBox";
 import { getParameterComponent } from "../InputParameterComponents";
 import InputBox from "@/components/Common/InputBox";
+import ExpandableTextInput from "@/components/Common/ExpandableTextInput";
 
 const ArrayParameter = ({ param, color, onUpdate, parameters, parameter }) => {
   const isStringValue = typeof param.value === "string";
@@ -244,25 +245,16 @@ const ArrayParameter = ({ param, color, onUpdate, parameters, parameter }) => {
       <DashedBox className="!p-4">
         {useTextInput ? (
           <Box className="space-y-2">
-            <InputBox
+            <ExpandableTextInput
               value={textInputValue}
               onChange={handleTextInputChange}
-              isShowLabel={false}
-              multiline
-              rows={6}
-              className="font-mono text-sm"
-              color={color}
-              placeholder='Enter JSON array (e.g., ["item1", "item2", 5, true, {}])'
+              language="json"
+              title={param.key || 'Array value'}
+              minRows={6}
+              maxRows={16}
+              error={error}
+              placeholder={'Enter JSON array (e.g., ["item1", "item2", 5, true, {}])'}
             />
-            {error && (
-              <Typography
-                color="error"
-                variant="caption"
-                className="text-red-600 text-xs"
-              >
-                {error}
-              </Typography>
-            )}
           </Box>
         ) : (
           <Box className="space-y-4">

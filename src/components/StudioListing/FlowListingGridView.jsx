@@ -90,7 +90,7 @@ const FlowListingGridView = ({ flows, handleOpenStudio, handleDeleteFlow }) => {
 
               <Tooltip title="Delete Flow">
                 <button
-                  onClick={() => handleDeleteFlow(flow.id)}
+                  onClick={() => handleDeleteFlow(flow)}
                   className="p-1 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                 >
                   <Trash2 size={14} />

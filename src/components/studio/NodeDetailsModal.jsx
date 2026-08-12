@@ -44,7 +44,7 @@ import CustomAccordion from '@/components/Common/CustomAccordion';
 import OutputParameterComponents from './OutputParameterComponents';
 import JsonOutputDrawer from './JsonOutputDrawer';
 import { updateNode, runFlow } from '@/redux/slices/studioSlice';
-import { getNodeDocs } from './nodeDocsData';
+import { getNodeDocs, toDisplayString } from './nodeDocsData';
 
 const InfoItem = ({ label, value, icon }) => (
   <Box key={label} className="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
@@ -551,16 +551,16 @@ const NodeDetailsModal = ({
                       <div className="flex items-center gap-2 mb-1.5">
                         <Sparkles size={15} className="text-indigo-600" />
                         <Typography className="!text-[13px] !font-bold !text-slate-800">
-                          {nodeDocs?.title || "Node Documentation"}
+                          {toDisplayString(nodeDocs?.title, "Node Documentation")}
                         </Typography>
                       </div>
                       <Typography className="!text-[12.5px] !text-slate-600 !leading-relaxed mb-3">
-                        {nodeDocs?.summary || description}
+                        {toDisplayString(nodeDocs?.summary) || toDisplayString(description)}
                       </Typography>
                       {nodeDocs?.whenToUse && (
                         <div className="text-[12px] text-indigo-900/80 bg-white/80 p-2.5 rounded-lg border border-indigo-100/60">
                           <strong className="text-indigo-950 font-semibold">When to use: </strong>
-                          {nodeDocs.whenToUse}
+                          {toDisplayString(nodeDocs.whenToUse)}
                         </div>
                       )}
                     </Box>
@@ -575,15 +575,16 @@ const NodeDetailsModal = ({
                           {nodeDocs.parameters.map((p, pIdx) => (
                             <div key={pIdx} className="p-3 bg-slate-50/80 rounded-lg border border-slate-200 text-xs space-y-1">
                               <div className="flex items-center justify-between">
-                                <span className="font-mono font-bold text-slate-800">{p.name}</span>
+                                <span className="font-mono font-bold text-slate-800">{toDisplayString(p.name)}</span>
                                 <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-white text-slate-600 border border-slate-200">
-                                  {p.type} {p.required ? "• required" : "• optional"}
+                                  {toDisplayString(p.type, "text")} {p.required ? "• required" : "• optional"}
                                 </span>
                               </div>
-                              <p className="text-slate-500 text-[11.5px]">{p.description}</p>
-                              {p.example && (
-                                <div className="mt-1 font-mono text-[11px] text-slate-600 bg-white px-2 py-1 rounded border border-slate-200/60">
-                                  <span className="text-slate-400">Example: </span>{p.example}
+                              <p className="text-slate-500 text-[11.5px]">{toDisplayString(p.description)}</p>
+                              {toDisplayString(p.example) && (
+                                <div className="mt-1 font-mono text-[11px] text-slate-600 bg-white px-2 py-1 rounded border border-slate-200/60 whitespace-pre-wrap break-words max-h-32 overflow-auto">
+                                  <span className="text-slate-400">Example: </span>
+                                  {toDisplayString(p.example)}
                                 </div>
                               )}
                             </div>
@@ -599,7 +600,7 @@ const NodeDetailsModal = ({
                           Recommended Flow Pipeline
                         </Typography>
                         <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs font-mono text-slate-700 flex items-center gap-1.5 overflow-x-auto">
-                          {nodeDocs.exampleWorkflow}
+                          {toDisplayString(nodeDocs.exampleWorkflow)}
                         </div>
                       </Box>
                     )}

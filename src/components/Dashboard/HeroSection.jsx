@@ -14,6 +14,7 @@ import {
   Layers,
   Zap,
 } from "lucide-react";
+import OrbitalVisual from "./OrbitalVisual";
 
 export default function HeroSection({ handleDrawerOpen }) {
   return (
@@ -24,7 +25,11 @@ export default function HeroSection({ handleDrawerOpen }) {
       <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[260px] bg-sky-100/20 rounded-full blur-[140px] animate-blob" style={{ animationDelay: "8s" }} />
 
       <Container maxWidth="lg" className="!px-4 relative z-10">
-        <div className="flex flex-col items-center text-center max-w-3xl mx-auto mb-16">
+        {/* Two-column hero: copy on the left, orbital product visual on the
+            right. Below `lg` it collapses back to the original single centred
+            column so the mobile layout is unchanged. */}
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] gap-12 lg:gap-10 items-center mb-16">
+        <div className="flex flex-col items-center text-center lg:items-start lg:text-left max-w-3xl mx-auto lg:mx-0">
           {/* Top Pill Tag */}
           <div
             className="inline-flex items-center gap-2 bg-white border border-slate-200/90 shadow-2xs px-3.5 py-1.5 rounded-full mb-6 animate-fade-up"
@@ -50,7 +55,7 @@ export default function HeroSection({ handleDrawerOpen }) {
 
           {/* Subtitle */}
           <p
-            className="text-base sm:text-lg text-slate-500 mt-6 max-w-2xl leading-relaxed animate-fade-up"
+            className="text-base sm:text-lg text-slate-500 mt-6 max-w-2xl lg:max-w-xl leading-relaxed animate-fade-up"
             style={{ animationDelay: "220ms" }}
           >
             Design multi-agent pipelines with visual graph execution, native MCP tool connectors,
@@ -59,7 +64,7 @@ export default function HeroSection({ handleDrawerOpen }) {
 
           {/* Call to Actions */}
           <div
-            className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto animate-fade-up"
+            className="mt-8 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 w-full sm:w-auto animate-fade-up"
             style={{ animationDelay: "320ms" }}
           >
             <button
@@ -80,7 +85,7 @@ export default function HeroSection({ handleDrawerOpen }) {
 
           {/* Feature Badges */}
           <div
-            className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-500 animate-fade-up"
+            className="mt-8 flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-slate-500 animate-fade-up"
             style={{ animationDelay: "420ms" }}
           >
             <span className="flex items-center gap-1.5">
@@ -92,6 +97,16 @@ export default function HeroSection({ handleDrawerOpen }) {
             <span className="flex items-center gap-1.5">
               <CheckCircle2 size={14} className="text-emerald-600" /> Zero Code Deployment
             </span>
+          </div>
+        </div>
+
+          {/* Orbital product visual */}
+          <div
+            className="hidden md:block animate-fade-up"
+            style={{ animationDelay: "460ms" }}
+            aria-hidden="true"
+          >
+            <OrbitalVisual />
           </div>
         </div>
 

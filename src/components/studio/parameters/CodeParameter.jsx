@@ -34,11 +34,15 @@ const CodeParameter = ({ parameters, param = {}, onUpdate }) => {
                     icon={<Code size={16} />}
                 />
             )}
+            {/* Height is content-driven between a comfortable floor and a
+                viewport-relative ceiling. The previous fixed `60vh` + `300px`
+                floor forced a tall editor even for a two-line snippet, which
+                pushed the rest of the parameter panel out of view. */}
             <CodeMirror
                 value={localValue}
-                height="60vh"
-            minHeight="300px"
-            maxHeight="80vh"
+                height="auto"
+            minHeight="220px"
+            maxHeight="55vh"
             width="100%"
             extensions={extensions}
             onChange={handleChange}

@@ -30,17 +30,29 @@ const StudioHeader = ({
   onSaveFlow,
   isSavingFlow,
   onDeployFlow,
+  isDirty = false,
+  onRequestNavigate,
 }) => {
   const router = useRouter();
 
-  const handleBackToFlows = (e) => {
-    e?.preventDefault?.();
-    e?.stopPropagation?.();
+  const navigateToFlows = React.useCallback(() => {
     try {
       router.push("/studio");
     } catch {
       window.location.href = "/studio";
     }
+  }, [router]);
+
+  const handleBackToFlows = (e) => {
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    // Route through the parent's guard so unsaved canvas changes can be
+    // confirmed before we leave the studio.
+    if (typeof onRequestNavigate === "function") {
+      onRequestNavigate(navigateToFlows);
+      return;
+    }
+    navigateToFlows();
   };
 
   return (
@@ -71,10 +83,27 @@ const StudioHeader = ({
             <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono text-slate-500 bg-slate-100 border border-slate-200">
               v{flow?.version || "1.0.0"}
             </span>
-            <div className="hidden md:flex items-center gap-1.5 ml-2 text-[11px] text-slate-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              <span>Saved</span>
-            </div>
+            {/* Real save status — was previously hardcoded to "Saved". */}
+            <Tooltip
+              title={
+                isDirty
+                  ? "This workflow has changes that have not been saved yet"
+                  : "All changes are saved"
+              }
+            >
+              <div
+                className={`hidden md:flex items-center gap-1.5 ml-2 text-[11px] ${
+                  isDirty ? "text-amber-600" : "text-slate-400"
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    isDirty ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                  }`}
+                />
+                <span>{isDirty ? "Unsaved changes" : "Saved"}</span>
+              </div>
+            </Tooltip>
           </div>
         </div>
       </Box>
@@ -156,12 +185,16 @@ const StudioHeader = ({
 
         <button
           type="button"
-          onClick={onSaveFlow}
+          onClick={() => onSaveFlow && onSaveFlow()}
           disabled={isSavingFlow}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors disabled:opacity-60"
+          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border shadow-2xs transition-colors disabled:opacity-60 ${
+            isDirty
+              ? "text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-200"
+              : "text-slate-700 bg-white hover:bg-slate-50 border-slate-200"
+          }`}
         >
           {isSavingFlow ? <CircularProgress size={12} color="inherit" /> : <Save size={13} />}
-          <span>{isSavingFlow ? "Saving..." : "Save"}</span>
+          <span>{isSavingFlow ? "Saving..." : isDirty ? "Save changes" : "Save"}</span>
         </button>
 
         <button

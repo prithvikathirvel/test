@@ -74,23 +74,65 @@ const getNodeIcon = (type, catalogTypes) => {
   }
 };
 
-const getNodeAccent = (type) => {
-  switch (type?.toLowerCase()) {
-    case "tool": return "bg-gradient-to-r from-blue-500 to-blue-600";
-    case "agent": return "bg-gradient-to-r from-emerald-500 to-emerald-600";
-    case "model": return "bg-gradient-to-r from-purple-500 to-purple-600";
-    case "inputs": return "bg-gradient-to-r from-cyan-500 to-cyan-600";
-    case "output": return "bg-gradient-to-r from-orange-500 to-orange-600";
-    case "agentflow": return "bg-gradient-to-r from-pink-500 to-pink-600";
-    case "decision": return "bg-gradient-to-r from-amber-500 to-amber-600";
-    case "iterator": return "bg-gradient-to-r from-indigo-500 to-indigo-600";
-    case "question": return "bg-gradient-to-r from-violet-500 to-violet-600";
-    case "conditions": return "bg-gradient-to-r from-amber-500 to-amber-600";
-    case "condition": return "bg-gradient-to-r from-amber-500 to-amber-600";
-    case "start": return "bg-gradient-to-r from-green-500 to-green-600";
-    default: return "bg-gradient-to-r from-gray-400 to-gray-500";
-  }
+/**
+ * Node accent tokens.
+ *
+ * The previous design painted a full-bleed saturated gradient bar across the
+ * top of every node. At canvas zoom levels those bars dominated the viewport,
+ * fought with the app's calm slate/indigo shell, and made the node titles
+ * (white on mid-tone gradients) hard to read. The refreshed treatment keeps the
+ * same per-type hues for instant recognition but applies them as a thin rail +
+ * tinted icon tile on a white card, matching the enterprise surface used by the
+ * header, sidebar and modals.
+ */
+const NODE_ACCENTS = {
+  tool:       { rail: "#3b82f6", tile: "bg-blue-50 text-blue-600 border-blue-100",       chip: "bg-blue-50 text-blue-700 border-blue-100",       ring: "rgba(59,130,246,0.35)" },
+  agent:      { rail: "#10b981", tile: "bg-emerald-50 text-emerald-600 border-emerald-100", chip: "bg-emerald-50 text-emerald-700 border-emerald-100", ring: "rgba(16,185,129,0.35)" },
+  model:      { rail: "#a855f7", tile: "bg-purple-50 text-purple-600 border-purple-100",  chip: "bg-purple-50 text-purple-700 border-purple-100",  ring: "rgba(168,85,247,0.35)" },
+  inputs:     { rail: "#06b6d4", tile: "bg-cyan-50 text-cyan-600 border-cyan-100",        chip: "bg-cyan-50 text-cyan-700 border-cyan-100",        ring: "rgba(6,182,212,0.35)" },
+  output:     { rail: "#f97316", tile: "bg-orange-50 text-orange-600 border-orange-100",  chip: "bg-orange-50 text-orange-700 border-orange-100",  ring: "rgba(249,115,22,0.35)" },
+  agentflow:  { rail: "#ec4899", tile: "bg-pink-50 text-pink-600 border-pink-100",        chip: "bg-pink-50 text-pink-700 border-pink-100",        ring: "rgba(236,72,153,0.35)" },
+  decision:   { rail: "#f59e0b", tile: "bg-amber-50 text-amber-600 border-amber-100",     chip: "bg-amber-50 text-amber-700 border-amber-100",     ring: "rgba(245,158,11,0.35)" },
+  conditions: { rail: "#f59e0b", tile: "bg-amber-50 text-amber-600 border-amber-100",     chip: "bg-amber-50 text-amber-700 border-amber-100",     ring: "rgba(245,158,11,0.35)" },
+  condition:  { rail: "#f59e0b", tile: "bg-amber-50 text-amber-600 border-amber-100",     chip: "bg-amber-50 text-amber-700 border-amber-100",     ring: "rgba(245,158,11,0.35)" },
+  iterator:   { rail: "#6366f1", tile: "bg-indigo-50 text-indigo-600 border-indigo-100",  chip: "bg-indigo-50 text-indigo-700 border-indigo-100",  ring: "rgba(99,102,241,0.35)" },
+  question:   { rail: "#8b5cf6", tile: "bg-violet-50 text-violet-600 border-violet-100",  chip: "bg-violet-50 text-violet-700 border-violet-100",  ring: "rgba(139,92,246,0.35)" },
+  start:      { rail: "#22c55e", tile: "bg-green-50 text-green-600 border-green-100",     chip: "bg-green-50 text-green-700 border-green-100",     ring: "rgba(34,197,94,0.35)" },
 };
+
+const DEFAULT_ACCENT = {
+  rail: "#94a3b8",
+  tile: "bg-slate-100 text-slate-600 border-slate-200",
+  chip: "bg-slate-50 text-slate-600 border-slate-200",
+  ring: "rgba(100,116,139,0.35)",
+};
+
+const getNodeAccent = (type) => NODE_ACCENTS[type?.toLowerCase()] || DEFAULT_ACCENT;
+
+/** Human-readable label for the type chip ("agentflow" -> "Agent Flow"). */
+const TYPE_LABELS = {
+  agentflow: "Agent Flow",
+  inputs: "Input",
+  conditions: "Condition",
+  iterator: "Loop",
+};
+const getTypeLabel = (type) => {
+  if (!type) return "Node";
+  const key = type.toLowerCase();
+  if (TYPE_LABELS[key]) return TYPE_LABELS[key];
+  return key.charAt(0).toUpperCase() + key.slice(1);
+};
+
+/** Shared handle geometry so every port on the canvas looks identical. */
+const handleStyle = (color, extra = {}) => ({
+  background: "#ffffff",
+  border: `2px solid ${color}`,
+  width: 10,
+  height: 10,
+  borderRadius: 9999,
+  boxShadow: "0 1px 2px rgba(15, 23, 42, 0.18)",
+  ...extra,
+});
 
 /** Module scope: a new array literal per render would defeat every memo below. */
 const OPTION_COLORS = [
@@ -192,6 +234,12 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
   // will keep using stale positions (edges detach / land on the wrong row)
   // unless we tell it to re-measure. Keyed on the count so it only fires when
   // handles are actually added or removed, never on every render.
+  /** Configured-field count shown in the header meta row. */
+  const paramCount = useMemo(
+    () => (Array.isArray(data.inputParameters) ? data.inputParameters.length : 0),
+    [data.inputParameters]
+  );
+
   const conditionCount = conditionData.conditions.length;
   const updateNodeInternals = useUpdateNodeInternals();
   useEffect(() => {
@@ -203,76 +251,98 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
   // `backdrop-blur-sm` was a no-op behind the opaque `bg-white` but still
   // forced a GPU compositing layer for every node, and `transition-all`
   // animated the drag transform. Both are narrowed to what is visible.
+  const typeLabel = getTypeLabel(nodeType);
+  const nodeTitle = data.displayName || data.name || typeLabel;
+
   return (
     <div
-      className={`relative min-w-[250px] bg-white rounded-xl shadow-lg hover:shadow-xl transition-[box-shadow,border-color] duration-300 ${
+      className={`group relative min-w-[250px] max-w-[300px] bg-white rounded-xl overflow-hidden transition-[box-shadow,border-color,transform] duration-200 ${
         selected
-          ? "border border-indigo-500 ring-2 ring-indigo-400/40"
-          : "border border-gray-200/60"
+          ? "border border-indigo-400 shadow-lg"
+          : "border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300"
       }`}
+      style={selected ? { boxShadow: `0 0 0 3px ${accent.ring}, 0 8px 20px -6px rgba(15,23,42,0.22)` } : undefined}
     >
-      
+      {/* Type rail: the only saturated colour on the card, so a glance still
+          identifies the node type without shouting over the canvas. */}
+      <div
+        className="absolute left-0 top-0 bottom-0 w-[3px]"
+        style={{ backgroundColor: accent.rail }}
+      />
+
       {/* Header */}
-      <div className={`flex items-center gap-3 px-4 py-3.5 !rounded-md ${accent} relative overflow-hidden`}>
-        {/* Background Pattern */}
-        <div className="absolute inset-0 bg-white/10 opacity-20">
-          <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent"></div>
-        </div>
-        
-        <div className="relative z-10 w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm border border-white/30">
+      <div className="flex items-start gap-2.5 pl-4 pr-3 py-2.5 border-b border-slate-100 bg-white">
+        <div
+          className={`shrink-0 mt-0.5 h-7 w-7 rounded-lg border flex items-center justify-center ${accent.tile}`}
+        >
           {nodeType === "iterator" ? (
-            <div className="text-white animate-spin">{icon}</div>
+            <span className="animate-[spin_3s_linear_infinite]">{icon}</span>
           ) : (
-            <div className="text-white">{icon}</div>
+            icon
           )}
         </div>
-        
-        <div className="relative z-10 flex-1 min-w-0">
-          <h3 className="text-white font-semibold text-sm leading-tight truncate">
-            {data.displayName || data.name}
-          </h3>
-          <p className="text-white/80 text-xs capitalize mt-0.5 font-medium">
-            {nodeType}
-          </p>
+
+        <div className="flex-1 min-w-0">
+          <Tooltip title={nodeTitle} placement="top" arrow>
+            <h3 className="text-[13px] font-semibold text-slate-800 leading-tight truncate tracking-tight">
+              {nodeTitle}
+            </h3>
+          </Tooltip>
+          <div className="mt-1 flex items-center gap-1.5">
+            <span
+              className={`inline-flex items-center px-1.5 py-px rounded text-[9.5px] font-medium uppercase tracking-wide border ${accent.chip}`}
+            >
+              {typeLabel}
+            </span>
+            {paramCount > 0 && (
+              <span className="text-[10px] text-slate-400 font-mono">
+                {paramCount} {paramCount === 1 ? "field" : "fields"}
+              </span>
+            )}
+          </div>
         </div>
-        
-        {/* <div className="relative z-10 flex items-center gap-2">
-          <div className="w-2 h-2 bg-white/90 rounded-full animate-pulse shadow-sm"></div>
-          <span className="text-white/90 text-xs font-medium">Ready</span>
-        </div> */}
       </div>
 
       {/* Question/Options Content */}
       {shouldShowOptionsUI && (
-        <div className="px-5 py-5 border-b border-gray-100">
+        <div className="pl-4 pr-3 py-2.5 border-b border-slate-100 bg-slate-50/50">
           {questionData.questionText && !isDynamic(questionData.questionText) && (
-            <p className="text-sm text-gray-700 font-medium leading-relaxed mb-4 break-words">
-              {questionData.questionText.length > 40 
-                ? `${questionData.questionText.substring(0, 40)}...` 
-                : questionData.questionText}
+            <p className="text-[11.5px] text-slate-600 leading-snug mb-2 line-clamp-2 break-words">
+              {questionData.questionText}
             </p>
           )}
 
           {/* Options List */}
           {displayOptions && typeof displayOptions === 'object' && !isDynamic(displayOptions) && Object.keys(displayOptions).length > 0 && (
-            <div className="space-y-2">
-              <p className="text-xs text-gray-500 font-medium mb-3">
-                {Object.keys(displayOptions).length} option{Object.keys(displayOptions).length !== 1 ? 's' : ''}:
+            <div className="space-y-1">
+              <p className="text-[9.5px] uppercase tracking-wide text-slate-400 font-semibold mb-1.5">
+                {Object.keys(displayOptions).length} option{Object.keys(displayOptions).length !== 1 ? 's' : ''}
               </p>
-              
-              {Object.entries(displayOptions).map(([key, value], index) => {
-                const colorIndex = index % optionColors.length;
-                const color = optionColors[colorIndex];
-                
+
+              {Object.entries(displayOptions).slice(0, 4).map(([key, value], index) => {
+                const optionColor = optionColors[index % optionColors.length];
+
                 return (
-                  <div key={key} className="flex justify-between gap-3 group bg-gray-100 p-2 px-4 rounded-lg">
-                    <div>Option {index + 1}</div>
-                    <span className="text-sm text-gray-800 font-medium truncate">
+                  <div
+                    key={key}
+                    className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1"
+                  >
+                    <span
+                      className="h-1.5 w-1.5 rounded-full shrink-0"
+                      style={{ backgroundColor: optionColor.hex }}
+                    />
+                    <span className="text-[11px] text-slate-700 truncate">
                       {String(value)}
                     </span>
                   </div>
                 );
               })}
+
+              {Object.keys(displayOptions).length > 4 && (
+                <p className="text-[10px] text-slate-400 pl-1 pt-0.5">
+                  +{Object.keys(displayOptions).length - 4} more
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -280,36 +350,33 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
 
       {/* Condition Content */}
       {(nodeType === "conditions" || nodeType === "condition") && Array.isArray(conditionData.conditions) && conditionData.conditions.length > 0 && (
-        <div className="px-5 py-5 border-b border-gray-100">
-          <p className="text-sm text-gray-700 font-medium leading-relaxed mb-4">
+        <div className="pl-4 pr-3 py-2.5 border-b border-slate-100 bg-slate-50/50">
+          <p className="text-[9.5px] uppercase tracking-wide text-slate-400 font-semibold mb-1.5">
             {conditionData.conditions.length} condition{conditionData.conditions.length !== 1 ? 's' : ''}
           </p>
 
-          {/* Conditions List with inline handles */}
-          <div className="space-y-3">
+          {/* Conditions List with one inline handle per branch */}
+          <div className="space-y-1.5">
             {conditionData.conditions.map((condition, index) => (
-              <div key={index} className="flex items-center gap-3 group relative pr-6 border-1 border-gray-300 p-2 rounded-md">
-               {/* <span className="text-xs text-gray-500 font-medium flex-shrink-0">
-                  Condition {index + 1}:
-                </span> */}
-              <span className="text-sm text-gray-800 font-medium truncate flex gap-3 items-center">
-                  <span className="text-xs text-gray-500 font-medium bg-gray-100 border-1 border-gray-300 px-2 py-1 rounded">{condition.operator}</span>
-                  <span className="text-xs text-gray-500 font-medium">{condition.comparisonValue || '(no value)'}</span>
+              <div
+                key={index}
+                className="relative flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 pr-4"
+              >
+                <span className="shrink-0 text-[9.5px] font-mono font-semibold text-amber-700 bg-amber-50 border border-amber-100 px-1.5 py-px rounded">
+                  {condition.operator}
+                </span>
+                <span className="text-[11px] text-slate-600 truncate">
+                  {condition.comparisonValue || '(no value)'}
                 </span>
 
-                {/* Handle positioned right next to this specific condition */}
+                {/* Handle sits on the row it belongs to */}
                 <Handle
                   key={index}
                   id={index.toString()}
                   type="source"
                   position={Position.Right}
-                  className="!w-3 !h-3 border-2 border-white shadow-md !absolute !right-0 !top-1/2 !transform !-translate-y-1/2"
-                  style={{
-                    background: 'gray',
-                    width: 10,
-                    height: 10,
-                    right: -6
-                  }}
+                  className="!absolute !top-1/2 !-translate-y-1/2 hover:!scale-125 transition-transform"
+                  style={handleStyle(accent.rail, { right: -6 })}
                 />
               </div>
             ))}
@@ -342,14 +409,8 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
         <Handle
           type="target"
           position={Position.Left}
-          className="w-15 h-15 border-2 border-white bg-gray-400 shadow-md hover:bg-gray-500 transition-colors"
-          style={{ 
-            background: "gray",
-            width: 10,
-            height: 10,
-            left: -6,
-            zIndex: 10
-          }}
+          className="hover:!scale-125 transition-transform"
+          style={handleStyle("#94a3b8", { left: -6, zIndex: 10 })}
         />
       )}
 
@@ -358,53 +419,83 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
         <Handle
           type="source"
           position={Position.Right}
-          className="w-15 h-15 border-2 border-white bg-gray-400 shadow-md hover:bg-gray-500 transition-colors"
-          style={{ right: -6,width: 10,height: 10,backgroundColor: 'gray',zIndex: 1000 }}
+          className="hover:!scale-125 transition-transform"
+          style={handleStyle(accent.rail, { right: -6, zIndex: 10 })}
         />
       )}
 
-      {/* Decision Node Handles */}
+      {/* Decision Node Handles - labelled so the true/false branch is obvious */}
       {nodeType === "decision" && (
         <>
-          <Handle
-            id="true"
-            type="source"
-            position={Position.Right}
-            className="w-3 h-3 border-2 border-white bg-emerald-500 shadow-md hover:bg-emerald-600 transition-colors"
-            style={{ right: -6, top: '40%',width: 10,height: 10,backgroundColor: 'gray' }}
-          />
-          <Handle
-            id="false"
-            type="source"
-            position={Position.Right}
-            className="w-3 h-3 border-2 border-white bg-red-500 shadow-md hover:bg-red-600 transition-colors"
-            style={{ right: -6, top: '60%',width: 10,height: 10,backgroundColor: 'gray' }}
-          />
+          <span
+            className="absolute right-2 text-[9px] font-semibold uppercase tracking-wide text-emerald-600 pointer-events-none"
+            style={{ top: '40%', transform: 'translateY(-50%)' }}
+          >
+            true
+          </span>
+          <Tooltip title="True branch" placement="right" arrow>
+            <Handle
+              id="true"
+              type="source"
+              position={Position.Right}
+              className="hover:!scale-125 transition-transform"
+              style={handleStyle("#10b981", { right: -6, top: '40%' })}
+            />
+          </Tooltip>
+
+          <span
+            className="absolute right-2 text-[9px] font-semibold uppercase tracking-wide text-rose-600 pointer-events-none"
+            style={{ top: '60%', transform: 'translateY(-50%)' }}
+          >
+            false
+          </span>
+          <Tooltip title="False branch" placement="right" arrow>
+            <Handle
+              id="false"
+              type="source"
+              position={Position.Right}
+              className="hover:!scale-125 transition-transform"
+              style={handleStyle("#f43f5e", { right: -6, top: '60%' })}
+            />
+          </Tooltip>
         </>
       )}
 
       {/* Iterator Node Handles */}
       {nodeType === "iterator" && (
         <>
-         <Tooltip title="Complete">
+          <span
+            className="absolute right-2 text-[9px] font-semibold uppercase tracking-wide text-indigo-600 pointer-events-none"
+            style={{ top: '40%', transform: 'translateY(-50%)' }}
+          >
+            loop
+          </span>
+          <Tooltip title="Loop body" placement="right" arrow>
+            <Handle
+              id="loop"
+              type="source"
+              position={Position.Right}
+              className="hover:!scale-125 transition-transform"
+              style={handleStyle("#6366f1", { right: -6, top: '40%' })}
+            />
+          </Tooltip>
 
-         <Handle
-            id="loop"
-            type="source"
-            position={Position.Right}
-            className="w-3 h-3 border-2 border-white bg-blue-500 shadow-md hover:bg-blue-600 transition-colors"
-            style={{ right: -6, top: '40%',width: 10,height: 10,backgroundColor: 'gray' }}
-          />
-
-         </Tooltip>
-          <Handle
-            id="complete"
-            type="source"
-            position={Position.Right}
-            className="w-3 h-3 border-2 border-white bg-gray-500 shadow-md hover:bg-gray-600 transition-colors"
-            style={{ right: -6, top: '70%',width: 10,height: 10,backgroundColor: 'gray' }}
-            focusable={true}
-          />
+          <span
+            className="absolute right-2 text-[9px] font-semibold uppercase tracking-wide text-slate-500 pointer-events-none"
+            style={{ top: '70%', transform: 'translateY(-50%)' }}
+          >
+            done
+          </span>
+          <Tooltip title="Complete" placement="right" arrow>
+            <Handle
+              id="complete"
+              type="source"
+              position={Position.Right}
+              className="hover:!scale-125 transition-transform"
+              style={handleStyle("#94a3b8", { right: -6, top: '70%' })}
+              focusable={true}
+            />
+          </Tooltip>
         </>
       )}
     </div>

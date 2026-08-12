@@ -101,7 +101,7 @@ const FlowListingTableView = ({ filteredFlows, handleOpenStudio, handleDeleteFlo
                     </button>
                     <Tooltip title="Delete Flow">
                       <button
-                        onClick={() => handleDeleteFlow(flow.id)}
+                        onClick={() => handleDeleteFlow(flow)}
                         className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                       >
                         <Trash2 size={15} />

@@ -126,11 +126,14 @@ function timeAgo(dateString) {
 
 
 const generateSpecification = (flow, nodes, edges) => {
-  if (!nodes.length) return null;
-
+  // Order matters: `nodes.length` used to be read before the Array check, so a
+  // null/undefined `nodes` (possible while a flow is still loading or after a
+  // failed fetch) threw instead of returning an empty spec.
   if (!Array.isArray(nodes) || !Array.isArray(edges)) {
     return {};
   }
+
+  if (!nodes.length) return null;
   const specification = {
     ...flow,
     graphSpec: {
@@ -202,13 +205,17 @@ function sortByField(arr, field, order = "asc") {
 // }
 
 function getLastOutputParameter(flowJson) {
+  // Returns `null` rather than throwing: this runs on user interaction (opening
+  // the output modal) and a partially-loaded / failed flow must not take the
+  // whole studio page down with an uncaught error.
   if (
     !flowJson ||
     !flowJson.graphSpec ||
     !Array.isArray(flowJson.graphSpec.nodes) ||
     !Array.isArray(flowJson.graphSpec.edges)
   ) {
-    throw new Error("Invalid flowJson structure");
+    console.warn("getLastOutputParameter: invalid flowJson structure", flowJson);
+    return null;
   }
 
   const { nodes, edges } = flowJson.graphSpec;
@@ -220,7 +227,8 @@ function getLastOutputParameter(flowJson) {
 
   const endNode = nodes.find(node => node.name === "End Node");
   if (!endNode) {
-    throw new Error("End Node not found");
+    console.warn("getLastOutputParameter: End Node not found");
+    return null;
   }
   let currentNodeId = endNode.node_id;
   let previousNode = null;

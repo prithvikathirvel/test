@@ -37,19 +37,47 @@ export const fetchModels = createAsyncThunk('studio/fetchModels', async () => {
   }
 });
 
+/**
+ * An empty-but-valid flow shell.
+ *
+ * `getFlowById` used to return `undefined` for every failure mode other than a
+ * literal HTTP 500 (the `throw` was commented out), so `getFlowById.fulfilled`
+ * assigned `state.flow = undefined` and every downstream `flow.graphSpec` read
+ * threw "Cannot read properties of null (reading 'graphSpec')". Normalising the
+ * payload here means the studio always has a renderable, empty canvas instead of
+ * an intermittent runtime crash.
+ */
+const EMPTY_FLOW_SHELL = () => ({
+  graphSpec: { nodes: [], edges: [] },
+  inputs: [],
+});
+
+/** Guarantees a flow object that is always safe to read `graphSpec` from. */
+const normalizeFlow = (flow) => {
+  if (!flow || typeof flow !== 'object' || Array.isArray(flow)) {
+    return EMPTY_FLOW_SHELL();
+  }
+  const graphSpec = flow.graphSpec && typeof flow.graphSpec === 'object' ? flow.graphSpec : {};
+  return {
+    ...flow,
+    graphSpec: {
+      ...graphSpec,
+      nodes: Array.isArray(graphSpec.nodes) ? graphSpec.nodes : [],
+      edges: Array.isArray(graphSpec.edges) ? graphSpec.edges : [],
+    },
+    inputs: Array.isArray(flow.inputs) ? flow.inputs : [],
+  };
+};
+
 export const getFlowById = createAsyncThunk('flow/getFlowById', async (data) => {
-  console.log('Fetching flow data...');
   try {
     const response = await APIKit.get(`/agent-flow/${data.id}`);
-    console.log('API Response:', response.data);
-    console.log('graphSpec structure:', response.data.graphSpec);
-    return response.data;
+    return normalizeFlow(response.data);
   } catch (error) {
     showToaster('error', error);
-    if (error.response && error.response.status === 500) {
-      return {};
-    }
-    //throw error;
+    // Never resolve with `undefined`: the fulfilled reducer and the studio page
+    // both dereference `.graphSpec` on the result.
+    return EMPTY_FLOW_SHELL();
   }
 });
 
@@ -139,9 +167,12 @@ const studioSlice = createSlice({
 
     setNodes: (state, action) => {
       if (action.payload.type === "flow") {
-        // When dropping a flow, add all its nodes
-        const flowSpec = action.payload.graphSpec;
-        state.nodes = [...state.nodes, ...flowSpec.nodes];
+        // When dropping a flow, add all its nodes.
+        // `graphSpec` can be missing entirely when the dropped flow came from a
+        // listing response that failed or was trimmed — guard both levels.
+        const flowSpec = action.payload.graphSpec || {};
+        const incoming = Array.isArray(flowSpec.nodes) ? flowSpec.nodes : [];
+        state.nodes = [...(state.nodes || []), ...incoming];
       } else {
         // Handle normal node addition
         const { nodes, flow } = action.payload;
@@ -175,9 +206,10 @@ const studioSlice = createSlice({
     },
     setEdges: (state, action) => {
       if (action.payload.type === "flow") {
-        // When dropping a flow, add all its edges
-        const flowSpec = action.payload.graphSpec;
-        state.edges = [...state.edges, ...flowSpec.edges];
+        // When dropping a flow, add all its edges (same guard as `setNodes`).
+        const flowSpec = action.payload.graphSpec || {};
+        const incoming = Array.isArray(flowSpec.edges) ? flowSpec.edges : [];
+        state.edges = [...(state.edges || []), ...incoming];
       } else {
         // Handle normal edge addition
         const { edges, flow } = action.payload;
@@ -389,8 +421,12 @@ const studioSlice = createSlice({
 
 
     builder.addCase(getFlowById.fulfilled, (state, action) => {
-      state.flow = action.payload;
-      state.specification = action.payload;
+      // Defensive: `normalizeFlow` already guarantees the shape, but a rejected
+      // -then-recovered thunk or a future caller must never be able to put
+      // `null`/`undefined` into `state.flow` — every consumer reads `.graphSpec`.
+      const flow = normalizeFlow(action.payload);
+      state.flow = flow;
+      state.specification = flow;
       state.studioLoader = false;
     });
     builder.addCase(getFlowById.pending, (state) => {

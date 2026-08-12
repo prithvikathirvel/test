@@ -20,6 +20,7 @@ import { sortByField } from "@/utils/commonFunction";
 import FlowListingTableView from "@/components/StudioListing/FlowListingTableView";
 import FlowListingGridView from "@/components/StudioListing/FlowListingGridView";
 import BlurredLoader from "@/components/Common/BlurredLoader";
+import ConfirmDialog from "@/components/Common/ConfirmDialog";
 
 const StudioListing = () => {
   const dispatch = useDispatch();
@@ -35,6 +36,10 @@ const StudioListing = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(6);
 
+  // Item 8 — deletion is irreversible, so it is always confirmed first.
+  const [flowPendingDeletion, setFlowPendingDeletion] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     dispatch(getAllFlows());
     setFlowDetailsModalOpen(false);
@@ -48,15 +53,38 @@ const StudioListing = () => {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  const handleDeleteFlow = (flowId) => {
+  /** Opens the confirmation dialog; the actual delete happens on confirm. */
+  const handleDeleteFlow = (flow) => {
+    // Tolerates being called with either the flow object or a bare id.
+    setFlowPendingDeletion(
+      flow && typeof flow === "object" ? flow : { id: flow, name: "" }
+    );
+  };
+
+  const handleCancelDelete = () => {
+    if (isDeleting) return;
+    setFlowPendingDeletion(null);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!flowPendingDeletion?.id) return;
+    setIsDeleting(true);
     dispatch(
       deleteFlow({
-        data: flowId,
+        data: flowPendingDeletion.id,
         onSuccess: () => {
+          setIsDeleting(false);
+          setFlowPendingDeletion(null);
           dispatch(getAllFlows());
         },
       })
-    );
+    )
+      .unwrap()
+      .catch(() => {
+        // The thunk already toasts the failure; just release the dialog.
+        setIsDeleting(false);
+        setFlowPendingDeletion(null);
+      });
   };
 
   const handleFlowDetailsSubmit = (details) => {
@@ -280,6 +308,20 @@ const StudioListing = () => {
         open={flowDetailsModalOpen}
         onClose={() => setFlowDetailsModalOpen(false)}
         onSubmit={handleFlowDetailsSubmit}
+      />
+
+      {/* Destructive-action guard for flow deletion */}
+      <ConfirmDialog
+        open={Boolean(flowPendingDeletion)}
+        tone="danger"
+        title="Delete this workflow?"
+        description="This permanently removes the workflow along with its nodes, connections and configuration. This action cannot be undone."
+        details={flowPendingDeletion?.name || flowPendingDeletion?.id}
+        confirmLabel="Delete workflow"
+        cancelLabel="Cancel"
+        busy={isDeleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
       />
     </Box>
   );

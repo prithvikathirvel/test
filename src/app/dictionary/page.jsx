@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Box,
   Typography,
@@ -27,53 +27,20 @@ import {
   AlertCircle,
   X,
   ExternalLink,
+  RefreshCw,
+  Loader2,
+  ServerCrash,
 } from "lucide-react";
 import { toast } from "sonner";
-
-const DEFAULT_GLOBAL_DICTIONARIES = [
-  {
-    id: "dict-01",
-    key: "API_GATEWAY_ENDPOINTS",
-    type: "object",
-    description: "Centralized internal API microservice endpoints",
-    value: {
-      crm_service: "https://crm.internal.corp/v1",
-      billing_service: "https://billing.internal.corp/v2",
-      auth_service: "https://auth.internal.corp/oauth",
-      vector_store: "https://qdrant.internal.corp:6333"
-    },
-    updatedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-  },
-  {
-    id: "dict-02",
-    key: "DEFAULT_AGENT_PROMPT_GUARDRAILS",
-    type: "array",
-    description: "Mandatory safety & compliance guidelines injected into all agent system prompts",
-    value: [
-      "Never reveal internal database connection credentials or API tokens.",
-      "Verify customer account ownership before returning transaction history.",
-      "Escalate to human support when customer sentiment score drops below -0.6.",
-      "Strictly refuse non-business prompts or unauthorized code execution."
-    ],
-    updatedAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-  },
-  {
-    id: "dict-03",
-    key: "MAX_AGENT_REASONING_LOOPS",
-    type: "number",
-    description: "Maximum execution loops permitted per agent before force termination",
-    value: 12,
-    updatedAt: new Date(Date.now() - 3600000 * 48).toISOString(),
-  },
-  {
-    id: "dict-04",
-    key: "ACTIVE_ENVIRONMENT",
-    type: "text",
-    description: "Active deployment cluster target",
-    value: "production-us-east-1",
-    updatedAt: new Date(Date.now() - 3600000 * 72).toISOString(),
-  },
-];
+import ConfirmDialog from "@/components/Common/ConfirmDialog";
+import {
+  listDictionaries,
+  createDictionary,
+  updateDictionary,
+  deleteDictionary,
+  validateDictionaryKey,
+  validateDictionaryValue,
+} from "@/utils/dictionaryAPI";
 
 const TYPE_FILTERS = ["all", "object", "array", "text", "number", "boolean"];
 
@@ -85,6 +52,13 @@ export default function DictionaryPage() {
   const [editItem, setEditItem] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
 
+  // Remote data lifecycle
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
   // Modal Form State
   const [keyName, setKeyName] = useState("");
   const [dataType, setDataType] = useState("object");
@@ -95,29 +69,30 @@ export default function DictionaryPage() {
   const [jsonText, setJsonText] = useState("{\n  \"key\": \"value\"\n}");
   const [jsonError, setJsonError] = useState(null);
 
-  // Load from localStorage or defaults
-  useEffect(() => {
+  /**
+   * Loads the global dictionary from the API.
+   *
+   * Filtering/search are applied client-side (as they always were) so typing in
+   * the search box stays instant; the endpoint's `search`/`type` params are
+   * still honoured for the initial fetch when a filter is already active.
+   */
+  const loadDictionaries = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
+    setLoadError(null);
     try {
-      const saved = localStorage.getItem("aurora_global_dictionaries");
-      if (saved) {
-        setDictionaries(JSON.parse(saved));
-      } else {
-        setDictionaries(DEFAULT_GLOBAL_DICTIONARIES);
-        localStorage.setItem("aurora_global_dictionaries", JSON.stringify(DEFAULT_GLOBAL_DICTIONARIES));
-      }
-    } catch {
-      setDictionaries(DEFAULT_GLOBAL_DICTIONARIES);
+      const { items } = await listDictionaries({ limit: 200 });
+      setDictionaries(items);
+    } catch (error) {
+      setLoadError(error?.message || "Unable to load global dictionaries.");
+      if (silent) toast.error(error?.message || "Unable to refresh dictionaries.");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  const saveToStorage = (updated) => {
-    setDictionaries(updated);
-    try {
-      localStorage.setItem("aurora_global_dictionaries", JSON.stringify(updated));
-    } catch (e) {
-      console.error(e);
-    }
-  };
+  useEffect(() => {
+    loadDictionaries();
+  }, [loadDictionaries]);
 
   const handleOpenCreateModal = () => {
     setEditItem(null);
@@ -163,14 +138,18 @@ export default function DictionaryPage() {
     }
   };
 
-  const handleSaveModal = () => {
+  const handleSaveModal = async () => {
     const cleanKey = keyName.trim().toUpperCase().replace(/\s+/g, "_");
-    if (!cleanKey) {
-      toast.error("Variable key name is required.");
+
+    // Contract validation (DICTIONARY_API_SPEC.md §2.B)
+    const keyError = validateDictionaryKey(cleanKey);
+    if (keyError) {
+      toast.error(keyError);
       return;
     }
 
-    // Check duplicate key
+    // Local duplicate guard: fail fast before the round-trip. The server is
+    // still authoritative and answers 409 / DUPLICATE_KEY.
     const duplicate = dictionaries.some(
       (d) => d.key === cleanKey && d.id !== editItem?.id
     );
@@ -196,45 +175,65 @@ export default function DictionaryPage() {
       finalValue = rawTextValue;
     }
 
-    if (editItem) {
-      // Update
-      const updated = dictionaries.map((d) =>
-        d.id === editItem.id
-          ? {
-              ...d,
-              key: cleanKey,
-              type: dataType,
-              description,
-              value: finalValue,
-              updatedAt: new Date().toISOString(),
-            }
-          : d
-      );
-      saveToStorage(updated);
-      toast.success(`Updated global variable "${cleanKey}"`);
-    } else {
-      // Create new
-      const newItem = {
-        id: `dict-${Date.now()}`,
-        key: cleanKey,
-        type: dataType,
-        description,
-        value: finalValue,
-        updatedAt: new Date().toISOString(),
-      };
-      saveToStorage([newItem, ...dictionaries]);
-      toast.success(`Registered global variable "${cleanKey}"`);
+    const valueError = validateDictionaryValue(dataType, finalValue);
+    if (valueError) {
+      if (dataType === "object" || dataType === "array") setJsonError(valueError);
+      toast.error(valueError);
+      return;
     }
 
-    setModalOpen(false);
+    const payload = {
+      key: cleanKey,
+      type: dataType,
+      description,
+      value: finalValue,
+    };
+
+    setSaving(true);
+    try {
+      if (editItem) {
+        const saved = await updateDictionary(editItem.id, payload);
+        setDictionaries((prev) =>
+          prev.map((d) => (d.id === editItem.id ? { ...d, ...saved } : d))
+        );
+        toast.success(`Updated global variable "${cleanKey}"`);
+      } else {
+        const created = await createDictionary(payload);
+        setDictionaries((prev) => [created, ...prev]);
+        toast.success(`Registered global variable "${cleanKey}"`);
+      }
+      setModalOpen(false);
+    } catch (error) {
+      if (error?.code === "DUPLICATE_KEY") {
+        toast.error(error.message || `Global variable "${cleanKey}" already exists.`);
+      } else {
+        toast.error(error?.message || "Failed to save global variable.");
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
+  /** Opens the confirmation dialog; the request itself runs on confirm. */
   const handleDelete = (id) => {
     const item = dictionaries.find((d) => d.id === id);
     if (!item) return;
-    const updated = dictionaries.filter((d) => d.id !== id);
-    saveToStorage(updated);
-    toast.info(`Deleted global variable "${item.key}"`);
+    setDeleteTarget(item);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteDictionary(deleteTarget.id);
+      setDictionaries((prev) => prev.filter((d) => d.id !== deleteTarget.id));
+      toast.info(`Deleted global variable "${deleteTarget.key}"`);
+      setDeleteTarget(null);
+    } catch (error) {
+      toast.error(error?.message || "Failed to delete global variable.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const handleCopySyntax = (key) => {
@@ -289,12 +288,24 @@ export default function DictionaryPage() {
             </p>
           </div>
 
-          <button
-            onClick={handleOpenCreateModal}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
-          >
-            <Plus size={15} /> Create Variable
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => loadDictionaries({ silent: true })}
+              disabled={loading}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors disabled:opacity-60"
+              title="Refresh from server"
+            >
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              Refresh
+            </button>
+
+            <button
+              onClick={handleOpenCreateModal}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
+            >
+              <Plus size={15} /> Create Variable
+            </button>
+          </div>
         </Box>
 
         {/* Metric Cards (Screenshot Style) */}
@@ -387,7 +398,31 @@ export default function DictionaryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {filteredList.length > 0 ? (
+                {loading ? (
+                  <tr>
+                    <td colSpan={4} className="py-14 text-center">
+                      <div className="inline-flex items-center gap-2 text-xs text-slate-400">
+                        <Loader2 size={15} className="animate-spin" />
+                        Loading global dictionaries…
+                      </div>
+                    </td>
+                  </tr>
+                ) : loadError ? (
+                  <tr>
+                    <td colSpan={4} className="py-14 text-center">
+                      <div className="inline-flex flex-col items-center gap-2.5">
+                        <ServerCrash size={22} className="text-slate-300" />
+                        <p className="text-xs text-slate-500 max-w-sm">{loadError}</p>
+                        <button
+                          onClick={() => loadDictionaries()}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors"
+                        >
+                          <RefreshCw size={13} /> Try again
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredList.length > 0 ? (
                   filteredList.map((item) => {
                     const isCopied = copiedId === item.key;
                     const previewText =
@@ -457,7 +492,9 @@ export default function DictionaryPage() {
                 ) : (
                   <tr>
                     <td colSpan={4} className="py-14 text-center text-xs text-slate-400">
-                      No global dictionary variables found matching your filter.
+                      {dictionaries.length === 0
+                        ? "No global dictionary variables registered yet. Create your first variable to get started."
+                        : "No global dictionary variables found matching your filter."}
                     </td>
                   </tr>
                 )}
@@ -636,19 +673,46 @@ export default function DictionaryPage() {
           <button
             type="button"
             onClick={() => setModalOpen(false)}
-            className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 bg-white border border-slate-200 rounded-xl"
+            disabled={saving}
+            className="px-4 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 bg-white border border-slate-200 rounded-xl disabled:opacity-60"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={handleSaveModal}
-            className="px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs"
+            disabled={saving}
+            className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {editItem ? "Save Changes" : "Register Variable"}
+            {saving && <Loader2 size={13} className="animate-spin" />}
+            {saving
+              ? editItem
+                ? "Saving…"
+                : "Registering…"
+              : editItem
+              ? "Save Changes"
+              : "Register Variable"}
           </button>
         </div>
       </Dialog>
+
+      {/* Delete confirmation — deleting a global variable breaks every flow
+          that references it, so it must never be a single-click action. */}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        tone="danger"
+        title="Delete global variable?"
+        description={
+          deleteTarget
+            ? `"${deleteTarget.key}" will be removed from the workspace dictionary. Any flow referencing {{global.${deleteTarget.key}}} will stop resolving it.`
+            : ""
+        }
+        confirmLabel="Delete Variable"
+        cancelLabel="Cancel"
+        busy={deleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => (deleting ? null : setDeleteTarget(null))}
+      />
     </Box>
   );
 }

@@ -198,37 +198,100 @@ export const DEFAULT_NODE_DOCS = {
   }
 };
 
+/**
+ * Coerces any parameter value into something React can render as a text child.
+ *
+ * Node input parameters legitimately hold objects and arrays (e.g. the MCP tool
+ * `arguments` payload, or `TABLE_NAMES: []`). Those values were being copied
+ * straight into `docs.parameters[].example`, which the docs tab renders as
+ * `{p.example}` — React then throws
+ * "Objects are not valid as a React child (found: object with keys {...})",
+ * blanking the whole modal. Pretty-printed JSON keeps the docs readable while
+ * remaining a valid React child.
+ */
+export const toDisplayString = (value, fallback = "") => {
+  if (value === null || value === undefined || value === "") return fallback;
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  try {
+    return JSON.stringify(value, null, 2);
+  } catch {
+    return String(value);
+  }
+};
+
+/**
+ * Normalises a docs object so every field the docs tab renders as a text child
+ * is guaranteed to be a string. Applied to backend-supplied docs too, since we
+ * do not control that payload.
+ */
+const normalizeDocs = (docs) => {
+  if (!docs || typeof docs !== "object") return docs;
+  return {
+    ...docs,
+    title: toDisplayString(docs.title, "Node"),
+    summary: toDisplayString(docs.summary),
+    category: toDisplayString(docs.category),
+    whenToUse: toDisplayString(docs.whenToUse),
+    exampleWorkflow: toDisplayString(docs.exampleWorkflow),
+    parameters: Array.isArray(docs.parameters)
+      ? docs.parameters.map((p) => ({
+          ...p,
+          name: toDisplayString(p?.name),
+          type: toDisplayString(p?.type, "text"),
+          description: toDisplayString(p?.description),
+          example: toDisplayString(p?.example),
+        }))
+      : [],
+    outputs: Array.isArray(docs.outputs)
+      ? docs.outputs.map((o) => ({
+          ...o,
+          name: toDisplayString(o?.name),
+          type: toDisplayString(o?.type, "text"),
+          description: toDisplayString(o?.description),
+        }))
+      : [],
+  };
+};
+
 export const getNodeDocs = (node) => {
   if (!node) return null;
   
   // 1. Check if node backend already provided custom docs
   if (node.data?.docs || node.docs) {
-    return node.data?.docs || node.docs;
+    return normalizeDocs(node.data?.docs || node.docs);
   }
 
   // 2. Lookup by node name or type in library
   const typeKey = (node.data?.type || node.type || "").toLowerCase();
   const nameKey = (node.data?.name || node.name || "").toLowerCase().replace(/\s+/g, "_");
 
-  if (DEFAULT_NODE_DOCS[nameKey]) return DEFAULT_NODE_DOCS[nameKey];
-  if (DEFAULT_NODE_DOCS[typeKey]) return DEFAULT_NODE_DOCS[typeKey];
+  if (DEFAULT_NODE_DOCS[nameKey]) return normalizeDocs(DEFAULT_NODE_DOCS[nameKey]);
+  if (DEFAULT_NODE_DOCS[typeKey]) return normalizeDocs(DEFAULT_NODE_DOCS[typeKey]);
 
   // Generic fallback documentation
   return {
-    title: node.data?.name || node.name || "Custom Node",
-    summary: node.data?.description || node.description || "Processes inputs and outputs within the workflow graph.",
+    title: toDisplayString(node.data?.name || node.name, "Custom Node"),
+    summary: toDisplayString(
+      node.data?.description || node.description,
+      "Processes inputs and outputs within the workflow graph."
+    ),
     category: "Workflow Component",
     whenToUse: "Configure this component to process upstream variables and emit outputs to downstream connected nodes.",
     parameters: (node.data?.inputParameters || []).map(p => ({
-      name: p.key || p.name,
-      type: p.type || "text",
+      name: toDisplayString(p.key || p.name, "parameter"),
+      type: toDisplayString(p.type, "text"),
       required: true,
-      description: p.description || `Configures the ${p.key || p.name} variable for this node.`,
-      example: p.value || "{{INPUT_VALUE}}"
+      description: toDisplayString(
+        p.description,
+        `Configures the ${toDisplayString(p.key || p.name, "value")} variable for this node.`
+      ),
+      // Objects/arrays are pretty-printed instead of leaking into JSX.
+      example: toDisplayString(p.value, "{{INPUT_VALUE}}")
     })),
     outputs: (node.data?.outputParameters || []).map(p => ({
-      name: p.key || p.name,
-      type: p.type || "text",
+      name: toDisplayString(p.key || p.name, "output"),
+      type: toDisplayString(p.type, "text"),
       description: `Emits output value to connected nodes.`
     })),
     exampleWorkflow: "Previous Node -> Current Node -> Next Node",

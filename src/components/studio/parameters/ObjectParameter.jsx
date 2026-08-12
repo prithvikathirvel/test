@@ -3,6 +3,7 @@ import React, { useState,useEffect} from 'react';
 import { Box, Typography, IconButton, Switch, Divider } from '@mui/material';
 import { X, Trash2 } from 'lucide-react';
 import InputBox from '@/components/Common/InputBox';
+import ExpandableTextInput from '@/components/Common/ExpandableTextInput';
 import DashedBox from '@/components/Common/DashedBox';
 import KeyValueInput from './common/KeyValueInput';
 import ObjectParameterHeader from './common/ObjectParameterHeader';
@@ -175,15 +176,16 @@ const ObjectParameter = ({ param, color = "#4f46e5", isAddNew = true, initialVal
       <DashedBox className="!p-4">
         {useTextInput ? (
           <Box className="space-y-2">
-            <InputBox
+            {/* Grows with the payload, caps at ~16 rows, and can be popped out
+                full screen — the panel width is never pushed by long values. */}
+            <ExpandableTextInput
               value={textInputValue}
               onChange={handleTextInputChange}
-              isShowLabel={false}
-              // multiline
-              rows={6}
-              className="font-mono text-sm"
-              color={color}
-              placeholder='Enter JSON object (e.g., {"key": "value"})'
+              language="json"
+              title={param.key || 'Object value'}
+              minRows={6}
+              maxRows={16}
+              placeholder={'Enter JSON object (e.g., {"key": "value"})'}
             />
           </Box>
         ) : (

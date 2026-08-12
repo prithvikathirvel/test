@@ -61,6 +61,39 @@ body {
   100% { left: 108%; opacity: 0; }
 }
 
+/* Orbital hero visual: rings counter-rotate their children so satellite cards
+   stay upright while travelling around the core. */
+@keyframes orbit {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes orbit-reverse {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+@keyframes orbit-glow {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%      { opacity: 0.6;  transform: scale(1.06); }
+}
+
+.animate-orbit         { animation: orbit 28s linear infinite; }
+.animate-orbit-reverse { animation: orbit-reverse 28s linear infinite; }
+.animate-orbit-glow    { animation: orbit-glow 4s ease-in-out infinite; }
+
+/* The orbit animations are decorative only. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-orbit,
+  .animate-orbit-reverse,
+  .animate-orbit-glow,
+  .animate-blob,
+  .animate-flow-dot,
+  .animate-float,
+  .animate-float-slow,
+  .animate-pulse-ring {
+    animation: none !important;
+  }
+}
+
 .animate-fade-up      { animation: fade-up 0.65s cubic-bezier(0.16, 1, 0.3, 1) both; }
 .animate-gradient-x   { animation: gradient-x 5s ease infinite; background-size: 200% 200%; }
 .animate-blob         { animation: blob 14s ease-in-out infinite; }

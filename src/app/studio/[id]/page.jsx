@@ -43,6 +43,8 @@ import {
     getEdgeStrokeColor,
     FLOW_EDGE_TYPE,
 } from "@/utils/flowLayout";
+import { fingerprintCanvas } from "@/utils/flowFingerprint";
+import ConfirmDialog from "@/components/Common/ConfirmDialog";
 
 const Studio = () => {
 
@@ -56,7 +58,18 @@ const Studio = () => {
     const [modalOpen, setModalOpen] = useState(false);
     const [outputModalOpen, setOutputModalOpen] = useState(false);
     const [inputConfigOpen, setInputConfigOpen] = useState(false);
-    const [saveFlow, setSaveFlow] = useState(false);
+    // Unsaved-changes tracking. `savedFingerprintRef` holds the fingerprint of
+    // the last persisted canvas; `isDirty` is derived from it in an effect so a
+    // pure re-render can never flip it on its own.
+    const [isDirty, setIsDirty] = useState(false);
+    const [pendingNavigation, setPendingNavigation] = useState(null);
+    /**
+     * Fingerprint of the canvas as it was last persisted. Compared against the
+     * live canvas to derive `isDirty` — comparing structures instead of setting
+     * a boolean from every mutation handler means undo-ing back to the saved
+     * state correctly clears the flag again.
+     */
+    const savedFingerprintRef = useRef(null);
     const [formattedOututParam, setFormattedOututParam] = useState(null);
     const [toggleViewMode, setToggleViewMode] = useState(false);
     const [renderFlow, setRenderFlow] = useState(false);
@@ -120,8 +133,15 @@ const Studio = () => {
         if (flow?.voice_enabled !== undefined) setVoiceEnabled(flow.voice_enabled);
         if (flow?.voice_config) setVoiceConfig(flow.voice_config);
 
-        setNodesState(buildNodesFromGraphSpec(flow.graphSpec));
-        setEdgesState(buildEdgesFromGraphSpec(flow.graphSpec));
+        const loadedNodes = buildNodesFromGraphSpec(flow.graphSpec);
+        const loadedEdges = buildEdgesFromGraphSpec(flow.graphSpec);
+
+        setNodesState(loadedNodes);
+        setEdgesState(loadedEdges);
+
+        // Anything the server just gave us is, by definition, saved.
+        savedFingerprintRef.current = fingerprintCanvas(loadedNodes, loadedEdges);
+        setIsDirty(false);
 
         if (renderFlow) {
             setRenderFlow(false);
@@ -147,6 +167,25 @@ const Studio = () => {
             setMainGridSize(prevGridSize);
         }
     }, [sidebarOpen, mainGridSize, prevGridSize]);
+
+    useEffect(() => {
+        if (savedFingerprintRef.current === null) return;
+        const current = fingerprintCanvas(nodes, edges);
+        setIsDirty(current !== savedFingerprintRef.current);
+    }, [nodes, edges]);
+
+    // Native browser guard (tab close / refresh / external link). The custom
+    // dialog below only covers in-app navigation.
+    useEffect(() => {
+        if (!isDirty) return undefined;
+        const handleBeforeUnload = (event) => {
+            event.preventDefault();
+            event.returnValue = "";
+            return "";
+        };
+        window.addEventListener("beforeunload", handleBeforeUnload);
+        return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+    }, [isDirty]);
 
     const onConnect = useCallback(
         (params) => {
@@ -386,15 +425,68 @@ const Studio = () => {
         // debounced `edges` effect above pushes the new list to Redux.
     }, []);
 
-    const handleSaveFlow = useCallback(() => {
-        if (!runFlowValidation()) return;
-        setSaveFlow(false);
+    // Refs so the save/navigation callbacks can read the latest canvas without
+    // being re-created on every node drag.
+    const nodesForSaveRef = useRef(nodes);
+    const edgesForSaveRef = useRef(edges);
+    useEffect(() => { nodesForSaveRef.current = nodes; }, [nodes]);
+    useEffect(() => { edgesForSaveRef.current = edges; }, [edges]);
+
+    const handleSaveFlow = useCallback((options = {}) => {
+        if (!runFlowValidation()) return false;
+        // Snapshot the fingerprint of exactly what is being sent, so edits made
+        // while the request is in flight are still detected as unsaved.
+        const savedSnapshot = fingerprintCanvas(nodesForSaveRef.current, edgesForSaveRef.current);
         dispatch(updateFlow({
             id: flowId,
             updatedData: store.getState().studio.specification,
-            onSuccess: () => toast.success("Workflow saved successfully")
+            onSuccess: () => {
+                savedFingerprintRef.current = savedSnapshot;
+                setIsDirty(
+                    fingerprintCanvas(nodesForSaveRef.current, edgesForSaveRef.current) !== savedSnapshot
+                );
+                toast.success("Workflow saved successfully");
+                if (typeof options.onSaved === "function") options.onSaved();
+            }
         }));
+        return true;
     }, [dispatch, flowId, runFlowValidation, store]);
+
+    /**
+     * Item 2 — unsaved-changes guard.
+     * Every in-app exit from the studio funnels through here: if the canvas
+     * differs from the last persisted version we park the intent in
+     * `pendingNavigation` and let the user save, discard, or stay.
+     */
+    const requestNavigation = useCallback((navigate) => {
+        if (!isDirty) {
+            navigate();
+            return;
+        }
+        setPendingNavigation(() => navigate);
+    }, [isDirty]);
+
+    const handleCancelNavigation = useCallback(() => setPendingNavigation(null), []);
+
+    const handleDiscardAndNavigate = useCallback(() => {
+        const navigate = pendingNavigation;
+        setPendingNavigation(null);
+        setIsDirty(false);
+        if (typeof navigate === "function") navigate();
+    }, [pendingNavigation]);
+
+    const handleSaveAndNavigate = useCallback(() => {
+        const navigate = pendingNavigation;
+        const started = handleSaveFlow({
+            onSaved: () => {
+                setPendingNavigation(null);
+                if (typeof navigate === "function") navigate();
+            }
+        });
+        // Validation failed – keep the dialog closed so the user can see the
+        // validation modal that `runFlowValidation` just opened.
+        if (!started) setPendingNavigation(null);
+    }, [pendingNavigation, handleSaveFlow]);
 
     const handleFixNode = useCallback((nodeId, targetNode) => {
         setValidationModalOpen(false);
@@ -489,6 +581,23 @@ const Studio = () => {
                     onSaveFlow={handleSaveFlow}
                     isSavingFlow={studioUpdateFlowLoader}
                     onDeployFlow={handleDeployFlow}
+                    isDirty={isDirty}
+                    onRequestNavigate={requestNavigation}
+                />
+
+                {/* Unsaved-changes guard for in-app navigation out of the studio */}
+                <ConfirmDialog
+                    open={Boolean(pendingNavigation)}
+                    tone="warning"
+                    title="Leave without saving?"
+                    description="This workflow has changes that haven't been saved yet. If you leave now, those changes will be lost."
+                    confirmLabel="Discard changes"
+                    secondaryLabel="Save & leave"
+                    cancelLabel="Stay here"
+                    busy={studioUpdateFlowLoader}
+                    onConfirm={handleDiscardAndNavigate}
+                    onSecondary={handleSaveAndNavigate}
+                    onCancel={handleCancelNavigation}
                 />
 
                 {/* Studio Main Workspace (Sidebar + Canvas) */}
