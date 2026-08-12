@@ -256,22 +256,26 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
 
   return (
     <div
-      className={`group relative min-w-[250px] max-w-[300px] bg-white rounded-xl overflow-hidden transition-[box-shadow,border-color,transform] duration-200 ${
-        selected
-          ? "border border-indigo-400 shadow-lg"
-          : "border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300"
+      className={`group relative min-w-[250px] max-w-[300px] bg-white rounded-xl border border-slate-200 transition-[box-shadow,border-color] duration-200 ${
+        selected ? "border-slate-300" : "shadow-sm hover:shadow-md hover:border-slate-300"
       }`}
-      style={selected ? { boxShadow: `0 0 0 3px ${accent.ring}, 0 8px 20px -6px rgba(15,23,42,0.22)` } : undefined}
+      style={{
+        // The type rail is the card's own left border, so it follows the
+        // rounded corners exactly instead of sitting as a detached bar. Using
+        // a real border also keeps it inside the element box, which means the
+        // card no longer needs `overflow-hidden` — and the connection handles,
+        // which are deliberately positioned 6px outside the card, stop being
+        // clipped into half-circles.
+        borderLeftWidth: 3,
+        borderLeftColor: accent.rail,
+        ...(selected
+          ? { boxShadow: `0 0 0 3px ${accent.ring}, 0 8px 20px -6px rgba(15,23,42,0.22)` }
+          : null),
+      }}
     >
-      {/* Type rail: the only saturated colour on the card, so a glance still
-          identifies the node type without shouting over the canvas. */}
-      <div
-        className="absolute left-0 top-0 bottom-0 w-[3px]"
-        style={{ backgroundColor: accent.rail }}
-      />
 
       {/* Header */}
-      <div className="flex items-start gap-2.5 pl-4 pr-3 py-2.5 border-b border-slate-100 bg-white">
+      <div className="flex items-start gap-2.5 pl-3.5 pr-3 py-2.5 border-b border-slate-100 bg-white rounded-tr-[10px]">
         <div
           className={`shrink-0 mt-0.5 h-7 w-7 rounded-lg border flex items-center justify-center ${accent.tile}`}
         >
@@ -305,7 +309,7 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
 
       {/* Question/Options Content */}
       {shouldShowOptionsUI && (
-        <div className="pl-4 pr-3 py-2.5 border-b border-slate-100 bg-slate-50/50">
+        <div className="pl-3.5 pr-3 py-2.5 border-b border-slate-100 bg-slate-50/50">
           {questionData.questionText && !isDynamic(questionData.questionText) && (
             <p className="text-[11.5px] text-slate-600 leading-snug mb-2 line-clamp-2 break-words">
               {questionData.questionText}
@@ -350,7 +354,7 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
 
       {/* Condition Content */}
       {(nodeType === "conditions" || nodeType === "condition") && Array.isArray(conditionData.conditions) && conditionData.conditions.length > 0 && (
-        <div className="pl-4 pr-3 py-2.5 border-b border-slate-100 bg-slate-50/50">
+        <div className="pl-3.5 pr-3 py-2.5 border-b border-slate-100 bg-slate-50/50">
           <p className="text-[9.5px] uppercase tracking-wide text-slate-400 font-semibold mb-1.5">
             {conditionData.conditions.length} condition{conditionData.conditions.length !== 1 ? 's' : ''}
           </p>
