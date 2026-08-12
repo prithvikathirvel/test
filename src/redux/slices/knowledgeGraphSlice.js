@@ -137,6 +137,16 @@ export const deleteGraph = createAsyncThunk(
 const asArray = (value) => (Array.isArray(value) ? value : []);
 const asObject = (value) => (value && typeof value === 'object' && !Array.isArray(value) ? value : {});
 
+/** First argument that parses as a finite number, else 0. */
+const firstNumber = (...candidates) => {
+  for (const c of candidates) {
+    if (c === null || c === undefined || c === '') continue;
+    const n = Number(c);
+    if (Number.isFinite(n)) return n;
+  }
+  return 0;
+};
+
 const normalizeGraphs = (raw) => {
   const payload = asObject(raw);
   const graphs = asArray(payload.graphs || payload.data?.graphs || payload.items || payload.data);
@@ -145,8 +155,14 @@ const normalizeGraphs = (raw) => {
     graph_name: String(g.graph_name || g.name || g.dataset_name || 'Untitled Graph'),
     status: String(g.status || 'Indexed'),
     file_type: String(g.file_type || g.type || 'csv').toLowerCase(),
-    node_count: Number.isFinite(Number(g.node_count)) ? Number(g.node_count) : 0,
-    relationship_count: Number.isFinite(Number(g.relationship_count)) ? Number(g.relationship_count) : 0,
+    // The API is inconsistent about these key names across endpoints
+    // (`/graphs` vs `/upload/graphs`) and versions, so accept every spelling
+    // we have seen instead of silently normalising a real count to 0.
+    node_count: firstNumber(g.node_count, g.nodes_count, g.nodeCount, g.total_nodes, g.nodes),
+    relationship_count: firstNumber(
+      g.relationship_count, g.rel_count, g.relationshipCount, g.relCount,
+      g.total_relationships, g.relationships_count, g.relationships,
+    ),
     created_at: g.created_at || g.createdAt || new Date().toISOString(),
   }));
 };

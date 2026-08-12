@@ -75,7 +75,7 @@ export default function GraphListing({ refreshTrigger }) {
       {!graphsLoading && !graphsError && graphList.length > 0 && (
         <div className="w-full bg-white rounded-lg overflow-hidden border border-slate-200">
           <div className="w-full overflow-x-auto">
-            <table className="w-full text-left border-collapse table-fixed min-w-[760px]">
+            <table className="w-full text-left border-collapse table-fixed">
               <colgroup>
                 {COLUMNS.map((c) => (
                   <col key={c.key} style={{ width: c.width }} />
@@ -118,7 +118,7 @@ export default function GraphListing({ refreshTrigger }) {
                       {Number(g?.node_count || 0).toLocaleString()}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-right text-[12.5px] font-mono tabular-nums text-slate-700">
-                      {Number(g?.rel_count || 0).toLocaleString()}
+                      {Number(g?.relationship_count || 0).toLocaleString()}
                     </td>
                     <td className="px-4 py-3 whitespace-nowrap text-[12.5px] text-slate-500">
                       {g?.created_at
@@ -128,7 +128,7 @@ export default function GraphListing({ refreshTrigger }) {
                     <td className="px-4 py-3 whitespace-nowrap text-right">
                       <button
                         onClick={() => handleDelete(g.id)}
-                        className="p-1.5 text-slate-400 rounded-md transition-colors hover:text-red-600 hover:bg-red-50 outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500/30 opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 focus-visible:opacity-100"
+                        className="p-1.5 text-slate-400 rounded-md transition-colors hover:text-red-600 hover:bg-red-50 outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500/30"
                         title="Delete graph dataset"
                         aria-label={`Delete ${renderCell(g?.graph_name) || 'graph'}`}
                       >

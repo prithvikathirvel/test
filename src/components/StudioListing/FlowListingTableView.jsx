@@ -29,20 +29,46 @@ import { timeAgo } from '@/utils/commonFunction';
 
 const flowName = (flow) => flow?.name || flow?.agent_name || 'Unnamed Flow';
 const flowDesc = (flow) => flow?.description || flow?.agent_description || '';
+// `id` is still needed as a React key and for the open/delete handlers, but it
+// is deliberately never rendered: an opaque UUID is operator plumbing, not
+// information a user can act on. The description occupies that line instead.
 const flowId = (flow) => flow?.id || flow?.agent_id || '';
+const flowVersion = (flow) => {
+  const v = flow?.version;
+  if (v === null || v === undefined || v === '') return '';
+  const str = String(v).trim();
+  return str.startsWith('v') ? str : `v${str}`;
+};
 
-/** Short, stable identifier shown under the flow name. */
-const shortId = (flow) => {
-  const id = String(flowId(flow));
-  if (!id) return '—';
-  return id.length > 10 ? `${id.slice(0, 8)}…${id.slice(-2)}` : id;
+/**
+ * Compare two version values segment by segment so 1.10.0 sorts after 1.9.0.
+ * Non-numeric or missing versions sort last, ascending.
+ */
+const compareVersions = (a, b) => {
+  const parse = (v) => {
+    const raw = String(v ?? '').trim().replace(/^v/i, '');
+    if (!raw) return [];
+    return raw.split('.').map((n) => Number(n));
+  };
+  const left = parse(a);
+  const right = parse(b);
+  const missing = (p) => p.length === 0 || Number.isNaN(p[0]);
+  if (missing(left) && missing(right)) return 0;
+  if (missing(left)) return 1;
+  if (missing(right)) return -1;
+  for (let i = 0; i < Math.max(left.length, right.length); i += 1) {
+    const l = Number.isNaN(left[i]) ? 0 : (left[i] ?? 0);
+    const r = Number.isNaN(right[i]) ? 0 : (right[i] ?? 0);
+    if (l !== r) return l - r;
+  }
+  return 0;
 };
 
 const COLUMNS = [
-  { key: 'name', label: 'Flow', sortable: true, width: '34%' },
-  { key: 'description', label: 'Description', sortable: false, width: '34%' },
-  { key: 'updatedAt', label: 'Last updated', sortable: true, width: '18%' },
-  { key: 'actions', label: '', sortable: false, width: '14%', align: 'right' },
+  { key: 'name', label: 'Flow', sortable: true, width: '46%' },
+  { key: 'version', label: 'Version', sortable: true, width: '14%' },
+  { key: 'updatedAt', label: 'Last updated', sortable: true, width: '22%' },
+  { key: 'actions', label: '', sortable: false, width: '18%', align: 'right' },
 ];
 
 const SortIcon = ({ state }) => {
@@ -75,6 +101,10 @@ const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDele
       if (sort.key === 'name') {
         return flowName(a).localeCompare(flowName(b), undefined, { sensitivity: 'base' }) * factor;
       }
+      if (sort.key === 'version') {
+        // Semver-aware: plain string compare puts "1.10.0" before "1.9.0".
+        return compareVersions(a?.version, b?.version) * factor;
+      }
       const left = new Date(a?.updatedAt || 0).getTime();
       const right = new Date(b?.updatedAt || 0).getTime();
       return (left - right) * factor;
@@ -84,7 +114,7 @@ const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDele
   return (
     <Box className="w-full bg-white rounded-lg border border-slate-200 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse table-fixed min-w-[720px]">
+        <table className="w-full text-left border-collapse table-fixed">
           <colgroup>
             {COLUMNS.map((col) => (
               <col key={col.key} style={{ width: col.width }} />
@@ -146,38 +176,45 @@ const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDele
                         <span className="block text-[13px] font-semibold text-slate-800 truncate">
                           {flowName(flow)}
                         </span>
-                        <span className="block text-[10.5px] font-mono text-slate-400 truncate">
-                          {shortId(flow)}
-                        </span>
+                        {description ? (
+                          <Tooltip
+                            title={<span className="text-[12px] leading-relaxed">{description}</span>}
+                            placement="bottom-start"
+                            arrow
+                            slotProps={{
+                              popper: {
+                                sx: {
+                                  '& .MuiTooltip-tooltip': {
+                                    backgroundColor: '#0f172a',
+                                    borderRadius: '8px',
+                                    padding: '8px 10px',
+                                    maxWidth: 320,
+                                  },
+                                  '& .MuiTooltip-arrow': { color: '#0f172a' },
+                                },
+                              },
+                            }}
+                          >
+                            <span className="block text-[11.5px] text-slate-500 truncate cursor-default">
+                              {description}
+                            </span>
+                          </Tooltip>
+                        ) : (
+                          <span className="block text-[11.5px] text-slate-400 italic">
+                            No description
+                          </span>
+                        )}
                       </span>
                     </div>
                   </td>
 
-                  {/* Description — truncated inline, full text on hover */}
-                  <td className="px-4 py-3 align-middle">
-                    {description ? (
-                      <Tooltip
-                        title={<span className="text-[12px] leading-relaxed">{description}</span>}
-                        placement="top-start"
-                        arrow
-                        slotProps={{
-                          popper: {
-                            sx: {
-                              '& .MuiTooltip-tooltip': {
-                                backgroundColor: '#0f172a',
-                                borderRadius: '8px',
-                                padding: '8px 10px',
-                                maxWidth: 320,
-                              },
-                              '& .MuiTooltip-arrow': { color: '#0f172a' },
-                            },
-                          },
-                        }}
-                      >
-                        <span className="block text-[12.5px] text-slate-600 truncate cursor-default">
-                          {description}
-                        </span>
-                      </Tooltip>
+                  {/* Version — a neutral mono chip; tabular figures keep the
+                      column optically aligned as numbers grow. */}
+                  <td className="px-4 py-3 align-middle whitespace-nowrap">
+                    {flowVersion(flow) ? (
+                      <span className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[11px] font-mono tabular-nums text-slate-600">
+                        {flowVersion(flow)}
+                      </span>
                     ) : (
                       <span className="text-[12.5px] text-slate-300">—</span>
                     )}
@@ -188,9 +225,10 @@ const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDele
                     <span className="text-[12px] text-slate-500">{timeAgo(flow?.updatedAt)}</span>
                   </td>
 
-                  {/* Actions — quiet until the row is hovered or focused */}
+                  {/* Actions — always visible: discoverability beats tidiness,
+                      and hover-only controls are unreachable on touch devices. */}
                   <td className="px-4 py-3 align-middle text-right whitespace-nowrap">
-                    <div className="inline-flex items-center justify-end gap-1 opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 focus-within:opacity-100 transition-opacity">
+                    <div className="inline-flex items-center justify-end gap-1">
                       <button
                         type="button"
                         onClick={() => handleOpenStudio(id)}

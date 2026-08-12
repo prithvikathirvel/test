@@ -27,6 +27,19 @@ const STATUS_STYLES = {
   failed: { dot: "bg-red-500", text: "text-red-700", ring: "border-red-200" },
 };
 
+/**
+ * Column widths as percentages so the layout is fluid rather than pinned to a
+ * pixel minimum. Source takes the slack because it is the only free-text field.
+ */
+const COLUMNS = [
+  { key: 'source', label: 'Source', width: '38%' },
+  { key: 'format', label: 'Format', width: '12%' },
+  { key: 'size', label: 'Size', width: '12%' },
+  { key: 'uploaded', label: 'Uploaded', width: '16%' },
+  { key: 'status', label: 'Status', width: '14%' },
+  { key: 'actions', label: '', width: '8%', align: 'right' },
+];
+
 const KnowledgeListingTableView = ({
   filteredFlows = [],
   handleOpenStudio,
@@ -34,21 +47,29 @@ const KnowledgeListingTableView = ({
 }) => {
   return (
     <div className="w-full overflow-x-auto">
-      <table className="w-full text-left border-collapse min-w-[680px]">
+      {/* Percentage widths + `table-fixed` let the table compress gracefully on
+          narrow screens. A fixed `min-w` used to force a horizontal scrollbar
+          even when there was room to fit; now the source name absorbs the
+          slack and truncates, and scroll only kicks in when genuinely needed. */}
+      <table className="w-full text-left border-collapse table-fixed">
+        <colgroup>
+          {COLUMNS.map((col) => (
+            <col key={col.key} style={{ width: col.width }} />
+          ))}
+        </colgroup>
         <thead>
           <tr className="bg-slate-50 border-b border-slate-200">
-            {["Source", "Format", "Size", "Uploaded", "Status"].map((label) => (
+            {COLUMNS.map((col) => (
               <th
-                key={label}
+                key={col.key}
                 scope="col"
-                className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap"
+                className={`px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap ${
+                  col.align === 'right' ? 'text-right' : ''
+                }`}
               >
-                {label}
+                {col.label ? col.label : <span className="sr-only">Actions</span>}
               </th>
             ))}
-            <th scope="col" className="px-4 py-2.5 text-right">
-              <span className="sr-only">Actions</span>
-            </th>
           </tr>
         </thead>
 
@@ -115,7 +136,7 @@ const KnowledgeListingTableView = ({
                   </td>
 
                   <td className="px-4 py-3 whitespace-nowrap text-right">
-                    <div className="inline-flex items-center justify-end opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 focus-within:opacity-100 transition-opacity">
+                    <div className="inline-flex items-center justify-end">
                       <Tooltip title="Delete source">
                         <button
                           type="button"

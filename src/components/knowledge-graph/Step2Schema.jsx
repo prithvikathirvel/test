@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { ArrowRight, ArrowLeft, Eye, GitBranch, Layers, Plus, AlertCircle } from 'lucide-react';
 import {
-  BASE, LABEL_RE, asArray, asObject, normalizeProposal, normalizeSampleData, enrichEntities, authHdr, readErr,
+  BASE, LABEL_RE, asArray, asObject, normalizeProposal, normalizeSampleData, enrichEntities, authHdr, readErrMessages,
 } from './helpers';
 import { Button, ErrorBox, WarnBox, InfoRow, SectionBadge } from './ui';
 import NodeCard from './NodeCard';
@@ -81,8 +81,9 @@ export default function Step2Schema({ session, onBack, onNext, onSessionExpired 
       });
       if (mapRes.status === 404) { onSessionExpired(); return; }
       if (!mapRes.ok) {
-        const e = await readErr(mapRes);
-        setErrors(e.errors?.length ? e.errors : [e.error || 'Mapping rejected by server']);
+        // 422 from FastAPI arrives as a `detail` list; readErrMessages flattens
+        // every shape into strings so validation failures reach the user.
+        setErrors(await readErrMessages(mapRes));
         return;
       }
       const mapData = await mapRes.json();
@@ -91,8 +92,7 @@ export default function Step2Schema({ session, onBack, onNext, onSessionExpired 
       const preRes = await fetch(`${BASE}/upload/${session.uploadId}/preview`, { method: 'POST', headers: authHdr() });
       if (preRes.status === 404) { onSessionExpired(); return; }
       if (!preRes.ok) {
-        const e = await readErr(preRes);
-        setSubmitErr(e.error || 'Preview request failed');
+        setErrors(await readErrMessages(preRes));
         return;
       }
       const previewData = await preRes.json();
@@ -103,7 +103,7 @@ export default function Step2Schema({ session, onBack, onNext, onSessionExpired 
         issues: asArray(previewData?.issues),
       });
     } catch {
-      setSubmitErr('Network error — could not reach the server.');
+      setSubmitErr('Network error \u2014 could not reach the server.');
     } finally {
       setBusy(false);
     }
@@ -159,6 +159,12 @@ export default function Step2Schema({ session, onBack, onNext, onSessionExpired 
           {previewWarns.map((iss, i) => <p key={i} className="text-[12px] text-amber-700 leading-relaxed">{iss.message}</p>)}
         </div>
       )}
+
+      {/* Server-side validation output. These were previously imported but
+          never rendered, so a 422 from /mapping or /preview was silently
+          swallowed and the user saw nothing happen after clicking Validate. */}
+      <ErrorBox messages={errors} />
+      <WarnBox messages={warnings} onDismiss={() => setWarnings([])} />
 
       {submitErr && <div className="mb-5"><InfoRow icon={AlertCircle}>{submitErr}</InfoRow></div>}
 

@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { ArrowLeft, Database, CheckCircle2, AlertCircle, Server, Check } from 'lucide-react';
-import { BASE, authHdr, readErr } from './helpers';
+import { BASE, authHdr, readErrMessages } from './helpers';
 import { Button, Spinner, ProgressBar, InfoRow } from './ui';
 
 const LOG_CLS = { ok: 'text-emerald-400', err: 'text-red-400', info: 'text-slate-300' };
@@ -36,8 +36,7 @@ export default function Step3Confirm({ session, onBack, onSessionExpired, onRese
       const res = await fetch(url, { method: 'POST', headers: authHdr() });
       if (res.status === 404) { onSessionExpired(); return; }
       if (!res.ok) {
-        const body = await readErr(res);
-        setFatalErr(body.error || `Commit failed (${res.status})`);
+        setFatalErr((await readErrMessages(res)).join(' \u00b7 '));
         setIngesting(false); return;
       }
 

@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { CloudUpload, FileText, CheckCircle2, X, Network, AlertCircle, Info } from 'lucide-react';
-import { BASE, ALLOWED_EXT, MAX_FILE_BYTES, authHdr, readErr } from './helpers';
+import { BASE, ALLOWED_EXT, MAX_FILE_BYTES, authHdr, readErrMessages } from './helpers';
 import { Button, IconBtn, InfoRow, ProgressBar, Spinner } from './ui';
 
 export default function Step1Upload({ onSuccess, sessionExpiredMsg }) {
@@ -34,11 +34,13 @@ export default function Step1Upload({ onSuccess, sessionExpiredMsg }) {
       form.append('file', file);
       const res = await fetch(`${BASE}/upload`, { method: 'POST', headers: authHdr(), body: form });
       if (!res.ok) {
-        const body = await readErr(res);
+        // A 422 here carries the real reason (bad sheet, empty file, unparseable
+        // SQL). Show the server's own wording rather than a generic sentence.
+        const messages = await readErrMessages(res);
         setServerErr(
-          res.status === 422 ? body.error || 'File has wrong format or no data'
-          : res.status === 413 ? 'File exceeds the 100 MB server limit'
-          : body.error || `Upload failed (${res.status})`
+          res.status === 413
+            ? 'File exceeds the 100 MB server limit'
+            : messages.join(' \u00b7 ')
         );
         return;
       }

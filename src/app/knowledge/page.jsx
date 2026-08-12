@@ -102,15 +102,27 @@ const KnowledgePage = () => {
         e.preventDefault();
         e.stopPropagation();
         setIsDragging(false);
-        if (e.dataTransfer.files.length > 0) {
-            setSelectedFiles(prev => [...prev, ...processFiles(e.dataTransfer.files)]);
-        }
+        if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+        // Same reasoning as handleFileInput: read the DataTransfer synchronously,
+        // because it is cleared once the drop event finishes dispatching.
+        const staged = processFiles(e.dataTransfer.files);
+        if (staged.length === 0) return;
+        setSelectedFiles(prev => [...prev, ...staged]);
     };
 
     const handleFileInput = (e) => {
-        if (!e.target.files || e.target.files.length === 0) return;
-        setSelectedFiles(prev => [...prev, ...processFiles(e.target.files)]);
-        e.target.value = '';
+        const input = e.target;
+        if (!input.files || input.files.length === 0) return;
+
+        // A FileList is a *live* view of the input. `processFiles` used to be
+        // called inside the state updater, which React runs asynchronously —
+        // by then `input.value = ''` had already emptied the list, so nothing
+        // was staged and the upload button never appeared. Snapshot first,
+        // reset the input second, then queue the update.
+        const staged = processFiles(input.files);
+        input.value = '';
+        if (staged.length === 0) return;
+        setSelectedFiles(prev => [...prev, ...staged]);
     };
 
     const handleFieldChange = (index, field, value) => {
@@ -120,7 +132,11 @@ const KnowledgePage = () => {
     };
 
     const handleRemoveFile = (index) => {
-        setSelectedFiles(selectedFiles.filter((_, i) => i !== index));
+        setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+        // Clear the native input too: re-selecting the *same* filename after a
+        // removal is a no-op otherwise, because the input's value never changes
+        // and the browser fires no `change` event.
+        if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
     const handleUpload = async () => {
@@ -153,7 +169,8 @@ const KnowledgePage = () => {
     }, [sources, searchKnowledge]);
 
     // Validation Check: ensure all files have a mapped Knowledge Base Name
-    const isFormValid = selectedFiles.every(file => file.knowledgeBaseName.trim() !== "");
+    const isFormValid = selectedFiles.length > 0
+        && selectedFiles.every(file => file.knowledgeBaseName.trim() !== "");
 
     const indexedCount = useMemo(
         () => sources.filter((s) => (s.status || "Indexed").toLowerCase() === "indexed").length,
@@ -199,7 +216,7 @@ const KnowledgePage = () => {
                 </Box>
 
                 {/* ---------------- Workspace ---------------- */}
-                <Box className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-5 items-start">
+                <Box className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-5 items-start">
                     {/* ===== Main column: the library ===== */}
                     <Box className="min-w-0 rounded-lg border border-slate-200 bg-white">
                         <Box className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-b border-slate-200">
@@ -263,14 +280,19 @@ const KnowledgePage = () => {
                     </Box>
 
                     {/* ===== Side rail: ingestion ===== */}
-                    <Box className="rounded-lg border border-slate-200 bg-white lg:sticky lg:top-5">
-                        <Box className="px-4 py-3 border-b border-slate-200">
+                    <Box className="rounded-lg border border-slate-200 bg-white lg:sticky lg:top-5 flex flex-col lg:max-h-[calc(100vh-2.5rem)]">
+                        <Box className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-200 shrink-0">
                             <h2 className="text-[12px] font-semibold uppercase tracking-wider text-slate-500">
                                 Add documents
                             </h2>
+                            {selectedFiles.length > 0 && (
+                                <span className="text-[11px] font-medium text-slate-400 tabular-nums">
+                                    {selectedFiles.length} staged
+                                </span>
+                            )}
                         </Box>
 
-                        <Box className="p-4">
+                        <Box className="p-4 min-h-0 overflow-y-auto">
                             {/* Compact dropzone — a form control, not a hero panel. */}
                             <div
                                 onDragOver={handleDragOver}
@@ -330,7 +352,7 @@ const KnowledgePage = () => {
                                         </button>
                                     </div>
 
-                                    <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-0.5">
+                                    <div className="space-y-2.5">
                                         {selectedFiles.map((item, index) => {
                                             const invalid = item.knowledgeBaseName.trim() === "";
                                             return (
@@ -362,7 +384,11 @@ const KnowledgePage = () => {
                                                         </Tooltip>
                                                     </div>
 
-                                                    <div className="mt-2 space-y-2">
+                                                    <div className={`mt-2 grid gap-2 ${
+                                                        ALLOWED_SETTINGS_EXTENSIONS_FOR_CHUNKING.includes(item.extension)
+                                                            ? "grid-cols-1 sm:grid-cols-2"
+                                                            : "grid-cols-1"
+                                                    }`}>
                                                         <InputBox
                                                             label="Knowledge base name *"
                                                             value={item.knowledgeBaseName}
@@ -389,7 +415,7 @@ const KnowledgePage = () => {
                                         })}
                                     </div>
 
-                                    {!isFormValid && (
+                                    {selectedFiles.length > 0 && !isFormValid && (
                                         <div className="mt-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2">
                                             <AlertCircle size={13} className="text-amber-600 shrink-0 mt-px" />
                                             <p className="text-[11px] font-medium text-amber-700">

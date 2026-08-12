@@ -18,6 +18,57 @@ export const getToken = () => (typeof window !== 'undefined' ? localStorage.getI
 export const authHdr = () => { const t = getToken(); return t ? { Authorization: `Bearer ${t}` } : {}; };
 export const readErr = async (res) => { try { return await res.json(); } catch { return { error: `HTTP ${res.status}` }; } };
 
+/**
+ * Turn any error response into a flat list of human-readable strings.
+ *
+ * The validation endpoint is FastAPI, which reports a 422 as
+ * `{ detail: [{ loc: ['body','entities',0,'node_label'], msg: '...' }] }`.
+ * Nothing in the UI understood that shape, so a 422 collapsed to a generic
+ * "Mapping rejected by server" — or to nothing at all. This normalises every
+ * shape we have seen (detail list, detail string, errors[], error, message,
+ * plain text) into messages the user can act on, keeping the `loc` path so it
+ * is clear *which* field the server rejected.
+ */
+export const readErrMessages = async (res) => {
+  const fallback = `Request failed (HTTP ${res.status})`;
+  let body;
+  try {
+    body = await res.clone().json();
+  } catch {
+    try {
+      const text = (await res.text()).trim();
+      return [text || fallback];
+    } catch {
+      return [fallback];
+    }
+  }
+
+  if (typeof body === 'string') return [body.trim() || fallback];
+
+  const fromDetailItem = (item) => {
+    if (typeof item === 'string') return item;
+    if (!item || typeof item !== 'object') return String(item);
+    const msg = item.msg || item.message || item.error || JSON.stringify(item);
+    // Drop the leading 'body'/'query' segment: it is protocol noise, not a field.
+    const path = Array.isArray(item.loc)
+      ? item.loc.filter((p) => p !== 'body' && p !== 'query').join('.')
+      : '';
+    return path ? `${path}: ${msg}` : String(msg);
+  };
+
+  const detail = body?.detail;
+  if (Array.isArray(detail) && detail.length) return detail.map(fromDetailItem);
+  if (typeof detail === 'string' && detail.trim()) return [detail.trim()];
+
+  if (Array.isArray(body?.errors) && body.errors.length) return body.errors.map(fromDetailItem);
+  if (Array.isArray(body) && body.length) return body.map(fromDetailItem);
+
+  const single = body?.error || body?.message || body?.detail?.msg;
+  if (typeof single === 'string' && single.trim()) return [single.trim()];
+
+  return [fallback];
+};
+
 export const renderCell = (v) => {
   if (v === null || v === undefined) return '—';
   if (typeof v === 'object') return JSON.stringify(v);
