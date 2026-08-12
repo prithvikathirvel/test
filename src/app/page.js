@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Container } from "@mui/material";
 import {
-  Sparkles,
   Menu,
   X,
   Workflow,
@@ -22,6 +22,7 @@ import {
   Server,
   FileCode,
   CheckCircle2,
+  Sparkles
 } from "lucide-react";
 import LoginDrawer from "@/components/Drawer/LoginDrawer";
 import HeroSection from "@/components/Dashboard/HeroSection";
@@ -122,12 +123,15 @@ export default function Home() {
             <div className="flex items-center justify-between py-3.5">
               {/* Brand Logo */}
               <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-xs">
-                  <Sparkles size={16} />
-                </div>
-                <span className="text-slate-900 font-bold text-base tracking-tight">
-                  Aurora
-                </span>
+                <Image
+                  src="/agent-studio/branding/aurora-logo.png"
+                  alt="Sify Aurora"
+                  width={100}
+                  height={40}
+                  className="object-contain"
+                  priority
+                  unoptimized
+                />
               </div>
 
               {/* Navigation Links */}
@@ -315,11 +319,15 @@ export default function Home() {
           <Container maxWidth="lg" className="!px-4">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-8 pb-10 border-b border-slate-100">
               <div className="col-span-2 space-y-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
-                    <Sparkles size={14} />
-                  </div>
-                  <span className="text-slate-900 font-bold text-sm">Aurora</span>
+                <div className="flex items-center">
+                  <Image
+                    src="/agent-studio/branding/aurora-logo.png"
+                    alt="Sify Aurora"
+                    width={100}
+                    height={36}
+                    className="object-contain"
+                    unoptimized
+                  />
                 </div>
                 <p className="text-xs text-slate-400 max-w-xs leading-relaxed">
                   Enterprise visual AI agent builder and workflow orchestration platform.

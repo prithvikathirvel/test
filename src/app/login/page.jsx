@@ -10,11 +10,11 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   AlertCircle,
 } from "lucide-react";
+import Image from "next/image";
 import BlurredLoader from "@/components/Common/BlurredLoader";
 
 export default function LoginPage() {
@@ -48,10 +48,16 @@ export default function LoginPage() {
         <div className="w-full max-w-sm bg-white rounded-2xl border border-slate-200/80 shadow-2xl p-8">
           {/* Brand Header */}
           <div className="text-center mb-6">
-            <Link href="/" className="inline-flex no-underline">
-              <div className="h-11 w-11 rounded-xl bg-indigo-600 flex items-center justify-center text-white mx-auto mb-3 shadow-xs shadow-indigo-500/20">
-                <Sparkles size={20} />
-              </div>
+            <Link href="/" className="inline-flex no-underline justify-center mb-4">
+              <Image
+                src="/agent-studio/branding/aurora-logo.png"
+                alt="Sify Aurora"
+                width={160}
+                height={48}
+                className="object-contain"
+                priority
+                unoptimized
+              />
             </Link>
             <h2 className="text-xl font-bold text-slate-800 tracking-tight">
               Sign in to Aurora

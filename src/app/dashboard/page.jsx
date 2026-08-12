@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { BookOpen, Github, FileText, Video, Lightbulb, PlayCircle, ArrowRight, ChevronRight, Plus } from "lucide-react"
 import AnimatedText from "@/components/Common/AnimatedText"
 
@@ -48,7 +49,15 @@ export default function OnboardingPage() {
       <header className="w-full bg-white text-black shadow-md z-50">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">Sify Aurora</h1>
+            <Image
+              src="/agent-studio/branding/aurora-logo.png"
+              alt="Sify Aurora"
+              width={130}
+              height={40}
+              className="object-contain"
+              priority
+              unoptimized
+            />
           </div>
 
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
@@ -147,8 +156,14 @@ export default function OnboardingPage() {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-blue-600 rounded" />
-              <h4 className="text-lg font-bold text-slate-800">Sify Aurora</h4>
+              <Image
+                src="/agent-studio/branding/aurora-logo.png"
+                alt="Sify Aurora"
+                width={120}
+                height={36}
+                className="object-contain"
+                unoptimized
+              />
             </div>
             <div className="flex flex-wrap justify-center gap-4">
               <button className="text-slate-600 hover:text-slate-800">Docs</button>

@@ -8,11 +8,11 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
   AlertCircle,
 } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginDrawer({ open, setOpen, handleLogin, error = null }) {
   const [username, setUsername] = useState("");
@@ -69,8 +69,16 @@ export default function LoginDrawer({ open, setOpen, handleLogin, error = null }
 
       {/* Brand & Title */}
       <div className="text-center mb-6">
-        <div className="h-11 w-11 rounded-xl bg-indigo-600 flex items-center justify-center text-white mx-auto mb-3 shadow-xs shadow-indigo-500/20">
-          <Sparkles size={20} />
+        <div className="flex justify-center mb-3">
+          <Image
+            src="/agent-studio/branding/aurora-logo.png"
+            alt="Sify Aurora"
+            width={140}
+            height={42}
+            className="object-contain"
+            priority
+            unoptimized
+          />
         </div>
         <h2 className="text-xl font-bold text-slate-800 tracking-tight">
           Welcome to Aurora

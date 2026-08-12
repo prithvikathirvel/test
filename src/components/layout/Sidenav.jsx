@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Box, Drawer, Typography, Tooltip, IconButton } from "@mui/material";
 import {
@@ -9,7 +10,6 @@ import {
   BookOpen,
   Share2,
   BookMarked,
-  Sparkles,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -75,6 +75,10 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
           flexDirection: "column",
           justifyContent: "space-between",
           boxShadow: "none",
+          fontFamily: "inherit",
+        },
+        "& .MuiDrawer-paper *": {
+          fontFamily: "inherit",
         },
       }}
     >
@@ -82,16 +86,27 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
       <Box className="flex flex-col">
         {/* Brand Header */}
         <Box className={`flex items-center min-h-[56px] border-b border-gray-100 ${isOpen ? 'px-4 justify-between' : 'justify-center px-2'}`}>
-          <Link href="/studio" className="flex items-center gap-2.5 no-underline overflow-hidden">
-            <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-xs">
-              <Sparkles size={16} />
-            </div>
-            {isOpen && (
-              <div className="overflow-hidden">
-                <Typography className="!text-[14px] !font-bold !text-slate-800 !leading-tight !tracking-tight">
-                  Aurora
-                </Typography>
-              </div>
+          <Link href="/studio" className="flex items-center no-underline overflow-hidden">
+            {isOpen ? (
+              <Image
+                src="/agent-studio/branding/aurora-logo.png"
+                alt="Sify Aurora"
+                width={120}
+                height={36}
+                className="object-contain"
+                priority
+                unoptimized
+              />
+            ) : (
+              <Image
+                src="/agent-studio/branding/aurora-icon.png"
+                alt="Aurora"
+                width={36}
+                height={36}
+                className="object-contain"
+                priority
+                unoptimized
+              />
             )}
           </Link>
 
