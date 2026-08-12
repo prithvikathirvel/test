@@ -4,7 +4,15 @@ export const BASE = (process.env.NEXT_PUBLIC_CMDB_API_URL || 'http://1.6.37.35/c
 export const LABEL_RE = /^[A-Za-z][A-Za-z0-9_]*$/;
 export const MAX_FILE_BYTES = 100 * 1024 * 1024;
 export const ALLOWED_EXT = ['.csv', '.xlsx', '.xls', '.sql', '.zip'];
-export const NODE_COLORS = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#b45309', '#0d9488'];
+/**
+ * Entity accent palette.
+ *
+ * Previously eight fully-saturated hues (pure red, green, amber...), which made
+ * a schema of six tables look like a chart legend. These are desaturated
+ * neighbours of the product's indigo, used only as a 3px rail or a small dot —
+ * enough to tell entities apart, not enough to dominate the page.
+ */
+export const NODE_COLORS = ['#4f46e5', '#0f766e', '#7c3aed', '#0369a1', '#4d7c0f', '#9f1239', '#3730a3', '#115e59'];
 
 export const getToken = () => (typeof window !== 'undefined' ? localStorage.getItem('token') : null);
 export const authHdr = () => { const t = getToken(); return t ? { Authorization: `Bearer ${t}` } : {}; };

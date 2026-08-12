@@ -116,58 +116,62 @@ export default function Step2Schema({ session, onBack, onNext, onSessionExpired 
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row items-start justify-between mb-6 gap-4">
+      <div className="flex flex-col sm:flex-row items-start justify-between mb-5 gap-3">
         <div>
-          <h2 className="font-bold text-gray-800 text-lg sm:text-xl mb-0.5">Schema Review</h2>
-          <p className="text-sm text-gray-400">Rename labels, adjust column mapping, then validate before ingestion.</p>
+          <p className="text-[12px] font-semibold uppercase tracking-wider text-slate-500">Step 2</p>
+          <h2 className="text-[17px] font-semibold text-slate-800 mt-0.5">Schema review</h2>
+          <p className="text-[13px] text-slate-500 mt-1">Rename labels, adjust column mapping, then validate before ingestion.</p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <span className="flex items-center gap-1.5 bg-indigo-50 text-indigo-700 text-xs font-semibold px-3 py-1.5 rounded-lg border border-indigo-100">
-            <Layers size={12} /> {mapping.entities.length} Nodes
-          </span>
-          <span className="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-lg border border-emerald-100">
-            <GitBranch size={12} /> {asArray(mapping.relationships).length} Rels
-          </span>
-        </div>
+        {/* Counts are data, not decoration \u2014 rendered as a neutral figure strip
+            rather than two tinted badges. */}
+        <dl className="flex items-stretch rounded-md border border-slate-200 divide-x divide-slate-200 overflow-hidden shrink-0">
+          <div className="px-3.5 py-2">
+            <dt className="text-[10.5px] font-semibold uppercase tracking-wider text-slate-500">Nodes</dt>
+            <dd className="text-[15px] font-semibold text-slate-800 font-mono tabular-nums leading-tight">
+              {mapping.entities.length}
+            </dd>
+          </div>
+          <div className="px-3.5 py-2">
+            <dt className="text-[10.5px] font-semibold uppercase tracking-wider text-slate-500">Relationships</dt>
+            <dd className="text-[15px] font-semibold text-slate-800 font-mono tabular-nums leading-tight">
+              {asArray(mapping.relationships).length}
+            </dd>
+          </div>
+        </dl>
       </div>
 
-      <ErrorBox messages={errors} />
-      <WarnBox messages={warnings} onDismiss={() => setWarnings([])} />
-
       {preview && (
-        <div className={`mb-6 p-4 rounded-xl border ${preview.valid ? 'bg-emerald-50/80 border-emerald-200' : 'bg-red-50/80 border-red-200'}`}>
-          <p className={`font-bold mb-2.5 text-sm ${preview.valid ? 'text-emerald-700' : 'text-red-700'}`}>
+        <div className={`mb-5 p-3.5 rounded-md border ${preview.valid ? 'bg-white border-slate-200' : 'bg-red-50 border-red-200'}`}>
+          <p className={`font-semibold mb-2.5 text-[13px] ${preview.valid ? 'text-slate-800' : 'text-red-700'}`}>
             {preview.valid ? '✓ Dry-run passed — ready to commit' : '✕ Dry-run failed'}
           </p>
           <div className="flex flex-wrap gap-2 mb-2">
             {Object.entries(preview.total_node_counts || {}).map(([label, count]) => (
-              <span key={label} className="text-xs font-mono bg-white border border-gray-200 rounded-lg px-2.5 py-1 shadow-sm">
+              <span key={label} className="text-[11px] font-mono bg-slate-50 text-slate-700 border border-slate-200 rounded px-1.5 py-0.5">
                 {label}: <strong>{Number(count).toLocaleString()}</strong>
               </span>
             ))}
-            <span className="text-xs font-mono bg-white border border-gray-200 rounded-lg px-2.5 py-1 shadow-sm">
+            <span className="text-[11px] font-mono bg-slate-50 text-slate-700 border border-slate-200 rounded px-1.5 py-0.5">
               Rels: <strong>{(preview.total_relationship_count ?? 0).toLocaleString()}</strong>
             </span>
           </div>
-          {previewErrs.map((iss, i) => <p key={i} className="text-xs text-red-600 leading-relaxed">✕ {iss.message}</p>)}
-          {previewWarns.map((iss, i) => <p key={i} className="text-xs text-amber-600 leading-relaxed">⚠ {iss.message}</p>)}
+          {previewErrs.map((iss, i) => <p key={i} className="text-[12px] text-red-700 leading-relaxed">{iss.message}</p>)}
+          {previewWarns.map((iss, i) => <p key={i} className="text-[12px] text-amber-700 leading-relaxed">{iss.message}</p>)}
         </div>
       )}
 
       {submitErr && <div className="mb-5"><InfoRow icon={AlertCircle}>{submitErr}</InfoRow></div>}
 
       {/* Node Labels */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-6 h-6 bg-indigo-600 rounded-md flex items-center justify-center shadow-sm">
-            <Layers size={12} className="text-white" />
-          </div>
-          <h3 className="font-bold text-gray-700 text-base">Node Labels</h3>
-          <SectionBadge count={mapping.entities.length} color="indigo" />
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-3 pb-2 border-b border-slate-200">
+          <Layers size={13} className="text-slate-400" />
+          <h3 className="text-[12px] font-semibold uppercase tracking-wider text-slate-500">Node labels</h3>
+          <SectionBadge count={mapping.entities.length} />
         </div>
         {mapping.entities.length === 0 && (
-          <div className="p-5 bg-red-50 border border-red-200 rounded-xl text-center">
-            <p className="text-sm text-red-600 font-medium">At least one node type is required.</p>
+          <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-md text-center">
+            <p className="text-[13px] text-red-700">At least one node type is required.</p>
           </div>
         )}
         <div className="flex flex-col gap-3">
@@ -184,14 +188,12 @@ export default function Step2Schema({ session, onBack, onNext, onSessionExpired 
       </div>
 
       {/* Relationships */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="w-6 h-6 bg-emerald-600 rounded-md flex items-center justify-center shadow-sm">
-              <GitBranch size={12} className="text-white" />
-            </div>
-            <h3 className="font-bold text-gray-700 text-base">Relationships</h3>
-            <SectionBadge count={asArray(mapping.relationships).length} color="green" />
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-200">
+          <div className="flex items-center gap-2">
+            <GitBranch size={13} className="text-slate-400" />
+            <h3 className="text-[12px] font-semibold uppercase tracking-wider text-slate-500">Relationships</h3>
+            <SectionBadge count={asArray(mapping.relationships).length} />
           </div>
           <Button
             variant="accent" size="sm"
@@ -206,12 +208,12 @@ export default function Step2Schema({ session, onBack, onNext, onSessionExpired 
 
         {asArray(mapping.relationships).length === 0 ? (
           <div
-            className="p-8 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-center cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/30 transition-all duration-200"
+            className="p-8 bg-slate-50/60 border border-dashed border-slate-300 rounded-md text-center cursor-pointer hover:border-indigo-400 hover:bg-white transition-colors"
             onClick={() => sourceTables.length > 0 && addRelationship()}
           >
-            <GitBranch size={24} className="text-gray-200 mx-auto mb-2" />
-            <p className="text-sm text-gray-400 mb-1">No relationships detected.</p>
-            {sourceTables.length > 0 && <p className="text-xs text-emerald-500 font-semibold">+ Click to add</p>}
+            <GitBranch size={22} className="text-slate-300 mx-auto mb-2" />
+            <p className="text-[13px] text-slate-600 mb-1">No relationships detected.</p>
+            {sourceTables.length > 0 && <p className="text-[12px] text-indigo-600 font-semibold">Click to add one</p>}
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -228,17 +230,17 @@ export default function Step2Schema({ session, onBack, onNext, onSessionExpired 
               />
             ))}
             <div
-              className="flex items-center justify-center gap-2 p-3.5 border border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-emerald-300 hover:bg-emerald-50/30 transition-all duration-200 text-gray-400 hover:text-emerald-600"
+              className="flex items-center justify-center gap-2 p-3 border border-dashed border-slate-300 rounded-md cursor-pointer hover:border-indigo-400 hover:bg-slate-50 transition-colors text-slate-500 hover:text-indigo-700"
               onClick={() => sourceTables.length > 0 && addRelationship()}
             >
               <Plus size={14} />
-              <span className="text-xs font-semibold">Add another relationship</span>
+              <span className="text-[12px] font-semibold">Add another relationship</span>
             </div>
           </div>
         )}
       </div>
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-t border-gray-100 pt-5 gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-t border-slate-200 pt-4 gap-3">
         <Button variant="outline" leftIcon={<ArrowLeft size={15} />} onClick={onBack} disabled={busy}>Back</Button>
         <div className="flex flex-wrap gap-2.5 items-center">
           <Button
@@ -256,7 +258,7 @@ export default function Step2Schema({ session, onBack, onNext, onSessionExpired 
           {preview && !canProceed && !busy && (
             <div className="flex items-center gap-1.5">
               <AlertCircle size={13} className="text-red-500" />
-              <span className="text-xs text-red-500 font-medium">Fix errors to continue</span>
+              <span className="text-[12px] text-red-600 font-medium">Fix errors to continue</span>
             </div>
           )}
         </div>

@@ -62,78 +62,98 @@ export default function Step1Upload({ onSuccess, sessionExpiredMsg }) {
 
   return (
     <div>
-      <h2 className="font-bold text-gray-800 text-lg sm:text-xl mb-1">Upload Data File</h2>
-      <p className="text-sm text-gray-400 mb-6">
-        Upload a structured data file. We&apos;ll auto-detect nodes, properties and relationships.
-      </p>
+      <div className="mb-5">
+        <p className="text-[12px] font-semibold uppercase tracking-wider text-slate-500">Step 1</p>
+        <h2 className="text-[17px] font-semibold text-slate-800 mt-0.5">Upload data file</h2>
+        <p className="text-[13px] text-slate-500 mt-1">
+          Upload a structured data file. Tables, columns and relationships are detected automatically.
+        </p>
+      </div>
 
       {sessionExpiredMsg && (
-        <div className="mb-5 p-3.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2.5">
-          <Info size={14} className="text-amber-500 shrink-0" />
-          <p className="text-sm text-amber-700">Session expired — please re-upload your file.</p>
+        <div className="mb-4 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-md flex items-center gap-2.5">
+          <Info size={14} className="text-amber-600 shrink-0" />
+          <p className="text-[13px] text-amber-800">Session expired \u2014 please re-upload your file.</p>
         </div>
       )}
 
+      {/* Dropzone: previously a very tall empty box with a scaling coloured tile.
+          It is now a compact horizontal band, so the supported-format reference
+          below stays visible in the same viewport. */}
       <div
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={(e) => { e.preventDefault(); setIsDragging(false); if (e.dataTransfer.files[0]) setCheckedFile(e.dataTransfer.files[0]); }}
         onClick={() => !file && inputRef.current?.click()}
-        className={`transition-all duration-200 rounded-2xl border-2 border-dashed cursor-pointer ${
-          isDragging ? 'border-blue-400 bg-blue-50/80' : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50/50'
+        role="button"
+        tabIndex={file ? -1 : 0}
+        onKeyDown={(e) => { if (!file && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); inputRef.current?.click(); } }}
+        aria-label="Upload data file"
+        className={`rounded-lg border border-dashed transition-colors outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500/30 ${
+          file
+            ? 'border-slate-200 bg-white cursor-default'
+            : isDragging
+              ? 'border-indigo-400 bg-indigo-50/60 cursor-pointer'
+              : 'border-slate-300 bg-slate-50/60 hover:border-slate-400 hover:bg-slate-50 cursor-pointer'
         }`}
       >
-        <div className="flex flex-col items-center py-10 sm:py-14 lg:py-16 gap-4 px-4">
-          <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-all duration-200 ${
-            isDragging ? 'bg-blue-100 scale-110' : 'bg-gray-100'
-          }`}>
-            <CloudUpload size={30} className={isDragging ? 'text-blue-500' : 'text-gray-300'} />
-          </div>
-
-          {!file ? (
-            <>
-              <div className="text-center">
-                <p className="font-semibold text-gray-600 text-sm sm:text-base mb-1">
-                  {isDragging ? 'Release to upload' : 'Drag & drop your file here'}
-                </p>
-                <p className="text-sm text-gray-400">
-                  or <span className="text-blue-600 font-semibold cursor-pointer hover:underline">browse files</span>
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2 justify-center max-w-xs">
-                {formats.map((f) => (
-                  <span
-                    key={f.label}
-                    title={f.note}
-                    className="text-[11px] font-semibold bg-white text-gray-500 px-2.5 py-1 rounded-full cursor-default border border-gray-200 shadow-sm"
-                  >
-                    {f.label}
-                  </span>
-                ))}
-              </div>
-              <p className="text-[11px] text-gray-300">Max 100 MB</p>
-            </>
-          ) : (
-            <div className="flex items-center gap-4 bg-white border border-emerald-200 rounded-xl px-4 sm:px-5 py-3.5 shadow-sm w-full max-w-sm sm:max-w-md">
-              <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
-                <FileText size={20} className="text-emerald-500" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-gray-700 truncate text-sm">{file.name}</p>
-                <p className="text-[11px] text-gray-400">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB · ready to upload
-                </p>
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <CheckCircle2 size={16} className="text-emerald-500" />
-                <IconBtn title="Remove" onClick={(e) => { e.stopPropagation(); setFile(null); setClientErr(null); setServerErr(null); }}>
-                  <X size={14} className="text-gray-400" />
-                </IconBtn>
-              </div>
+        {!file ? (
+          <div className="flex flex-col sm:flex-row items-center gap-4 px-5 py-8 sm:py-9">
+            <div className="w-11 h-11 rounded-md border border-slate-200 bg-white flex items-center justify-center shrink-0">
+              <CloudUpload size={20} className={isDragging ? 'text-indigo-600' : 'text-slate-400'} />
             </div>
-          )}
-        </div>
+            <div className="flex-1 min-w-0 text-center sm:text-left">
+              <p className="text-[14px] font-semibold text-slate-800">
+                {isDragging ? 'Release to upload' : 'Drag and drop a file, or browse'}
+              </p>
+              <p className="text-[12px] text-slate-500 mt-0.5">
+                XLSX, XLS, CSV, ZIP or SQL \u00b7 up to 100 MB
+              </p>
+            </div>
+            <span className="shrink-0 inline-flex items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700">
+              Browse files
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-3 px-4 py-3.5">
+            <div className="w-9 h-9 rounded-md border border-slate-200 bg-slate-50 flex items-center justify-center shrink-0">
+              <FileText size={17} className="text-slate-500" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[13px] font-semibold text-slate-800 truncate">{file.name}</p>
+              <p className="text-[11.5px] text-slate-500 mt-0.5 flex items-center gap-1.5">
+                <CheckCircle2 size={12} className="text-emerald-600" />
+                {(file.size / 1024 / 1024).toFixed(2)} MB \u00b7 ready to upload
+              </p>
+            </div>
+            <IconBtn
+              title="Remove file"
+              onClick={(e) => { e.stopPropagation(); setFile(null); setClientErr(null); setServerErr(null); }}
+              className="hover:!text-red-600 hover:!bg-red-50"
+            >
+              <X size={15} />
+            </IconBtn>
+          </div>
+        )}
       </div>
+
+      {!file && (
+        <div className="mt-3 rounded-lg border border-slate-200 overflow-hidden">
+          <p className="px-3.5 py-2 bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            Supported formats
+          </p>
+          <ul className="divide-y divide-slate-100">
+            {formats.map((f) => (
+              <li key={f.label} className="flex items-center gap-3 px-3.5 py-2">
+                <span className="font-mono text-[11px] font-semibold text-slate-700 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 w-14 text-center shrink-0">
+                  {f.label}
+                </span>
+                <span className="text-[12px] text-slate-500">{f.note}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <input
         ref={inputRef} type="file" hidden
@@ -148,19 +168,19 @@ export default function Step1Upload({ onSuccess, sessionExpiredMsg }) {
       )}
 
       {uploading && (
-        <div className="mt-5 p-4 bg-blue-50/80 border border-blue-100 rounded-xl">
-          <div className="flex items-center gap-3 mb-3">
-            <Spinner size={14} className="text-blue-600" />
-            <p className="font-semibold text-blue-700 text-sm">Analysing file structure…</p>
+        <div className="mt-4 p-3.5 bg-white border border-slate-200 rounded-md">
+          <div className="flex items-center gap-2.5 mb-2.5">
+            <Spinner size={13} className="text-indigo-600" />
+            <p className="text-[13px] font-semibold text-slate-800">Analysing file structure\u2026</p>
           </div>
           <ProgressBar />
-          <p className="text-[11px] text-blue-500/70 mt-2.5">Detecting tables, columns and relationships</p>
+          <p className="text-[11.5px] text-slate-500 mt-2">Detecting tables, columns and relationships</p>
         </div>
       )}
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-6 gap-3">
-        <p className="text-[11px] text-gray-300">
-          {file ? 'Click Upload & Analyse to continue' : 'Select a file to begin'}
+        <p className="text-[11.5px] text-slate-500">
+          {file ? 'Continue to detect the schema' : 'Select a file to begin'}
         </p>
         <Button
           onClick={handleUpload}

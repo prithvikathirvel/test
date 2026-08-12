@@ -1,23 +1,30 @@
 import React from "react";
-import { Typography, Tooltip } from "@mui/material";
-import { FileText, Link2, Trash2, Eye, FileSpreadsheet, FileCode, Clock } from "lucide-react";
+import { Tooltip } from "@mui/material";
+import { FileText, FileSpreadsheet, FileCode, Trash2 } from "lucide-react";
 import { timeAgo } from "@/utils/commonFunction";
 
-const getFileTypeBadge = (type) => {
+/**
+ * Source catalogue grid.
+ *
+ * The previous version gave every file format its own tinted badge (red PDF,
+ * blue DOCX, green CSV...), which turned a reference table into a colour chart.
+ * Format is now a neutral monospace token and only the icon glyph varies, so
+ * the eye is drawn to status — the one column where colour actually encodes
+ * information.
+ */
+
+/** Icon per family; deliberately monochrome. */
+const formatIcon = (type) => {
   const t = (type || "").toLowerCase();
-  if (t === "pdf") {
-    return { bg: "bg-red-50", text: "text-red-700", border: "border-red-200/60", icon: <FileText size={14} className="text-red-600" /> };
-  }
-  if (["docx", "doc"].includes(t)) {
-    return { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200/60", icon: <FileText size={14} className="text-blue-600" /> };
-  }
-  if (["csv", "xlsx", "xls"].includes(t)) {
-    return { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200/60", icon: <FileSpreadsheet size={14} className="text-emerald-600" /> };
-  }
-  if (["json", "md", "txt"].includes(t)) {
-    return { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200/60", icon: <FileCode size={14} className="text-amber-600" /> };
-  }
-  return { bg: "bg-slate-50", text: "text-slate-700", border: "border-slate-200/60", icon: <FileText size={14} className="text-slate-500" /> };
+  if (["csv", "xlsx", "xls"].includes(t)) return FileSpreadsheet;
+  if (["json", "md", "txt"].includes(t)) return FileCode;
+  return FileText;
+};
+
+const STATUS_STYLES = {
+  indexed: { dot: "bg-emerald-500", text: "text-emerald-700", ring: "border-emerald-200" },
+  processing: { dot: "bg-amber-500 animate-pulse", text: "text-amber-700", ring: "border-amber-200" },
+  failed: { dot: "bg-red-500", text: "text-red-700", ring: "border-red-200" },
 };
 
 const KnowledgeListingTableView = ({
@@ -26,107 +33,107 @@ const KnowledgeListingTableView = ({
   handleDeleteKnowledge
 }) => {
   return (
-    <div className="w-full bg-white rounded-xl shadow-2xs overflow-hidden border border-slate-200/80">
-      <div className="w-full overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/80 border-b border-slate-200/80">
-              <th className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                Document Source
+    <div className="w-full overflow-x-auto">
+      <table className="w-full text-left border-collapse min-w-[680px]">
+        <thead>
+          <tr className="bg-slate-50 border-b border-slate-200">
+            {["Source", "Format", "Size", "Uploaded", "Status"].map((label) => (
+              <th
+                key={label}
+                scope="col"
+                className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 whitespace-nowrap"
+              >
+                {label}
               </th>
-              <th className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                Format
-              </th>
-              <th className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                Size
-              </th>
-              <th className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
-                Uploaded
-              </th>
-              <th className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 bg-white">
-            {filteredFlows.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="py-12 text-center text-xs text-slate-400 font-medium">
-                  No knowledge sources uploaded yet.
-                </td>
-              </tr>
-            ) : (
-              filteredFlows.map((row, idx) => {
-                const style = getFileTypeBadge(row.type || row.content_type);
-                const status = row.status || "Indexed";
-                const isIndexed = status.toLowerCase() === "indexed";
-                const isProcessing = status.toLowerCase() === "processing";
+            ))}
+            <th scope="col" className="px-4 py-2.5 text-right">
+              <span className="sr-only">Actions</span>
+            </th>
+          </tr>
+        </thead>
 
-                return (
-                  <tr key={row.id || idx} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="px-5 py-3.5 whitespace-nowrap">
-                      <div className="flex items-center gap-2.5">
-                        <div className={`h-7 w-7 rounded-md ${style.bg} border ${style.border} flex items-center justify-center shrink-0`}>
-                          {style.icon}
-                        </div>
-                        <div className="min-w-0">
-                          <span className="text-[13px] font-semibold text-slate-800 truncate block max-w-xs">
-                            {row.knowledgeBase || row.knowledge_base_name || row.filename || "Untitled Document"}
+        <tbody className="divide-y divide-slate-100">
+          {filteredFlows.length === 0 ? (
+            <tr>
+              <td colSpan={6} className="py-12 text-center text-xs text-slate-400">
+                No knowledge sources uploaded yet.
+              </td>
+            </tr>
+          ) : (
+            filteredFlows.map((row, idx) => {
+              const format = (row.type || row.content_type || "txt").toLowerCase();
+              const Icon = formatIcon(format);
+              const status = row.status || "Indexed";
+              const tone = STATUS_STYLES[status.toLowerCase()] || STATUS_STYLES.failed;
+              const name =
+                row.knowledgeBase || row.knowledge_base_name || row.filename || "Untitled Document";
+
+              return (
+                <tr
+                  key={row.id || idx}
+                  className="group/row hover:bg-slate-50/70 focus-within:bg-slate-50/70 transition-colors"
+                >
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="h-8 w-8 shrink-0 rounded-md border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-500 group-hover/row:border-slate-300 transition-colors">
+                        <Icon size={14} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[13px] font-semibold text-slate-800 truncate max-w-xs">
+                          {name}
+                        </span>
+                        {row.filename && row.filename !== name && (
+                          <span className="block text-[10.5px] text-slate-400 truncate max-w-xs">
+                            {row.filename}
                           </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap">
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-mono font-medium bg-slate-100 text-slate-600 border border-slate-200">
-                        {(row.type || row.content_type || "txt").toUpperCase()}
+                        )}
                       </span>
-                    </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap text-xs text-slate-500">
-                      {row.size || row.file_size || "—"}
-                    </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap text-xs text-slate-400">
-                      {timeAgo(row.createdAt || row.uploaded_at || new Date().toISOString())}
-                    </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium border ${
-                          isIndexed
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200/60"
-                            : isProcessing
-                            ? "bg-amber-50 text-amber-700 border-amber-200/60"
-                            : "bg-red-50 text-red-700 border-red-200/60"
-                        }`}
-                      >
-                        <span
-                          className={`h-1.5 w-1.5 rounded-full ${
-                            isIndexed ? "bg-emerald-500" : isProcessing ? "bg-amber-500 animate-pulse" : "bg-red-500"
-                          }`}
-                        />
-                        {status}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 whitespace-nowrap text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <Tooltip title="Delete Knowledge Base Source">
-                          <button
-                            onClick={() => handleDeleteKnowledge && handleDeleteKnowledge(row?.knowledgeBase || row?.id)}
-                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </Tooltip>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                    </div>
+                  </td>
+
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10.5px] font-mono font-medium uppercase text-slate-500">
+                      {format}
+                    </span>
+                  </td>
+
+                  <td className="px-4 py-3 whitespace-nowrap text-[12px] text-slate-500">
+                    {row.size || row.file_size || "—"}
+                  </td>
+
+                  <td className="px-4 py-3 whitespace-nowrap text-[12px] text-slate-500">
+                    {timeAgo(row.createdAt || row.uploaded_at || new Date().toISOString())}
+                  </td>
+
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full border bg-white px-2 py-0.5 text-[11px] font-medium ${tone.ring} ${tone.text}`}
+                    >
+                      <span className={`h-1.5 w-1.5 rounded-full ${tone.dot}`} />
+                      {status}
+                    </span>
+                  </td>
+
+                  <td className="px-4 py-3 whitespace-nowrap text-right">
+                    <div className="inline-flex items-center justify-end opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 focus-within:opacity-100 transition-opacity">
+                      <Tooltip title="Delete source">
+                        <button
+                          type="button"
+                          aria-label={`Delete ${name}`}
+                          onClick={() => handleDeleteKnowledge && handleDeleteKnowledge(row?.knowledgeBase || row?.id)}
+                          className="p-1.5 rounded-md text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500/40"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </Tooltip>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })
+          )}
+        </tbody>
+      </table>
     </div>
   );
 };

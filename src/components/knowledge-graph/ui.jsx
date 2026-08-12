@@ -12,25 +12,28 @@ export function Button({
   variant = 'primary', size = 'md', leftIcon, rightIcon, disabled, loading,
   className = '', children, type = 'button', ...rest
 }) {
-  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-all duration-150 select-none focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed';
+  const base =
+    'inline-flex items-center justify-center gap-2 font-medium rounded-md border transition-colors duration-150 select-none focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed';
   const sizes = {
-    sm: 'text-xs px-2.5 py-1.5',
-    md: 'text-sm px-4 py-2',
-    lg: 'text-sm px-5 py-2.5',
+    sm: 'text-[12px] px-2.5 py-1.5',
+    md: 'text-[13px] px-3.5 py-2',
+    lg: 'text-[13px] px-4 py-2.5',
   };
+  // Flat, single-weight fills. The gradient + coloured shadow treatment read as
+  // consumer UI; enterprise tables need one obvious primary and quiet rest.
   const variants = {
     primary:
-      'bg-gradient-to-b from-blue-600 to-blue-700 text-white shadow-sm shadow-blue-200 hover:from-blue-700 hover:to-blue-800 active:from-blue-800 active:to-blue-900 focus:ring-blue-300',
+      'bg-indigo-600 border-indigo-600 text-white hover:bg-indigo-700 hover:border-indigo-700 active:bg-indigo-800 focus-visible:ring-indigo-500/40',
     outline:
-      'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300 focus:ring-gray-200',
+      'bg-white border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 focus-visible:ring-slate-400/40',
     ghost:
-      'bg-transparent text-gray-600 hover:bg-gray-100 focus:ring-gray-200',
+      'bg-transparent border-transparent text-slate-600 hover:bg-slate-100 focus-visible:ring-slate-400/40',
     accent:
-      'bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-100 focus:ring-emerald-200',
+      'bg-white border-emerald-300 text-emerald-700 hover:bg-emerald-50 focus-visible:ring-emerald-500/30',
     info:
-      'bg-white border border-blue-500 text-blue-600 hover:bg-blue-50 focus:ring-blue-200',
+      'bg-white border-indigo-300 text-indigo-700 hover:bg-indigo-50 focus-visible:ring-indigo-500/30',
     danger:
-      'bg-red-600 text-white hover:bg-red-700 focus:ring-red-300',
+      'bg-red-600 border-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500/40',
   };
   return (
     <button
@@ -52,7 +55,7 @@ export function IconBtn({ title, onClick, children, className = '' }) {
       type="button"
       title={title}
       onClick={onClick}
-      className={`inline-flex items-center justify-center w-7 h-7 rounded-md hover:bg-gray-100 active:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-200 ${className}`}
+      className={`inline-flex items-center justify-center w-7 h-7 rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:bg-slate-200 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500/40 ${className}`}
     >
       {children}
     </button>
@@ -61,9 +64,9 @@ export function IconBtn({ title, onClick, children, className = '' }) {
 
 export function Toggle({ checked, onChange, disabled, color = 'blue' }) {
   const colors = {
-    blue: 'bg-blue-600',
-    amber: 'bg-amber-500',
-    gray: 'bg-gray-500',
+    blue: 'bg-indigo-600',
+    amber: 'bg-amber-600',
+    gray: 'bg-slate-500',
   };
   return (
     <button
@@ -72,8 +75,8 @@ export function Toggle({ checked, onChange, disabled, color = 'blue' }) {
       aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange?.(!checked)}
-      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-blue-200 disabled:opacity-50 ${
-        checked ? colors[color] : 'bg-gray-200'
+      className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-indigo-500/40 disabled:opacity-50 ${
+        checked ? colors[color] : 'bg-slate-200'
       }`}
     >
       <span
@@ -85,7 +88,7 @@ export function Toggle({ checked, onChange, disabled, color = 'blue' }) {
   );
 }
 
-export function ProgressBar({ color = '#2563eb', bg = '#bfdbfe' }) {
+export function ProgressBar({ color = '#4f46e5', bg = '#e2e8f0' }) {
   return (
     <div className="relative h-1 rounded-full overflow-hidden" style={{ backgroundColor: bg }}>
       <div
@@ -119,10 +122,10 @@ export function Modal({ open, onClose, children, maxWidth = 'max-w-lg' }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div
-        className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm animate-[fadein_.18s_ease]"
+        className="absolute inset-0 bg-slate-900/40 animate-[fadein_.18s_ease]"
         onClick={onClose}
       />
-      <div className={`relative w-full ${maxWidth} bg-white rounded-2xl shadow-2xl overflow-hidden animate-[pop_.2s_ease]`}>
+      <div className={`relative w-full ${maxWidth} bg-white rounded-lg border border-slate-200 shadow-xl overflow-hidden animate-[pop_.2s_ease]`}>
         {children}
       </div>
       <style jsx>{`
@@ -134,14 +137,13 @@ export function Modal({ open, onClose, children, maxWidth = 'max-w-lg' }) {
 }
 
 export function SectionBadge({ count, color = 'indigo' }) {
+  // Counts are metadata, not status: one neutral treatment for all of them
+  // keeps section headers from turning into a colour key.
   const cls = {
-    indigo: 'bg-indigo-50 text-indigo-700 ring-indigo-200/60',
-    green: 'bg-emerald-50 text-emerald-700 ring-emerald-200/60',
-    amber: 'bg-amber-50 text-amber-700 ring-amber-200/60',
-    gray: 'bg-gray-100 text-gray-600 ring-gray-200/60',
-  }[color] || 'bg-gray-100 text-gray-600 ring-gray-200/60';
+    amber: 'bg-amber-50 text-amber-700 ring-amber-200',
+  }[color] || 'bg-slate-100 text-slate-600 ring-slate-200';
   return (
-    <span className={`inline-flex items-center justify-center min-w-[22px] h-[22px] text-[11px] font-bold rounded-full ring-1 px-1 ${cls}`}>
+    <span className={`inline-flex items-center justify-center min-w-[22px] h-[22px] text-[11px] font-semibold rounded-md ring-1 px-1.5 ${cls}`}>
       {count}
     </span>
   );
@@ -150,10 +152,10 @@ export function SectionBadge({ count, color = 'indigo' }) {
 export function ErrorBox({ messages }) {
   if (!messages?.length) return null;
   return (
-    <div className="p-4 bg-red-50/80 border border-red-200/80 rounded-xl mb-5">
+    <div className="p-3.5 bg-red-50 border border-red-200 rounded-md mb-5">
       <div className="flex items-center gap-2.5 mb-2">
         <AlertCircle size={15} className="text-red-500 shrink-0" />
-        <span className="font-semibold text-red-700 text-sm">
+        <span className="font-semibold text-red-700 text-[13px]">
           {messages.length > 1 ? `${messages.length} Errors` : 'Error'}
         </span>
       </div>
@@ -167,11 +169,11 @@ export function ErrorBox({ messages }) {
 export function WarnBox({ messages, onDismiss }) {
   if (!messages?.length) return null;
   return (
-    <div className="p-4 bg-amber-50/80 border border-amber-200/80 rounded-xl mb-5">
+    <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-md mb-5">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2.5">
           <Info size={15} className="text-amber-500 shrink-0" />
-          <span className="font-semibold text-amber-700 text-sm">
+          <span className="font-semibold text-amber-700 text-[13px]">
             {messages.length > 1 ? `${messages.length} Warnings` : 'Warning'}
           </span>
         </div>
@@ -190,7 +192,7 @@ export function WarnBox({ messages, onDismiss }) {
 
 export function InfoRow({ icon: Icon, color = 'text-red-500', children }) {
   return (
-    <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2.5">
+    <div className="p-3 bg-red-50 border border-red-200 rounded-md flex items-center gap-2.5">
       <Icon size={14} className={`${color} shrink-0`} />
       <span className="text-xs text-red-600">{children}</span>
     </div>
@@ -198,4 +200,4 @@ export function InfoRow({ icon: Icon, color = 'text-red-500', children }) {
 }
 
 export const inputCls =
-  'w-full border border-gray-200 rounded-lg px-3.5 py-2.5 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-white';
+  'w-full border border-slate-300 rounded-md px-3 py-2 text-[13px] outline-hidden focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-colors bg-white placeholder:text-slate-400';

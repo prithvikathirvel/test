@@ -6,7 +6,7 @@ import { ArrowLeft, Database, CheckCircle2, AlertCircle, Server, Check } from 'l
 import { BASE, authHdr, readErr } from './helpers';
 import { Button, Spinner, ProgressBar, InfoRow } from './ui';
 
-const LOG_CLS = { ok: 'text-emerald-400', err: 'text-red-400', info: 'text-blue-300' };
+const LOG_CLS = { ok: 'text-emerald-400', err: 'text-red-400', info: 'text-slate-300' };
 
 export default function Step3Confirm({ session, onBack, onSessionExpired, onReset, onIngestComplete }) {
   const { selectedConnectionId, connections } = useSelector((s) => s.knowledgeGraph);
@@ -91,36 +91,57 @@ export default function Step3Confirm({ session, onBack, onSessionExpired, onRese
     const totalNodes = complete.total_nodes != null ? Number(complete.total_nodes).toLocaleString() : '—';
     const totalRels = complete.total_relationships != null ? Number(complete.total_relationships).toLocaleString() : '—';
     return (
-      <div className="flex flex-col items-center text-center py-8 sm:py-12">
-        <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mb-5 ${complete.status === 'SUCCESS' ? 'bg-emerald-100' : 'bg-amber-100'}`}>
-          <CheckCircle2 size={38} className={complete.status === 'SUCCESS' ? 'text-emerald-600' : 'text-amber-500'} />
+      <div className="py-2">
+        {/* Result summary reads as a report header + figures table, not a
+            celebration screen: the numbers are what the operator came for. */}
+        <div className="flex items-start gap-3 pb-4 border-b border-slate-200">
+          <div className={`w-9 h-9 rounded-md border flex items-center justify-center shrink-0 ${
+            complete.status === 'SUCCESS' ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'
+          }`}>
+            <CheckCircle2 size={18} className={complete.status === 'SUCCESS' ? 'text-emerald-600' : 'text-amber-600'} />
+          </div>
+          <div className="min-w-0">
+            <h2 className="text-[16px] font-semibold text-slate-800">
+              {complete.status === 'SUCCESS' ? 'Graph ingested' : 'Partially ingested'}
+            </h2>
+            <p className="text-[12.5px] text-slate-500 mt-0.5 break-words">
+              &ldquo;{graphName}&rdquo; has been written to Neo4j.
+            </p>
+          </div>
         </div>
-        <h2 className="font-bold text-gray-800 text-xl sm:text-2xl mb-1.5">
-          {complete.status === 'SUCCESS' ? 'Graph Ingested' : 'Partially Ingested'}
-        </h2>
+
         {complete.status === 'PARTIAL' && complete.message && (
-          <div className="mb-4 p-3.5 bg-amber-50 border border-amber-200 rounded-xl max-w-sm">
-            <p className="text-amber-700 text-sm">⚠ {complete.message}</p>
+          <div className="mt-4 px-3.5 py-2.5 bg-amber-50 border border-amber-200 rounded-md">
+            <p className="text-amber-800 text-[12.5px]">{complete.message}</p>
           </div>
         )}
-        <p className="text-sm text-gray-400 mb-6 max-w-sm">&ldquo;{graphName}&rdquo; has been written to Neo4j.</p>
-        <div className="grid grid-cols-2 gap-4 w-full max-w-xs mb-8">
+
+        <dl className="mt-4 grid grid-cols-2 gap-3">
           {[
-            { label: 'Nodes Created', value: totalNodes, color: '#2563eb', bg: '#eff6ff' },
-            { label: 'Relationships', value: totalRels, color: '#16a34a', bg: '#f0fdf4' },
+            { label: 'Nodes created', value: totalNodes },
+            { label: 'Relationships', value: totalRels },
           ].map((s) => (
-            <div key={s.label} className="rounded-xl p-4 text-center shadow-sm border border-gray-100" style={{ backgroundColor: s.bg }}>
-              <p className="font-bold text-xl" style={{ color: s.color }}>{s.value}</p>
-              <p className="text-[11px] text-gray-400 font-medium">{s.label}</p>
+            <div key={s.label} className="rounded-md border border-slate-200 bg-white px-4 py-3">
+              <dt className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{s.label}</dt>
+              <dd className="text-[20px] font-semibold text-slate-800 font-mono tabular-nums mt-1">{s.value}</dd>
             </div>
           ))}
+        </dl>
+
+        <div className="mt-4 rounded-md border border-slate-200 overflow-hidden">
+          <p className="px-3.5 py-2 bg-slate-50 border-b border-slate-200 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            Ingest log
+          </p>
+          <div className="bg-slate-900 px-4 py-3 max-h-40 overflow-y-auto">
+            {log.map((l, i) => (
+              <p key={i} className={`font-mono text-[11px] leading-5 ${LOG_CLS[l.variant] || 'text-slate-400'}`}>{l.text}</p>
+            ))}
+          </div>
         </div>
-        <div className="w-full max-w-xl bg-gray-950 rounded-xl p-4 text-left mb-6 max-h-36 overflow-y-auto">
-          {log.map((l, i) => (
-            <p key={i} className={`font-mono text-[11px] leading-5 ${LOG_CLS[l.variant] || 'text-gray-500'}`}>{l.text}</p>
-          ))}
+
+        <div className="mt-5 flex justify-end">
+          <Button variant="outline" onClick={onReset}>Ingest another file</Button>
         </div>
-        <Button variant="outline" onClick={onReset}>Ingest Another File</Button>
       </div>
     );
   }
@@ -130,73 +151,76 @@ export default function Step3Confirm({ session, onBack, onSessionExpired, onRese
 
   return (
     <div>
-      <h2 className="font-bold text-gray-800 text-lg sm:text-xl mb-1">Confirm &amp; Ingest</h2>
-      <p className="text-sm text-gray-400 mb-6">Name your graph and start the ingest. Progress streams in real time.</p>
+      <div className="mb-5">
+        <p className="text-[12px] font-semibold uppercase tracking-wider text-slate-500">Step 3</p>
+        <h2 className="text-[17px] font-semibold text-slate-800 mt-0.5">Confirm and ingest</h2>
+        <p className="text-[13px] text-slate-500 mt-1">Name your graph and start the ingest. Progress streams in real time.</p>
+      </div>
 
-      <div className="mb-5 p-3.5 bg-slate-50 border border-gray-200/80 rounded-xl flex items-center gap-3">
-        <Server size={15} className="text-gray-400 shrink-0" />
+      <div className="mb-4 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-md flex items-center gap-3">
+        <Server size={15} className="text-slate-400 shrink-0" />
         <div className="flex-1">
-          <p className="text-[11px] text-gray-400 font-medium leading-tight">Target Connection</p>
-          <p className="font-semibold text-gray-700 text-sm">{connLabel}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 leading-tight">Target connection</p>
+          <p className="text-[13px] font-semibold text-slate-800 truncate">{connLabel}</p>
         </div>
         {activeConn && (
-          <span className="text-[10px] font-bold bg-blue-50 text-blue-600 px-2.5 py-0.5 rounded-full border border-blue-100">CUSTOM</span>
+          <span className="text-[10px] font-semibold font-mono bg-white text-slate-600 px-1.5 py-0.5 rounded border border-slate-300">CUSTOM</span>
         )}
       </div>
 
       <div className="mb-6">
-        <label className="font-semibold text-gray-600 text-sm mb-2 block">
+        <label className="text-[12px] font-semibold text-slate-700 mb-1.5 block">
           Graph Name <span className="text-red-500">*</span>
         </label>
         <div
-          className={`flex items-center border rounded-xl overflow-hidden transition-all duration-200 ${
+          className={`flex items-center border rounded-md overflow-hidden transition-colors ${
             nameErr ? 'border-red-300 ring-2 ring-red-100'
-              : graphName.trim() ? 'border-blue-500 ring-2 ring-blue-100'
-              : 'border-gray-200'
+              : graphName.trim() ? 'border-indigo-500 ring-2 ring-indigo-500/20'
+              : 'border-slate-300'
           }`}
         >
-          <div className="px-3.5 py-2.5 bg-gray-50 border-r border-gray-100">
-            <Database size={16} className="text-gray-400" />
+          <div className="px-3 py-2.5 bg-slate-50 border-r border-slate-200">
+            <Database size={16} className="text-slate-400" />
           </div>
           <input
             value={graphName}
             onChange={(e) => { setGraphName(e.target.value); if (nameErr) setNameErr(''); }}
             placeholder="e.g. Customer Orders 2024"
             disabled={ingesting}
-            className="flex-1 px-3.5 py-2.5 text-sm outline-none bg-white font-medium"
+            className="flex-1 px-3.5 py-2.5 text-sm outline-hidden bg-white font-medium"
           />
           {graphName.trim() && !nameErr && !ingesting && <Check size={15} className="text-emerald-500 mr-3" />}
         </div>
         {nameErr
           ? <p className="text-red-500 mt-1.5 text-[11px]">{nameErr}</p>
-          : <p className="text-gray-300 mt-1.5 text-[11px]">{graphName.length}/200</p>}
+          : <p className="text-slate-400 mt-1.5 text-[11px] font-mono tabular-nums">{graphName.length}/200</p>}
       </div>
 
       {(ingesting || log.length > 0) && (
         <div className="mb-6">
           {ingesting && (
-            <div className="p-4 bg-blue-50/80 border border-blue-100 rounded-t-xl border-b-0">
+            <div className="px-3.5 py-3 bg-slate-50 border border-slate-200 rounded-t-md border-b-0">
               <div className="flex items-center gap-2.5 mb-3">
-                <Spinner size={14} className="text-blue-600" />
-                <p className="font-semibold text-blue-700 text-sm">Writing to Neo4j…</p>
+                <Spinner size={13} className="text-indigo-600" />
+                <p className="text-[13px] font-semibold text-slate-800">Writing to Neo4j\u2026</p>
               </div>
               <ProgressBar />
             </div>
           )}
           <div
             ref={logRef}
-            className={`bg-gray-950 px-5 py-5 max-h-52 overflow-y-auto ${ingesting ? 'rounded-b-xl' : 'rounded-xl'}`}
+            className={`bg-slate-900 px-4 py-3.5 max-h-52 overflow-y-auto border border-slate-200 ${ingesting ? 'rounded-b-md border-t-0' : 'rounded-md'}`}
           >
             {log.map((l, i) => (
-              <p key={i} className={`font-mono text-[11px] leading-5 ${LOG_CLS[l.variant] || 'text-gray-500'}`}>{l.text}</p>
+              <p key={i} className={`font-mono text-[11px] leading-5 ${LOG_CLS[l.variant] || 'text-slate-500'}`}>{l.text}</p>
             ))}
-            {ingesting && <p className="font-mono text-[11px] text-gray-600 animate-pulse">▋</p>}
+            {ingesting && <p className="font-mono text-[11px] text-slate-500 animate-pulse">\u258b</p>}
           </div>
         </div>
       )}
 
       {(fatalErr || complete?.status === 'FAILED') && (
-        <div className="mb-5 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
+        <div className="mb-4 px-3.5 py-3 bg-red-50 border border-red-200 rounded-md flex items-start gap-2.5">
           <AlertCircle size={16} className="text-red-500 shrink-0 mt-0.5" />
           <div>
             <p className="font-bold text-red-700 mb-0.5 text-sm">Ingest Failed</p>
@@ -205,7 +229,7 @@ export default function Step3Confirm({ session, onBack, onSessionExpired, onRese
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-t border-gray-100 pt-5 gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-t border-slate-200 pt-4 gap-3">
         <Button variant="outline" leftIcon={<ArrowLeft size={15} />} onClick={onBack} disabled={ingesting}>Back</Button>
         <Button
           onClick={handleIngest}

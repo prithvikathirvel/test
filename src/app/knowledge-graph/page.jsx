@@ -65,15 +65,17 @@ export default function KnowledgeGraphPage() {
 
   return (
     <div className="px-6 lg:px-5 py-5 bg-[#f8fafc] min-h-screen">
-      <div className="mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          {/* <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
-            <span>Platform</span>
-            <span>/</span>
-            <span className="text-slate-700">Knowledge Graph</span>
-          </div> */}
-          <h1 className="font-bold text-slate-800 leading-tight text-md">Knowledge Graph</h1>
-          <p className="text-xs text-slate-400 mt-0.5">Model structured data into entity-relationship graphs for agent retrieval</p>
+      <div className="mb-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+        <div className="flex items-start gap-3">
+          <div className="h-9 w-9 rounded-md border border-slate-200 bg-white flex items-center justify-center shrink-0">
+            <Waypoints size={17} className="text-slate-500" />
+          </div>
+          <div>
+            <h1 className="text-[16px] font-semibold text-slate-800 leading-tight">Knowledge Graph</h1>
+            <p className="text-[12.5px] text-slate-500 mt-0.5">
+              Model structured data into entity-relationship graphs for agent retrieval
+            </p>
+          </div>
         </div>
         <HealthBadge />
       </div>
@@ -81,7 +83,7 @@ export default function KnowledgeGraphPage() {
       <div className="mx-auto">
         <ConnectionManager />
 
-        <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-5 sm:p-8 lg:p-10">
+        <div className="bg-white rounded-lg border border-slate-200 p-4 sm:p-6 mt-4">
           <StepIndicator current={step} />
 
           {step === 1 && (

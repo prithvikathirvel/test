@@ -1,119 +1,221 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Box, Tooltip } from '@mui/material';
-import { Workflow, ArrowUpRight, Trash2, Info } from 'lucide-react';
+import {
+  Workflow,
+  ArrowUpRight,
+  Trash2,
+  ArrowUp,
+  ArrowDown,
+  ChevronsUpDown,
+} from 'lucide-react';
 import { timeAgo } from '@/utils/commonFunction';
 
-const getFirst5Words = (text) => {
-  if (!text) return "No description available";
-  const words = text.trim().split(/\s+/);
-  if (words.length <= 5) return text;
-  return words.slice(0, 5).join(' ') + '...';
+/**
+ * Enterprise flow data grid.
+ *
+ * Design intent (deliberately different from the previous card-ish table):
+ * - Structural, not decorative. A single neutral surface, hairline column
+ *   dividers and a sticky header, so it reads as a data grid instead of a
+ *   list of styled rows.
+ * - Colour carries meaning only. Slate is the entire palette; indigo appears
+ *   solely on the focused/hovered primary action and the sort indicator.
+ * - Scannable identity column: monospaced short id under the name, so rows
+ *   stay distinguishable when names are similar.
+ * - Row actions stay hidden until hover/focus to keep the grid quiet, but are
+ *   always present for keyboard users (focus-within reveals them).
+ *
+ * The props contract is unchanged, so the page needs no modification.
+ */
+
+const flowName = (flow) => flow?.name || flow?.agent_name || 'Unnamed Flow';
+const flowDesc = (flow) => flow?.description || flow?.agent_description || '';
+const flowId = (flow) => flow?.id || flow?.agent_id || '';
+
+/** Short, stable identifier shown under the flow name. */
+const shortId = (flow) => {
+  const id = String(flowId(flow));
+  if (!id) return '—';
+  return id.length > 10 ? `${id.slice(0, 8)}…${id.slice(-2)}` : id;
 };
 
-const FlowListingTableView = ({ filteredFlows, handleOpenStudio, handleDeleteFlow }) => {
+const COLUMNS = [
+  { key: 'name', label: 'Flow', sortable: true, width: '34%' },
+  { key: 'description', label: 'Description', sortable: false, width: '34%' },
+  { key: 'updatedAt', label: 'Last updated', sortable: true, width: '18%' },
+  { key: 'actions', label: '', sortable: false, width: '14%', align: 'right' },
+];
+
+const SortIcon = ({ state }) => {
+  if (state === 'asc') return <ArrowUp size={12} className="text-indigo-600" />;
+  if (state === 'desc') return <ArrowDown size={12} className="text-indigo-600" />;
   return (
-    <Box className="w-full bg-white rounded-xl shadow-2xs overflow-hidden border border-slate-200/80">
-      <table className="w-full text-left border-collapse table-fixed">
-        <thead>
-          <tr className="bg-slate-50/80 border-b border-slate-200/80">
-            <th className="w-[32%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Flow Name
-            </th>
-            <th className="w-[30%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              Description
-            </th>
-            <th className="w-[20%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider whitespace-nowrap">
-              Last Updated
-            </th>
-            <th className="w-[14%] px-5 py-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider text-right whitespace-nowrap">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100 bg-white">
-          {filteredFlows.map((flow) => {
-            const fullDesc = flow?.description || flow?.agent_description || "No description available";
-            const shortDesc = getFirst5Words(fullDesc);
+    <ChevronsUpDown
+      size={12}
+      className="text-slate-300 group-hover/th:text-slate-400 transition-colors"
+    />
+  );
+};
 
-            return (
-              <tr key={flow.id || flow.agent_id} className="hover:bg-slate-50/60 transition-colors">
-                <td className="px-5 py-3.5 align-middle">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="h-7 w-7 rounded-md bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
-                      <Workflow size={14} />
-                    </div>
-                    <span className="text-[13px] font-semibold text-slate-800 truncate block">
-                      {flow.name || flow.agent_name || "Unnamed Flow"}
-                    </span>
-                  </div>
-                </td>
+const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDeleteFlow }) => {
+  // `null` = keep the order the page already applied (updatedAt desc).
+  const [sort, setSort] = useState(null);
 
-                <td className="px-5 py-3.5 align-middle">
-                  <Tooltip
-                    title={
-                      <div className="p-1 space-y-1 max-w-xs">
-                        <div className="text-[10.5px] font-semibold text-slate-300 uppercase tracking-wider">
-                          Full Description
-                        </div>
-                        <div className="text-[12px] text-white leading-relaxed">
-                          {fullDesc}
-                        </div>
-                      </div>
+  const toggleSort = (key) => {
+    setSort((current) => {
+      if (!current || current.key !== key) return { key, direction: 'asc' };
+      if (current.direction === 'asc') return { key, direction: 'desc' };
+      return null; // third click restores the page's default ordering
+    });
+  };
+
+  const rows = useMemo(() => {
+    if (!sort) return filteredFlows;
+    const factor = sort.direction === 'asc' ? 1 : -1;
+    return [...filteredFlows].sort((a, b) => {
+      if (sort.key === 'name') {
+        return flowName(a).localeCompare(flowName(b), undefined, { sensitivity: 'base' }) * factor;
+      }
+      const left = new Date(a?.updatedAt || 0).getTime();
+      const right = new Date(b?.updatedAt || 0).getTime();
+      return (left - right) * factor;
+    });
+  }, [filteredFlows, sort]);
+
+  return (
+    <Box className="w-full bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse table-fixed min-w-[720px]">
+          <colgroup>
+            {COLUMNS.map((col) => (
+              <col key={col.key} style={{ width: col.width }} />
+            ))}
+          </colgroup>
+
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-200">
+              {COLUMNS.map((col) => {
+                const state = sort?.key === col.key ? sort.direction : null;
+                return (
+                  <th
+                    key={col.key}
+                    scope="col"
+                    aria-sort={
+                      !col.sortable ? undefined : state === 'asc' ? 'ascending' : state === 'desc' ? 'descending' : 'none'
                     }
-                    placement="top-start"
-                    arrow
-                    slotProps={{
-                      popper: {
-                        sx: {
-                          '& .MuiTooltip-tooltip': {
-                            backgroundColor: '#0f172a',
-                            borderRadius: '10px',
-                            padding: '8px 12px',
-                            border: '1px solid #334155',
-                            boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)',
-                          },
-                          '& .MuiTooltip-arrow': {
-                            color: '#0f172a',
-                          },
-                        },
-                      },
-                    }}
+                    className={`px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 ${
+                      col.align === 'right' ? 'text-right' : ''
+                    }`}
                   >
-                    <span className="text-[12.5px] text-slate-600 hover:text-slate-900 cursor-pointer inline-flex items-center gap-1 group">
-                      <span className="font-medium underline decoration-slate-300 underline-offset-2 group-hover:decoration-indigo-500">
-                        {shortDesc}
-                      </span>
-                    </span>
-                  </Tooltip>
-                </td>
-
-                <td className="px-5 py-3.5 align-middle whitespace-nowrap">
-                  <span className="text-[12px] text-slate-400">{timeAgo(flow?.updatedAt)}</span>
-                </td>
-
-                <td className="px-5 py-3.5 align-middle text-right whitespace-nowrap">
-                  <div className="flex items-center justify-end gap-1.5">
-                    <button
-                      onClick={() => handleOpenStudio(flow.id)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-colors"
-                    >
-                      Open Studio <ArrowUpRight size={13} />
-                    </button>
-                    <Tooltip title="Delete Flow">
+                    {col.sortable ? (
                       <button
-                        onClick={() => handleDeleteFlow(flow)}
-                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        type="button"
+                        onClick={() => toggleSort(col.key)}
+                        className="group/th inline-flex items-center gap-1.5 rounded-sm uppercase tracking-wider hover:text-slate-700 focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500/40 transition-colors"
                       >
-                        <Trash2 size={15} />
+                        {col.label}
+                        <SortIcon state={state} />
                       </button>
-                    </Tooltip>
-                  </div>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                    ) : (
+                      <span className={col.align === 'right' ? 'sr-only' : undefined}>
+                        {col.label || 'Actions'}
+                      </span>
+                    )}
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+
+          <tbody className="divide-y divide-slate-100">
+            {rows.map((flow) => {
+              const description = flowDesc(flow);
+              const id = flowId(flow);
+
+              return (
+                <tr
+                  key={id}
+                  className="group/row hover:bg-slate-50/70 focus-within:bg-slate-50/70 transition-colors"
+                >
+                  {/* Identity */}
+                  <td className="px-4 py-3 align-middle">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="h-8 w-8 shrink-0 rounded-md border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-500 group-hover/row:border-slate-300 transition-colors">
+                        <Workflow size={14} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[13px] font-semibold text-slate-800 truncate">
+                          {flowName(flow)}
+                        </span>
+                        <span className="block text-[10.5px] font-mono text-slate-400 truncate">
+                          {shortId(flow)}
+                        </span>
+                      </span>
+                    </div>
+                  </td>
+
+                  {/* Description — truncated inline, full text on hover */}
+                  <td className="px-4 py-3 align-middle">
+                    {description ? (
+                      <Tooltip
+                        title={<span className="text-[12px] leading-relaxed">{description}</span>}
+                        placement="top-start"
+                        arrow
+                        slotProps={{
+                          popper: {
+                            sx: {
+                              '& .MuiTooltip-tooltip': {
+                                backgroundColor: '#0f172a',
+                                borderRadius: '8px',
+                                padding: '8px 10px',
+                                maxWidth: 320,
+                              },
+                              '& .MuiTooltip-arrow': { color: '#0f172a' },
+                            },
+                          },
+                        }}
+                      >
+                        <span className="block text-[12.5px] text-slate-600 truncate cursor-default">
+                          {description}
+                        </span>
+                      </Tooltip>
+                    ) : (
+                      <span className="text-[12.5px] text-slate-300">—</span>
+                    )}
+                  </td>
+
+                  {/* Recency */}
+                  <td className="px-4 py-3 align-middle whitespace-nowrap">
+                    <span className="text-[12px] text-slate-500">{timeAgo(flow?.updatedAt)}</span>
+                  </td>
+
+                  {/* Actions — quiet until the row is hovered or focused */}
+                  <td className="px-4 py-3 align-middle text-right whitespace-nowrap">
+                    <div className="inline-flex items-center justify-end gap-1 opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 focus-within:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenStudio(id)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[12px] font-medium text-slate-700 bg-white hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 border border-slate-200 rounded-md transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                      >
+                        Open <ArrowUpRight size={13} />
+                      </button>
+                      <Tooltip title="Delete flow">
+                        <button
+                          type="button"
+                          aria-label={`Delete ${flowName(flow)}`}
+                          onClick={() => handleDeleteFlow(flow)}
+                          className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-red-500/40"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </Tooltip>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </Box>
   );
 };
