@@ -12,7 +12,9 @@ import {
     Database,
     CheckCircle2,
     X,
+    BookOpen,
 } from "lucide-react";
+import PageHeader from "@/components/layout/PageHeader";
 import { useDispatch, useSelector } from "react-redux";
 import CustomButton from "@/components/Common/CustomButton";
 import InputBox from "@/components/Common/InputBox";
@@ -182,15 +184,11 @@ const KnowledgePage = () => {
     return (
         <Box className="min-h-screen bg-[#f8fafc]">
             <Box className="px-6 lg:px-5 py-5">
-                {/* ---------------- Header ---------------- */}
-                <Box className="mb-5">
-                    <h1 className="text-[15px] font-bold text-slate-800 tracking-tight">
-                        Knowledge Base
-                    </h1>
-                    <p className="text-slate-500 text-xs mt-0.5">
-                        Documents indexed for agent retrieval.
-                    </p>
-                </Box>
+                <PageHeader
+                    icon={BookOpen}
+                    title="Knowledge Base"
+                    description="Documents indexed for agent retrieval"
+                />
 
                 {/* Summary strip: three plain figures, no tinted cards. */}
                 <Box className="mb-5 grid grid-cols-3 divide-x divide-slate-200 rounded-lg border border-slate-200 bg-white">

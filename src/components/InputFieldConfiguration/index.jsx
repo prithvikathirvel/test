@@ -16,9 +16,12 @@ import {
   Lock,
   ChevronDown,
   Search,
+  ExternalLink,
 } from "lucide-react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { listDictionaries } from "@/utils/dictionaryAPI";
+import { serializeFlowInputs, isTemplateRef } from "@/utils/templateRef";
 
 const TYPE_OPTIONS = [
   { value: "text", label: "Text" },
@@ -43,7 +46,29 @@ const emptyEditor = () => ({
   jsonVal: '{\n  "key": "value"\n}',
   jsonError: null,
   isGlobal: false,
+  displayValue: "",
 });
+
+const hydrateFromGlobal = (item) => {
+  const type = item?.type || "text";
+  const next = emptyEditor();
+  next.keyName = item?.key || "";
+  next.dataType = type;
+  next.isGlobal = true;
+  next.displayValue = previewValue(type, item?.value);
+
+  if (type === "number") next.numVal = Number(item.value) || 0;
+  else if (type === "boolean") next.boolVal = Boolean(item.value);
+  else if (type === "object" || type === "array") {
+    next.jsonVal =
+      typeof item.value === "object" && item.value !== null
+        ? JSON.stringify(item.value, null, 2)
+        : String(item.value || (type === "array" ? "[]" : "{}"));
+  } else {
+    next.textVal = String(item.value ?? "");
+  }
+  return next;
+};
 
 export default function InputFieldConfiguration({ open, onClose, onSave }) {
   const dispatch = useDispatch();
@@ -61,6 +86,14 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const pickerRef = useRef(null);
 
+  const globalsByKey = useMemo(() => {
+    const map = {};
+    globals.forEach((g) => {
+      if (g?.key) map[g.key] = g;
+    });
+    return map;
+  }, [globals]);
+
   useEffect(() => {
     if (!open || !specification) return;
 
@@ -69,7 +102,7 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
       existing.map((f) => ({
         key: f.key || f.name || "",
         type: f.type || "text",
-        value: f.value ?? "",
+        value: f.value,
         description: f.description || "",
         scope: f.scope === "global" ? "global" : "local",
       }))
@@ -100,6 +133,19 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
     };
   }, [open]);
 
+  // Once globals arrive, fill display values for existing global entries.
+  useEffect(() => {
+    if (!globals.length) return;
+    setFields((prev) =>
+      prev.map((f) => {
+        if (f.scope !== "global") return f;
+        const match = globalsByKey[f.key];
+        if (!match) return f;
+        return { ...f, type: match.type || f.type, value: match.value };
+      })
+    );
+  }, [globals, globalsByKey]);
+
   useEffect(() => {
     if (!pickerOpen) return undefined;
     const onPointer = (event) => {
@@ -119,9 +165,10 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
   const filteredGlobals = useMemo(() => {
     const q = editor.keyName.trim().toLowerCase();
     return globals.filter((g) => {
-      if (usedKeys.has((g.key || "").toLowerCase()) && editor.keyName.toLowerCase() !== (g.key || "").toLowerCase()) {
-        return false;
-      }
+      const taken =
+        usedKeys.has((g.key || "").toLowerCase()) &&
+        editor.keyName.toLowerCase() !== (g.key || "").toLowerCase();
+      if (taken) return false;
       if (!q) return true;
       return (
         g.key.toLowerCase().includes(q) ||
@@ -140,16 +187,20 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
     setSelectedIdx(idx);
     setPickerOpen(false);
 
+    if (field.scope === "global") {
+      const match = globalsByKey[field.key] || field;
+      setEditor(hydrateFromGlobal({ ...match, key: field.key, type: field.type || match.type, value: match.value ?? field.value }));
+      return;
+    }
+
     const next = emptyEditor();
     next.keyName = field.key;
     next.dataType = field.type || "text";
-    next.isGlobal = field.scope === "global";
+    next.isGlobal = false;
 
-    if (field.type === "number") {
-      next.numVal = Number(field.value) || 0;
-    } else if (field.type === "boolean") {
-      next.boolVal = Boolean(field.value);
-    } else if (field.type === "object" || field.type === "array") {
+    if (field.type === "number") next.numVal = Number(field.value) || 0;
+    else if (field.type === "boolean") next.boolVal = Boolean(field.value);
+    else if (field.type === "object" || field.type === "array") {
       if (typeof field.value === "object" && field.value !== null) {
         next.jsonVal = JSON.stringify(field.value, null, 2);
       } else {
@@ -162,33 +213,33 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
   };
 
   const applyGlobal = (item) => {
-    const type = item.type || "text";
-    const next = emptyEditor();
-    next.keyName = item.key;
-    next.dataType = type;
-    next.isGlobal = true;
-
-    if (type === "number") {
-      next.numVal = Number(item.value) || 0;
-    } else if (type === "boolean") {
-      next.boolVal = Boolean(item.value);
-    } else if (type === "object" || type === "array") {
-      next.jsonVal =
-        typeof item.value === "object" && item.value !== null
-          ? JSON.stringify(item.value, null, 2)
-          : String(item.value || (type === "array" ? "[]" : "{}"));
-    } else {
-      next.textVal = String(item.value ?? "");
-    }
-
-    setEditor(next);
+    setEditor(hydrateFromGlobal(item));
     setPickerOpen(false);
+  };
+
+  const setScope = (isGlobal) => {
+    if (isGlobal) {
+      setEditor((prev) => ({
+        ...emptyEditor(),
+        isGlobal: true,
+        keyName: prev.isGlobal ? prev.keyName : "",
+      }));
+      setPickerOpen(true);
+    } else {
+      setEditor((prev) => ({ ...emptyEditor(), isGlobal: false, keyName: prev.isGlobal ? "" : prev.keyName }));
+      setPickerOpen(false);
+    }
   };
 
   const buildFieldFromEditor = () => {
     const cleanKey = editor.keyName.trim();
     if (!cleanKey) {
-      toast.error("Variable key name is required.");
+      toast.error(editor.isGlobal ? "Choose a global variable from the list." : "Variable key name is required.");
+      return null;
+    }
+
+    if (editor.isGlobal && !globalsByKey[cleanKey]) {
+      toast.error("Global variables must be selected from the workspace dictionary.");
       return null;
     }
 
@@ -200,18 +251,32 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
       return null;
     }
 
+    if (editor.isGlobal) {
+      const source = globalsByKey[cleanKey];
+      return {
+        key: cleanKey,
+        type: source?.type || editor.dataType,
+        value: source?.value,
+        scope: "global",
+      };
+    }
+
     let resolvedValue;
     if (editor.dataType === "number") {
       resolvedValue = Number(editor.numVal);
     } else if (editor.dataType === "boolean") {
       resolvedValue = Boolean(editor.boolVal);
     } else if (editor.dataType === "object" || editor.dataType === "array") {
-      try {
-        resolvedValue = JSON.parse(editor.jsonVal);
-      } catch (e) {
-        setEditor((prev) => ({ ...prev, jsonError: `Invalid JSON: ${e.message}` }));
-        toast.error("Please fix JSON syntax before adding this variable.");
-        return null;
+      if (isTemplateRef(editor.jsonVal)) {
+        resolvedValue = editor.jsonVal;
+      } else {
+        try {
+          resolvedValue = JSON.parse(editor.jsonVal);
+        } catch (e) {
+          setEditor((prev) => ({ ...prev, jsonError: `Invalid JSON: ${e.message}` }));
+          toast.error("Please fix JSON syntax before adding this variable.");
+          return null;
+        }
       }
     } else {
       resolvedValue = editor.textVal;
@@ -221,7 +286,7 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
       key: cleanKey,
       type: editor.dataType,
       value: resolvedValue,
-      scope: editor.isGlobal ? "global" : "local",
+      scope: "local",
     };
   };
 
@@ -256,15 +321,13 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
   };
 
   const persistFields = (nextFields) => {
-    dispatch(updateSpecification({ inputs: nextFields }));
+    dispatch(updateSpecification({ inputs: serializeFlowInputs(nextFields) }));
     onSave?.(nextFields);
     onClose();
     toast.success("Flow dictionary saved.");
   };
 
   const handleSaveAllAndClose = () => {
-    // Users often skip "Add to Flow Dictionary" and hit Save. If the form has
-    // a key, commit that draft first so the value is not silently dropped.
     if (editor.keyName.trim()) {
       const drafted = buildFieldFromEditor();
       if (!drafted) return;
@@ -293,8 +356,13 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
   const localCount = fields.filter((f) => f.scope !== "global").length;
   const globalCount = fields.filter((f) => f.scope === "global").length;
   const hasDraft = Boolean(editor.keyName.trim());
+  const selectedGlobal = editor.isGlobal ? globalsByKey[editor.keyName] : null;
+  const globalDisplay = selectedGlobal
+    ? previewValue(selectedGlobal.type, selectedGlobal.value)
+    : editor.displayValue;
 
   const formatJson = useCallback(() => {
+    if (isTemplateRef(editor.jsonVal)) return;
     try {
       const parsed = JSON.parse(editor.jsonVal);
       setEditor((prev) => ({
@@ -361,7 +429,6 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
       </div>
 
       <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12 min-h-0">
-        {/* Left: variables already on this flow */}
         <div className="lg:col-span-5 border-r border-slate-200 bg-slate-50/40 flex flex-col min-h-0">
           <div className="p-3 border-b border-slate-200 bg-white space-y-2">
             <div className="flex items-center gap-1.5">
@@ -414,6 +481,9 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
                 const isSelected = selectedIdx === actualIdx;
                 const isCopied = copiedKey === field.key;
                 const isGlobal = field.scope === "global";
+                const shown = isGlobal
+                  ? previewValue(field.type, globalsByKey[field.key]?.value ?? field.value)
+                  : previewValue(field.type, field.value);
 
                 return (
                   <div
@@ -430,13 +500,7 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
                         {field.key}
                       </span>
                       <div className="flex items-center gap-1 shrink-0">
-                        <span
-                          className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium border ${
-                            isGlobal
-                              ? "bg-slate-50 text-slate-600 border-slate-200"
-                              : "bg-white text-slate-500 border-slate-200"
-                          }`}
-                        >
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium border bg-white text-slate-500 border-slate-200">
                           {isGlobal ? <Globe size={9} /> : <Lock size={9} />}
                           {isGlobal ? "global" : "local"}
                         </span>
@@ -446,9 +510,7 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
                       </div>
                     </div>
                     <div className="mt-1 flex items-center justify-between gap-2">
-                      <p className="text-[11px] font-mono text-slate-400 truncate">
-                        {previewValue(field.type, field.value)}
-                      </p>
+                      <p className="text-[11px] font-mono text-slate-400 truncate">{shown}</p>
                       <div className="flex items-center">
                         <Tooltip title="Copy {{tag}}">
                           <button
@@ -459,11 +521,7 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
                             }}
                             className="p-1 text-slate-400 hover:text-slate-700 rounded"
                           >
-                            {isCopied ? (
-                              <Check size={12} className="text-emerald-600" />
-                            ) : (
-                              <Copy size={12} />
-                            )}
+                            {isCopied ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
                           </button>
                         </Tooltip>
                         <Tooltip title="Remove from this flow">
@@ -487,13 +545,12 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
               <div className="py-12 px-4 text-center text-[12px] text-slate-400">
                 {searchQuery || scopeFilter !== "all"
                   ? "No variables match this filter."
-                  : "Nothing in this flow yet. Add a local variable or pick a workspace global."}
+                  : "Nothing in this flow yet. Choose local or global, then add a variable."}
               </div>
             )}
           </div>
         </div>
 
-        {/* Right: editor */}
         <div className="lg:col-span-7 bg-white flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
             <div>
@@ -501,220 +558,281 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
                 {selectedIdx !== null ? "Edit variable" : "Add variable"}
               </h3>
               <p className="text-[11.5px] text-slate-400 mt-0.5">
-                Click the key field to reuse a workspace global, or type a new local key.
+                Choose the scope first. Globals are picked from the workspace dictionary.
               </p>
             </div>
 
-            <div ref={pickerRef} className="relative">
-              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                Key
+            {/* Scope first */}
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                Scope
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={editor.keyName}
-                  onFocus={() => setPickerOpen(true)}
-                  onChange={(e) => {
-                    setEditor((prev) => ({
-                      ...prev,
-                      keyName: e.target.value.replace(/\s+/g, "_"),
-                    }));
-                    setPickerOpen(true);
-                  }}
-                  placeholder="e.g. CHAT_QUERY or pick a global…"
-                  className="w-full px-3 py-2 pr-8 text-xs font-mono bg-white border border-slate-200 rounded-md text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-400"
-                />
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
-                  onClick={() => setPickerOpen((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  aria-label="Browse global variables"
-                >
-                  <ChevronDown size={14} />
-                </button>
-              </div>
-
-              {pickerOpen && (
-                <div className="absolute z-20 mt-1 w-full max-h-52 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
-                  <div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-100">
-                    Workspace globals
-                  </div>
-                  {globalsLoading ? (
-                    <p className="px-3 py-3 text-[12px] text-slate-400">Loading…</p>
-                  ) : filteredGlobals.length === 0 ? (
-                    <p className="px-3 py-3 text-[12px] text-slate-400">
-                      {globals.length === 0
-                        ? "No globals in the workspace dictionary yet."
-                        : "No matching globals."}
-                    </p>
-                  ) : (
-                    filteredGlobals.map((item) => (
-                      <button
-                        key={item.id || item.key}
-                        type="button"
-                        onClick={() => applyGlobal(item)}
-                        className="w-full text-left px-3 py-2 hover:bg-slate-50 border-b border-slate-50 last:border-0"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[12px] font-mono font-semibold text-slate-800 truncate">
-                            {item.key}
-                          </span>
-                          <span className="inline-flex items-center gap-1 text-[10px] text-slate-500 shrink-0">
-                            <Globe size={9} />
-                            {item.type}
-                          </span>
-                        </div>
-                        <p className="text-[11px] font-mono text-slate-400 truncate mt-0.5">
-                          {item.description || previewValue(item.type, item.value)}
-                        </p>
-                      </button>
-                    ))
-                  )}
-                </div>
-              )}
-              <p className="text-[10.5px] text-slate-400 mt-1">
-                Reference in nodes as{" "}
-                <code className="font-mono text-slate-600">
-                  {`{{${editor.keyName || "KEY"}}}`}
-                </code>
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
-                Type
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {TYPE_OPTIONS.map((t) => {
-                  const active = editor.dataType === t.value;
-                  return (
-                    <button
-                      key={t.value}
-                      type="button"
-                      onClick={() =>
-                        setEditor((prev) => ({
-                          ...prev,
-                          dataType: t.value,
-                          jsonError: null,
-                          jsonVal:
-                            t.value === "array"
-                              ? '[\n  "item_1"\n]'
-                              : t.value === "object"
-                              ? '{\n  "key": "value"\n}'
-                              : prev.jsonVal,
-                        }))
-                      }
-                      className={`px-2.5 py-1 rounded-md text-[11.5px] font-medium border transition-colors ${
-                        active
-                          ? "bg-slate-800 text-white border-slate-800"
-                          : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
-                      }`}
-                    >
-                      {t.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
-                  Value
-                </label>
-                {(editor.dataType === "object" || editor.dataType === "array") && (
-                  <button
-                    type="button"
-                    onClick={formatJson}
-                    className="text-[11px] font-medium text-slate-600 hover:text-slate-900"
-                  >
-                    Format JSON
-                  </button>
-                )}
-              </div>
-
-              {editor.dataType === "text" && (
-                <textarea
-                  rows={3}
-                  value={editor.textVal}
-                  onChange={(e) =>
-                    setEditor((prev) => ({ ...prev, textVal: e.target.value }))
-                  }
-                  placeholder="Default value used at run time"
-                  className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-400"
-                />
-              )}
-
-              {editor.dataType === "number" && (
-                <input
-                  type="number"
-                  value={editor.numVal}
-                  onChange={(e) =>
-                    setEditor((prev) => ({ ...prev, numVal: e.target.value }))
-                  }
-                  className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md text-slate-800 focus:outline-none focus:border-slate-400"
-                />
-              )}
-
-              {editor.dataType === "boolean" && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setEditor((prev) => ({ ...prev, boolVal: !prev.boolVal }))
-                  }
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${
-                    editor.boolVal
-                      ? "bg-slate-800 text-white border-slate-800"
-                      : "bg-white text-slate-600 border-slate-200"
+                  onClick={() => setScope(false)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md border text-left transition-colors ${
+                    !editor.isGlobal
+                      ? "border-slate-800 bg-slate-900 text-white"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                   }`}
                 >
-                  {editor.boolVal ? "true" : "false"}
+                  <Lock size={13} />
+                  <span>
+                    <span className="block text-[12px] font-semibold">Local</span>
+                    <span className={`block text-[10.5px] ${!editor.isGlobal ? "text-slate-300" : "text-slate-400"}`}>
+                      Lives only on this flow
+                    </span>
+                  </span>
                 </button>
-              )}
+                <button
+                  type="button"
+                  onClick={() => setScope(true)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md border text-left transition-colors ${
+                    editor.isGlobal
+                      ? "border-slate-800 bg-slate-900 text-white"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                  }`}
+                >
+                  <Globe size={13} />
+                  <span>
+                    <span className="block text-[12px] font-semibold">Global</span>
+                    <span className={`block text-[10.5px] ${editor.isGlobal ? "text-slate-300" : "text-slate-400"}`}>
+                      From workspace dictionary
+                    </span>
+                  </span>
+                </button>
+              </div>
+            </div>
 
-              {(editor.dataType === "object" || editor.dataType === "array") && (
-                <div>
-                  <textarea
-                    rows={6}
-                    value={editor.jsonVal}
-                    onChange={(e) =>
-                      setEditor((prev) => ({
-                        ...prev,
-                        jsonVal: e.target.value,
-                        jsonError: null,
-                      }))
-                    }
-                    className="w-full p-3 font-mono text-xs bg-slate-50 border border-slate-200 rounded-md text-slate-800 focus:outline-none focus:border-slate-400"
-                  />
-                  {editor.jsonError && (
-                    <div className="mt-1.5 flex items-center gap-1.5 text-xs text-red-600">
-                      <AlertCircle size={13} className="shrink-0" />
-                      <span>{editor.jsonError}</span>
+            {editor.isGlobal ? (
+              <>
+                <div ref={pickerRef} className="relative">
+                  <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                    Global variable
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setPickerOpen((v) => !v)}
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-mono bg-white border border-slate-200 rounded-md text-left hover:border-slate-300"
+                  >
+                    <span className={editor.keyName ? "text-slate-800" : "text-slate-400"}>
+                      {editor.keyName || "Select a global…"}
+                    </span>
+                    <ChevronDown size={14} className="text-slate-400 shrink-0" />
+                  </button>
+                  {pickerOpen && (
+                    <div className="absolute z-20 mt-1 w-full max-h-52 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg">
+                      <div className="px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                        Workspace globals
+                      </div>
+                      {globalsLoading ? (
+                        <p className="px-3 py-3 text-[12px] text-slate-400">Loading…</p>
+                      ) : filteredGlobals.length === 0 ? (
+                        <p className="px-3 py-3 text-[12px] text-slate-400">
+                          {globals.length === 0
+                            ? "No globals yet. Create one on the Dictionary page."
+                            : "No matching globals."}
+                        </p>
+                      ) : (
+                        filteredGlobals.map((item) => (
+                          <button
+                            key={item.id || item.key}
+                            type="button"
+                            onClick={() => applyGlobal(item)}
+                            className="w-full text-left px-3 py-2 hover:bg-slate-50 border-b border-slate-50 last:border-0"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[12px] font-mono font-semibold text-slate-800 truncate">
+                                {item.key}
+                              </span>
+                              <span className="text-[10px] uppercase text-slate-500">{item.type}</span>
+                            </div>
+                            <p className="text-[11px] font-mono text-slate-400 truncate mt-0.5">
+                              {item.description || previewValue(item.type, item.value)}
+                            </p>
+                          </button>
+                        ))
+                      )}
                     </div>
                   )}
                 </div>
-              )}
-            </div>
 
-            <label className="flex items-start gap-2.5 rounded-md border border-slate-200 bg-slate-50/70 px-3 py-2.5 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={editor.isGlobal}
-                onChange={(e) =>
-                  setEditor((prev) => ({ ...prev, isGlobal: e.target.checked }))
-                }
-                className="mt-0.5 h-3.5 w-3.5 rounded border-slate-300 text-slate-800"
-              />
-              <span>
-                <span className="block text-[12.5px] font-medium text-slate-800">
-                  Global variable
-                </span>
-                <span className="block text-[11px] text-slate-500 mt-0.5">
-                  Saved with <code className="font-mono">scope: &quot;global&quot;</code>.
-                  Unchecked entries are local to this flow.
-                </span>
-              </span>
-            </label>
+                {editor.keyName && (
+                  <>
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                        Type
+                      </label>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-mono uppercase border border-slate-200 bg-slate-50 text-slate-600">
+                        {selectedGlobal?.type || editor.dataType}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                          Current value
+                        </label>
+                        <Link
+                          href="/dictionary"
+                          className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 hover:text-slate-900 no-underline"
+                        >
+                          Edit in Dictionary <ExternalLink size={11} />
+                        </Link>
+                      </div>
+                      <div className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-md text-slate-600 min-h-[40px]">
+                        {globalDisplay || "(empty)"}
+                      </div>
+                      <p className="text-[10.5px] text-slate-400 mt-1">
+                        Read-only here. The spec stores only the key and{" "}
+                        <code className="font-mono">scope: &quot;global&quot;</code> — the runtime
+                        fetches the latest value.
+                      </p>
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                    Key
+                  </label>
+                  <input
+                    type="text"
+                    value={editor.keyName}
+                    onChange={(e) =>
+                      setEditor((prev) => ({
+                        ...prev,
+                        keyName: e.target.value.replace(/\s+/g, "_"),
+                      }))
+                    }
+                    placeholder="e.g. CHAT_QUERY"
+                    className="w-full px-3 py-2 text-xs font-mono bg-white border border-slate-200 rounded-md text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-400"
+                  />
+                  <p className="text-[10.5px] text-slate-400 mt-1">
+                    Reference in nodes as{" "}
+                    <code className="font-mono text-slate-600">{`{{${editor.keyName || "KEY"}}}`}</code>
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">
+                    Type
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {TYPE_OPTIONS.map((t) => {
+                      const active = editor.dataType === t.value;
+                      return (
+                        <button
+                          key={t.value}
+                          type="button"
+                          onClick={() =>
+                            setEditor((prev) => ({
+                              ...prev,
+                              dataType: t.value,
+                              jsonError: null,
+                              jsonVal:
+                                t.value === "array"
+                                  ? '[\n  "item_1"\n]'
+                                  : t.value === "object"
+                                  ? '{\n  "key": "value"\n}'
+                                  : prev.jsonVal,
+                            }))
+                          }
+                          className={`px-2.5 py-1 rounded-md text-[11.5px] font-medium border transition-colors ${
+                            active
+                              ? "bg-slate-800 text-white border-slate-800"
+                              : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                          }`}
+                        >
+                          {t.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                      Value
+                    </label>
+                    {(editor.dataType === "object" || editor.dataType === "array") && (
+                      <button
+                        type="button"
+                        onClick={formatJson}
+                        className="text-[11px] font-medium text-slate-600 hover:text-slate-900"
+                      >
+                        Format JSON
+                      </button>
+                    )}
+                  </div>
+
+                  {editor.dataType === "text" && (
+                    <textarea
+                      rows={3}
+                      value={editor.textVal}
+                      onChange={(e) =>
+                        setEditor((prev) => ({ ...prev, textVal: e.target.value }))
+                      }
+                      placeholder="Default value used at run time"
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-400"
+                    />
+                  )}
+
+                  {editor.dataType === "number" && (
+                    <input
+                      type="number"
+                      value={editor.numVal}
+                      onChange={(e) =>
+                        setEditor((prev) => ({ ...prev, numVal: e.target.value }))
+                      }
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-md text-slate-800 focus:outline-none focus:border-slate-400"
+                    />
+                  )}
+
+                  {editor.dataType === "boolean" && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditor((prev) => ({ ...prev, boolVal: !prev.boolVal }))
+                      }
+                      className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${
+                        editor.boolVal
+                          ? "bg-slate-800 text-white border-slate-800"
+                          : "bg-white text-slate-600 border-slate-200"
+                      }`}
+                    >
+                      {editor.boolVal ? "true" : "false"}
+                    </button>
+                  )}
+
+                  {(editor.dataType === "object" || editor.dataType === "array") && (
+                    <div>
+                      <textarea
+                        rows={6}
+                        value={editor.jsonVal}
+                        onChange={(e) =>
+                          setEditor((prev) => ({
+                            ...prev,
+                            jsonVal: e.target.value,
+                            jsonError: null,
+                          }))
+                        }
+                        className="w-full p-3 font-mono text-xs bg-slate-50 border border-slate-200 rounded-md text-slate-800 focus:outline-none focus:border-slate-400"
+                      />
+                      {editor.jsonError && (
+                        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-red-600">
+                          <AlertCircle size={13} className="shrink-0" />
+                          <span>{editor.jsonError}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="px-5 py-3 border-t border-slate-100 bg-white">

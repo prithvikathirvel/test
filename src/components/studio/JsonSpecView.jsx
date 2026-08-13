@@ -5,6 +5,15 @@ import { Box, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import { Copy, Check, Download, FileJson } from "lucide-react";
 import { truncateLongStrings } from "@/utils/commonFunction";
+import { serializeFlowInputs } from "@/utils/templateRef";
+
+const specForJson = (spec) => {
+  if (!spec) return null;
+  return {
+    ...spec,
+    inputs: serializeFlowInputs(spec.inputs),
+  };
+};
 
 export default function JsonSpecView() {
   const specification = useSelector((state) => state.studio.specification);
@@ -13,7 +22,7 @@ export default function JsonSpecView() {
   // For visual display on screen only: truncate ultra-long base64/files to keep DOM responsive
   const processedSpec = React.useMemo(() => {
     if (!specification) return null;
-    return truncateLongStrings(specification, 100);
+    return truncateLongStrings(specForJson(specification), 100);
   }, [specification]);
 
   const viewJsonString = React.useMemo(() => {

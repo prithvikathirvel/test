@@ -85,26 +85,30 @@ const getNodeIcon = (type, catalogTypes) => {
  * tinted icon tile on a white card, matching the enterprise surface used by the
  * header, sidebar and modals.
  */
+/**
+ * Muted SaaS accents — recognisable by type, never neon.
+ * Rail is a 2px left border; the tile/chip stay pale so titles stay readable.
+ */
 const NODE_ACCENTS = {
-  tool:       { rail: "#3b82f6", tile: "bg-blue-50 text-blue-600 border-blue-100",       chip: "bg-blue-50 text-blue-700 border-blue-100",       ring: "rgba(59,130,246,0.35)" },
-  agent:      { rail: "#10b981", tile: "bg-emerald-50 text-emerald-600 border-emerald-100", chip: "bg-emerald-50 text-emerald-700 border-emerald-100", ring: "rgba(16,185,129,0.35)" },
-  model:      { rail: "#a855f7", tile: "bg-purple-50 text-purple-600 border-purple-100",  chip: "bg-purple-50 text-purple-700 border-purple-100",  ring: "rgba(168,85,247,0.35)" },
-  inputs:     { rail: "#06b6d4", tile: "bg-cyan-50 text-cyan-600 border-cyan-100",        chip: "bg-cyan-50 text-cyan-700 border-cyan-100",        ring: "rgba(6,182,212,0.35)" },
-  output:     { rail: "#f97316", tile: "bg-orange-50 text-orange-600 border-orange-100",  chip: "bg-orange-50 text-orange-700 border-orange-100",  ring: "rgba(249,115,22,0.35)" },
-  agentflow:  { rail: "#ec4899", tile: "bg-pink-50 text-pink-600 border-pink-100",        chip: "bg-pink-50 text-pink-700 border-pink-100",        ring: "rgba(236,72,153,0.35)" },
-  decision:   { rail: "#f59e0b", tile: "bg-amber-50 text-amber-600 border-amber-100",     chip: "bg-amber-50 text-amber-700 border-amber-100",     ring: "rgba(245,158,11,0.35)" },
-  conditions: { rail: "#f59e0b", tile: "bg-amber-50 text-amber-600 border-amber-100",     chip: "bg-amber-50 text-amber-700 border-amber-100",     ring: "rgba(245,158,11,0.35)" },
-  condition:  { rail: "#f59e0b", tile: "bg-amber-50 text-amber-600 border-amber-100",     chip: "bg-amber-50 text-amber-700 border-amber-100",     ring: "rgba(245,158,11,0.35)" },
-  iterator:   { rail: "#6366f1", tile: "bg-indigo-50 text-indigo-600 border-indigo-100",  chip: "bg-indigo-50 text-indigo-700 border-indigo-100",  ring: "rgba(99,102,241,0.35)" },
-  question:   { rail: "#8b5cf6", tile: "bg-violet-50 text-violet-600 border-violet-100",  chip: "bg-violet-50 text-violet-700 border-violet-100",  ring: "rgba(139,92,246,0.35)" },
-  start:      { rail: "#22c55e", tile: "bg-green-50 text-green-600 border-green-100",     chip: "bg-green-50 text-green-700 border-green-100",     ring: "rgba(34,197,94,0.35)" },
+  tool:       { rail: "#5b7fa6", tile: "bg-slate-50 text-slate-600 border-slate-200",     chip: "bg-slate-50 text-slate-600 border-slate-200",     ring: "rgba(91,127,166,0.28)" },
+  agent:      { rail: "#3d8f73", tile: "bg-emerald-50/70 text-emerald-700 border-emerald-100", chip: "bg-emerald-50 text-emerald-700 border-emerald-100", ring: "rgba(61,143,115,0.28)" },
+  model:      { rail: "#6f63a3", tile: "bg-violet-50/70 text-violet-700 border-violet-100", chip: "bg-violet-50 text-violet-700 border-violet-100", ring: "rgba(111,99,163,0.28)" },
+  inputs:     { rail: "#4d8f9a", tile: "bg-cyan-50/70 text-cyan-700 border-cyan-100",     chip: "bg-cyan-50 text-cyan-700 border-cyan-100",       ring: "rgba(77,143,154,0.28)" },
+  output:     { rail: "#b67a4a", tile: "bg-orange-50/70 text-orange-700 border-orange-100", chip: "bg-orange-50 text-orange-700 border-orange-100", ring: "rgba(182,122,74,0.28)" },
+  agentflow:  { rail: "#a06b84", tile: "bg-rose-50/70 text-rose-700 border-rose-100",     chip: "bg-rose-50 text-rose-700 border-rose-100",       ring: "rgba(160,107,132,0.28)" },
+  decision:   { rail: "#b08a3e", tile: "bg-amber-50/70 text-amber-700 border-amber-100",  chip: "bg-amber-50 text-amber-700 border-amber-100",     ring: "rgba(176,138,62,0.28)" },
+  conditions: { rail: "#b08a3e", tile: "bg-amber-50/70 text-amber-700 border-amber-100",  chip: "bg-amber-50 text-amber-700 border-amber-100",     ring: "rgba(176,138,62,0.28)" },
+  condition:  { rail: "#b08a3e", tile: "bg-amber-50/70 text-amber-700 border-amber-100",  chip: "bg-amber-50 text-amber-700 border-amber-100",     ring: "rgba(176,138,62,0.28)" },
+  iterator:   { rail: "#5c6aa8", tile: "bg-indigo-50/70 text-indigo-700 border-indigo-100", chip: "bg-indigo-50 text-indigo-700 border-indigo-100", ring: "rgba(92,106,168,0.28)" },
+  question:   { rail: "#6f63a3", tile: "bg-violet-50/70 text-violet-700 border-violet-100", chip: "bg-violet-50 text-violet-700 border-violet-100", ring: "rgba(111,99,163,0.28)" },
+  start:      { rail: "#4a9a6e", tile: "bg-emerald-50/70 text-emerald-700 border-emerald-100", chip: "bg-emerald-50 text-emerald-700 border-emerald-100", ring: "rgba(74,154,110,0.28)" },
 };
 
 const DEFAULT_ACCENT = {
   rail: "#94a3b8",
-  tile: "bg-slate-100 text-slate-600 border-slate-200",
+  tile: "bg-slate-50 text-slate-600 border-slate-200",
   chip: "bg-slate-50 text-slate-600 border-slate-200",
-  ring: "rgba(100,116,139,0.35)",
+  ring: "rgba(100,116,139,0.28)",
 };
 
 const getNodeAccent = (type) => NODE_ACCENTS[type?.toLowerCase()] || DEFAULT_ACCENT;
@@ -126,11 +130,11 @@ const getTypeLabel = (type) => {
 /** Shared handle geometry so every port on the canvas looks identical. */
 const handleStyle = (color, extra = {}) => ({
   background: "#ffffff",
-  border: `2px solid ${color}`,
-  width: 10,
-  height: 10,
+  border: `1.5px solid ${color}`,
+  width: 9,
+  height: 9,
   borderRadius: 9999,
-  boxShadow: "0 1px 2px rgba(15, 23, 42, 0.18)",
+  boxShadow: "0 0 0 2px #ffffff",
   ...extra,
 });
 
@@ -244,7 +248,12 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
   const updateNodeInternals = useUpdateNodeInternals();
   useEffect(() => {
     if (!id) return;
-    if (nodeType !== "conditions" && nodeType !== "condition") return;
+    if (
+      nodeType !== "conditions" &&
+      nodeType !== "condition" &&
+      nodeType !== "decision" &&
+      nodeType !== "iterator"
+    ) return;
     updateNodeInternals(id);
   }, [id, nodeType, conditionCount, updateNodeInternals]);
 
@@ -256,28 +265,21 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
 
   return (
     <div
-      className={`group relative min-w-[250px] max-w-[300px] bg-white rounded-xl border border-slate-200 transition-[box-shadow,border-color] duration-200 ${
-        selected ? "border-slate-300" : "shadow-sm hover:shadow-md hover:border-slate-300"
+      className={`group relative w-[264px] bg-white rounded-lg border border-slate-200 transition-[box-shadow,border-color] duration-150 ${
+        selected ? "border-slate-300" : "hover:border-slate-300"
       }`}
       style={{
-        // The type rail is the card's own left border, so it follows the
-        // rounded corners exactly instead of sitting as a detached bar. Using
-        // a real border also keeps it inside the element box, which means the
-        // card no longer needs `overflow-hidden` — and the connection handles,
-        // which are deliberately positioned 6px outside the card, stop being
-        // clipped into half-circles.
-        borderLeftWidth: 3,
+        borderLeftWidth: 2,
         borderLeftColor: accent.rail,
-        ...(selected
-          ? { boxShadow: `0 0 0 3px ${accent.ring}, 0 8px 20px -6px rgba(15,23,42,0.22)` }
-          : null),
+        boxShadow: selected
+          ? `0 0 0 3px ${accent.ring}, 0 6px 16px -8px rgba(15,23,42,0.18)`
+          : "0 1px 2px rgba(15,23,42,0.04)",
       }}
     >
-
       {/* Header */}
-      <div className="flex items-start gap-2.5 pl-3.5 pr-3 py-2.5 border-b border-slate-100 bg-white rounded-tr-[10px]">
+      <div className="flex items-center gap-2.5 px-3 py-2.5">
         <div
-          className={`shrink-0 mt-0.5 h-7 w-7 rounded-lg border flex items-center justify-center ${accent.tile}`}
+          className={`shrink-0 h-7 w-7 rounded-md border flex items-center justify-center ${accent.tile}`}
         >
           {nodeType === "iterator" ? (
             <span className="animate-[spin_3s_linear_infinite]">{icon}</span>
@@ -288,18 +290,18 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
 
         <div className="flex-1 min-w-0">
           <Tooltip title={nodeTitle} placement="top" arrow>
-            <h3 className="text-[13px] font-semibold text-slate-800 leading-tight truncate tracking-tight">
+            <h3 className="text-[13px] font-semibold text-slate-800 leading-5 truncate tracking-tight">
               {nodeTitle}
             </h3>
           </Tooltip>
-          <div className="mt-1 flex items-center gap-1.5">
+          <div className="mt-0.5 flex items-center gap-1.5 min-h-[16px]">
             <span
-              className={`inline-flex items-center px-1.5 py-px rounded text-[9.5px] font-medium uppercase tracking-wide border ${accent.chip}`}
+              className={`inline-flex items-center px-1.5 h-4 rounded text-[9.5px] font-medium uppercase tracking-wide border ${accent.chip}`}
             >
               {typeLabel}
             </span>
             {paramCount > 0 && (
-              <span className="text-[10px] text-slate-400 font-mono">
+              <span className="text-[10px] text-slate-400 tabular-nums">
                 {paramCount} {paramCount === 1 ? "field" : "fields"}
               </span>
             )}
@@ -309,7 +311,7 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
 
       {/* Question/Options Content */}
       {shouldShowOptionsUI && (
-        <div className="pl-3.5 pr-3 py-2.5 border-b border-slate-100 bg-slate-50/50">
+        <div className="px-3 py-2 border-t border-slate-100 bg-slate-50/40">
           {questionData.questionText && !isDynamic(questionData.questionText) && (
             <p className="text-[11.5px] text-slate-600 leading-snug mb-2 line-clamp-2 break-words">
               {questionData.questionText}
@@ -354,7 +356,7 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
 
       {/* Condition Content */}
       {(nodeType === "conditions" || nodeType === "condition") && Array.isArray(conditionData.conditions) && conditionData.conditions.length > 0 && (
-        <div className="pl-3.5 pr-3 py-2.5 border-b border-slate-100 bg-slate-50/50">
+        <div className="px-3 py-2 border-t border-slate-100 bg-slate-50/40">
           <p className="text-[9.5px] uppercase tracking-wide text-slate-400 font-semibold mb-1.5">
             {conditionData.conditions.length} condition{conditionData.conditions.length !== 1 ? 's' : ''}
           </p>
@@ -428,79 +430,58 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
         />
       )}
 
-      {/* Decision Node Handles - labelled so the true/false branch is obvious */}
       {nodeType === "decision" && (
-        <>
-          <span
-            className="absolute right-2 text-[9px] font-semibold uppercase tracking-wide text-emerald-600 pointer-events-none"
-            style={{ top: '40%', transform: 'translateY(-50%)' }}
-          >
-            true
-          </span>
-          <Tooltip title="True branch" placement="right" arrow>
+        <div className="px-3 pb-2.5 pt-0 space-y-1.5 border-t border-slate-100">
+          <div className="relative flex items-center justify-between rounded-md border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 pr-4">
+            <span className="text-[11px] font-medium text-slate-600">True</span>
+            <span className="text-[10px] font-mono text-emerald-700">yes</span>
             <Handle
               id="true"
               type="source"
               position={Position.Right}
-              className="hover:!scale-125 transition-transform"
-              style={handleStyle("#10b981", { right: -6, top: '40%' })}
+              className="!absolute !top-1/2 !-translate-y-1/2 hover:!scale-125 transition-transform"
+              style={handleStyle("#3d8f73", { right: -6 })}
             />
-          </Tooltip>
-
-          <span
-            className="absolute right-2 text-[9px] font-semibold uppercase tracking-wide text-rose-600 pointer-events-none"
-            style={{ top: '60%', transform: 'translateY(-50%)' }}
-          >
-            false
-          </span>
-          <Tooltip title="False branch" placement="right" arrow>
+          </div>
+          <div className="relative flex items-center justify-between rounded-md border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 pr-4">
+            <span className="text-[11px] font-medium text-slate-600">False</span>
+            <span className="text-[10px] font-mono text-slate-500">no</span>
             <Handle
               id="false"
               type="source"
               position={Position.Right}
-              className="hover:!scale-125 transition-transform"
-              style={handleStyle("#f43f5e", { right: -6, top: '60%' })}
+              className="!absolute !top-1/2 !-translate-y-1/2 hover:!scale-125 transition-transform"
+              style={handleStyle("#b06a6a", { right: -6 })}
             />
-          </Tooltip>
-        </>
+          </div>
+        </div>
       )}
 
-      {/* Iterator Node Handles */}
       {nodeType === "iterator" && (
-        <>
-          <span
-            className="absolute right-2 text-[9px] font-semibold uppercase tracking-wide text-indigo-600 pointer-events-none"
-            style={{ top: '40%', transform: 'translateY(-50%)' }}
-          >
-            loop
-          </span>
-          <Tooltip title="Loop body" placement="right" arrow>
+        <div className="px-3 pb-2.5 pt-0 space-y-1.5 border-t border-slate-100">
+          <div className="relative flex items-center justify-between rounded-md border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 pr-4">
+            <span className="text-[11px] font-medium text-slate-600">Loop body</span>
+            <span className="text-[10px] font-mono text-indigo-700">loop</span>
             <Handle
               id="loop"
               type="source"
               position={Position.Right}
-              className="hover:!scale-125 transition-transform"
-              style={handleStyle("#6366f1", { right: -6, top: '40%' })}
+              className="!absolute !top-1/2 !-translate-y-1/2 hover:!scale-125 transition-transform"
+              style={handleStyle("#5c6aa8", { right: -6 })}
             />
-          </Tooltip>
-
-          <span
-            className="absolute right-2 text-[9px] font-semibold uppercase tracking-wide text-slate-500 pointer-events-none"
-            style={{ top: '70%', transform: 'translateY(-50%)' }}
-          >
-            done
-          </span>
-          <Tooltip title="Complete" placement="right" arrow>
+          </div>
+          <div className="relative flex items-center justify-between rounded-md border border-slate-200 bg-slate-50/60 px-2.5 py-1.5 pr-4">
+            <span className="text-[11px] font-medium text-slate-600">Complete</span>
+            <span className="text-[10px] font-mono text-slate-500">done</span>
             <Handle
               id="complete"
               type="source"
               position={Position.Right}
-              className="hover:!scale-125 transition-transform"
-              style={handleStyle("#94a3b8", { right: -6, top: '70%' })}
-              focusable={true}
+              className="!absolute !top-1/2 !-translate-y-1/2 hover:!scale-125 transition-transform"
+              style={handleStyle("#94a3b8", { right: -6 })}
             />
-          </Tooltip>
-        </>
+          </div>
+        </div>
       )}
     </div>
   );

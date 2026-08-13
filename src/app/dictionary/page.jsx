@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import ConfirmDialog from "@/components/Common/ConfirmDialog";
+import PageHeader from "@/components/layout/PageHeader";
 import {
   listDictionaries,
   createDictionary,
@@ -269,44 +270,30 @@ export default function DictionaryPage() {
   return (
     <Box className="min-h-screen bg-[#f8fafc]">
       <Box className="px-5 lg:px-5 py-5">
-        {/* Top Page Header */}
-        <Box className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            {/* <div className="flex items-center gap-2 text-xs font-semibold text-slate-400 mb-1">
-              <span>Platform</span>
-              <span>/</span>
-              <span className="text-slate-700">Dictionary</span>
-            </div> */}
-            <h1 className="text-md font-bold text-slate-800 tracking-tight flex items-center gap-2.5">
-              Global Dictionary & Variables
-              <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
-                {dictionaries.length} Stores
-              </span>
-            </h1>
-            <p className="text-slate-400 text-xs mt-0.5">
-              Manage centralized key-value configurations and constants referenced across all Agent Flows.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => loadDictionaries({ silent: true })}
-              disabled={loading}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors disabled:opacity-60"
-              title="Refresh from server"
-            >
-              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-              Refresh
-            </button>
-
-            <button
-              onClick={handleOpenCreateModal}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
-            >
-              <Plus size={15} /> Create Variable
-            </button>
-          </div>
-        </Box>
+        <PageHeader
+          icon={BookMarked}
+          title="Global Dictionary"
+          description="Manage centralized key-value configurations referenced across all agent flows"
+          actions={
+            <>
+              <button
+                onClick={() => loadDictionaries({ silent: true })}
+                disabled={loading}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 transition-colors disabled:opacity-60"
+                title="Refresh from server"
+              >
+                <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+                Refresh
+              </button>
+              <button
+                onClick={handleOpenCreateModal}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 transition-colors"
+              >
+                <Plus size={15} /> Create Variable
+              </button>
+            </>
+          }
+        />
 
         {/* Metric Cards (Screenshot Style) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

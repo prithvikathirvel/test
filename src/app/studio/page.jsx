@@ -24,6 +24,7 @@ import FlowListingTableView from "@/components/StudioListing/FlowListingTableVie
 import FlowListingGridView from "@/components/StudioListing/FlowListingGridView";
 import BlurredLoader from "@/components/Common/BlurredLoader";
 import ConfirmDialog from "@/components/Common/ConfirmDialog";
+import PageHeader from "@/components/layout/PageHeader";
 
 const StudioListing = () => {
   const dispatch = useDispatch();
@@ -150,26 +151,19 @@ const StudioListing = () => {
       {studioSaveFlowLoader && <BlurredLoader title="Creating Flow..." />}
 
       <Box className="px-6 lg:px-5 py-5">
-        {/* Page Header matching attached design */}
-        <Box className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-md font-bold text-slate-800 tracking-tight">
-              Studio Flows
-            </h1>
-            <p className="text-slate-400 text-xs mt-0.5">
-              Manage and orchestrate AI agent workflows for your workspace
-            </p>
-          </div>
-
-          <Box className="flex items-center gap-3">
+        <PageHeader
+          icon={Workflow}
+          title="Studio Flows"
+          description="Manage and orchestrate AI agent workflows for your workspace"
+          actions={
             <button
               onClick={handleCreateStudio}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-md text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 transition-colors"
             >
               <Plus size={15} /> Create Flow
             </button>
-          </Box>
-        </Box>
+          }
+        />
 
         <Box className="mb-6 grid grid-cols-2 lg:grid-cols-4 divide-x divide-slate-200 rounded-lg border border-slate-200 bg-white">
           {[

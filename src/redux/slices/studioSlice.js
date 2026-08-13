@@ -4,6 +4,7 @@ import APIKit from "@/utils/APIKit";
 import { showToaster } from "@/utils/commonFunction";
 import axios from "axios";
 import { sanitizeOutput } from "@/utils/commonFunction";
+import { serializeFlowInputs } from "@/utils/templateRef";
 
 const initialState = initialRootState.studio;
 
@@ -85,9 +86,10 @@ export const updateFlow = createAsyncThunk('flow/updateFlow', async (data) => {
   console.log('Updating flow data...');
   try {
     const { id, updatedData, onSuccess } = data
-    console.log('Flow ID:', id);
-    console.log('Updated Data:', updatedData);
-    const response = await APIKit.put(`/agent-flow/${id}`, updatedData);
+    const payload = updatedData && typeof updatedData === "object"
+      ? { ...updatedData, inputs: serializeFlowInputs(updatedData.inputs) }
+      : updatedData;
+    const response = await APIKit.put(`/agent-flow/${id}`, payload);
     showToaster('success', 'Flow updated successfully');
     onSuccess();
     return response.data;
@@ -513,10 +515,7 @@ const generateSpecification = (flow, nodes, edges) => {
 
   const specification = {
     ...flow,
-    inputs: (flow?.inputs || []).map((input) => ({
-      ...input,
-      scope: input?.scope === "global" ? "global" : "local",
-    })),
+    inputs: serializeFlowInputs(flow?.inputs),
     graphSpec: {
       nodes: nodes.map(node => {
         const connections = nodeConnections[node.id] || [];

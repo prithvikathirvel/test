@@ -4,7 +4,8 @@ import { useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/navigation";
 import { Box } from "@mui/material";
-import { LogOut, Mail, User as UserIcon } from "lucide-react";
+import { LogOut, Mail, User as UserIcon, Settings } from "lucide-react";
+import PageHeader from "@/components/layout/PageHeader";
 import { logout } from "@/redux/slices/authSlice";
 import {
   getDisplayName,
@@ -34,12 +35,11 @@ export default function SettingsPage() {
   return (
     <Box className="min-h-screen bg-[#f8fafc]">
       <Box className="px-6 lg:px-5 py-5 max-w-3xl">
-        <div className="mb-6">
-          <h1 className="text-[15px] font-bold text-slate-800 tracking-tight">Settings</h1>
-          <p className="text-slate-500 text-xs mt-0.5">
-            Your account details for this workspace
-          </p>
-        </div>
+        <PageHeader
+          icon={Settings}
+          title="Settings"
+          description="Your account details for this workspace"
+        />
 
         {!isAuthenticated || !user ? (
           <div className="rounded-lg border border-slate-200 bg-white px-5 py-10 text-center">

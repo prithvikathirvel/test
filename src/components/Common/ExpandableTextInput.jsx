@@ -19,6 +19,7 @@ import {
   AlertCircle,
   X,
 } from "lucide-react";
+import { isTemplateRef, looksLikeJson } from "@/utils/templateRef";
 
 /**
  * Auto-growing, expandable text editor for large free-form payloads
@@ -38,14 +39,6 @@ import {
  */
 const LINE_HEIGHT = 20; // px, matches text-[12.5px]/leading-5
 const VERTICAL_PADDING = 20; // py-2.5 top + bottom
-
-const looksLikeJson = (text) => {
-  const trimmed = (text || "").trim();
-  if (!trimmed) return false;
-  const first = trimmed[0];
-  const last = trimmed[trimmed.length - 1];
-  return (first === "{" && last === "}") || (first === "[" && last === "]");
-};
 
 const ExpandableTextInput = ({
   value = "",
@@ -79,6 +72,8 @@ const ExpandableTextInput = ({
 
   const jsonError = useMemo(() => {
     if (!isJsonMode || !text.trim()) return null;
+    // Template refs (`{{KEY}}`) are resolved at runtime — never JSON.
+    if (isTemplateRef(text)) return null;
     try {
       JSON.parse(text);
       return null;
@@ -222,7 +217,7 @@ const ExpandableTextInput = ({
       <span>{stats.lines} ln</span>
       <span className="text-slate-300">•</span>
       <span>{stats.chars} ch</span>
-      {isJsonMode && (
+      {isJsonMode && !isTemplateRef(text) && (
         <>
           <span className="text-slate-300">•</span>
           <span className={jsonError ? "text-red-500" : "text-emerald-600"}>

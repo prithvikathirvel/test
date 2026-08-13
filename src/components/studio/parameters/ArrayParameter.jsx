@@ -119,6 +119,13 @@ const ArrayParameter = ({ param, color, onUpdate, parameters, parameter }) => {
   const handleTextInputChange = (value) => {
     setTextInputValue(value);
 
+    const trimmed = (value || "").trim();
+    if (trimmed.startsWith("{{")) {
+      setError(null);
+      updateParentValue(value);
+      return;
+    }
+
     try {
       const parsed = JSON.parse(value);
       if (!Array.isArray(parsed)) {

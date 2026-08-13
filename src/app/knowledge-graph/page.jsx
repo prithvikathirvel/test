@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Waypoints } from 'lucide-react';
+import PageHeader from '@/components/layout/PageHeader';
 import {
   setStep, setUploadSession,
   clearSession, setSessionExpired, resetWizard,
@@ -65,20 +66,12 @@ export default function KnowledgeGraphPage() {
 
   return (
     <div className="px-6 lg:px-5 py-5 bg-[#f8fafc] min-h-screen">
-      <div className="mb-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
-        <div className="flex items-start gap-3">
-          <div className="h-9 w-9 rounded-md border border-slate-200 bg-white flex items-center justify-center shrink-0">
-            <Waypoints size={17} className="text-slate-500" />
-          </div>
-          <div>
-            <h1 className="text-[16px] font-semibold text-slate-800 leading-tight">Knowledge Graph</h1>
-            <p className="text-[12.5px] text-slate-500 mt-0.5">
-              Model structured data into entity-relationship graphs for agent retrieval
-            </p>
-          </div>
-        </div>
-        <HealthBadge />
-      </div>
+      <PageHeader
+        icon={Waypoints}
+        title="Knowledge Graph"
+        description="Model structured data into entity-relationship graphs for agent retrieval"
+        actions={<HealthBadge />}
+      />
 
       <div className="mx-auto">
         <ConnectionManager />
