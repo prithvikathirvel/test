@@ -8,7 +8,17 @@ import {
   Tooltip,
   CircularProgress,
 } from "@mui/material";
-import { Plus, X, Pencil, Trash2, RefreshCw } from "lucide-react";
+import {
+  Plus,
+  X,
+  Pencil,
+  Trash2,
+  RefreshCw,
+  FileJson,
+  ChevronDown,
+  Import,
+  Braces,
+} from "lucide-react";
 import CustomTable from "@/components/Common/CustomTable";
 import ConfirmDialog from "@/components/Common/ConfirmDialog";
 import {
@@ -19,7 +29,10 @@ import {
   deleteRegistry,
   buildPayload,
   recordToFormValues,
+  extractParamsFromJson,
+  paramsToEditor,
 } from "@/utils/adminAPI";
+import { InputParametersEditor, OutputParametersEditor } from "./ParametersEditor";
 import { getCurrentUserFromToken } from "@/utils/jwt";
 import { toast } from "sonner";
 
@@ -42,7 +55,15 @@ const Toggle = ({ checked, onChange, disabled = false }) => (
   </button>
 );
 
-const Field = ({ field, value, onChange, disabled }) => {
+const SectionLabel = ({ children, hint }) => (
+  <div className="flex items-center justify-between mb-3">
+    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">{children}</span>
+    {hint && <span className="text-[11px] text-slate-400">{hint}</span>}
+  </div>
+);
+
+/** Simple text / textarea / toggle field for the basic-info card. */
+const BasicField = ({ field, value, onChange, disabled }) => {
   if (field.type === "toggle") {
     return (
       <div className="flex items-center justify-between gap-4 px-3 py-2.5 rounded-lg bg-slate-50 border border-slate-200">
@@ -66,7 +87,7 @@ const Field = ({ field, value, onChange, disabled }) => {
           value={value ?? ""}
           onChange={(e) => onChange(e.target.value)}
           placeholder={field.placeholder}
-          rows={field.type === "json" ? 5 : 3}
+          rows={field.type === "json" ? 4 : 2}
           className={`w-full px-3 py-2 text-[12.5px] bg-white border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 transition-all resize-y ${
             field.type === "json" ? "font-mono text-[11.5px]" : ""
           }`}
@@ -106,11 +127,28 @@ const RegistrySection = ({ kind }) => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState(null); // record being edited, or null for create
+  const [editing, setEditing] = useState(null);
   const [formValues, setFormValues] = useState({});
   const [saving, setSaving] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  // Import JSON state
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [importCandidates, setImportCandidates] = useState([]);
+  const [importMessage, setImportMessage] = useState(null);
+  const [importSelected, setImportSelected] = useState(0);
+
+  const hasField = useCallback(
+    (key) => config.fields.some((f) => f.key === key),
+    [config.fields]
+  );
+
+  const basicFields = useMemo(
+    () => config.fields.filter((f) => f.type !== "params" && f.type !== "outputParams"),
+    [config.fields]
+  );
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -131,10 +169,9 @@ const RegistrySection = ({ kind }) => {
     const values = {};
     config.fields.forEach((f) => {
       if (f.type === "toggle") values[f.key] = f.key === "isActive" || f.key === "status" ? true : false;
-      else if (f.type === "tags") values[f.key] = f.key === "agents" ? "" : "";
+      else if (f.type === "params" || f.type === "outputParams") values[f.key] = [];
       else values[f.key] = "";
     });
-    // Prefill "createdBy" from the admin's own JWT identity.
     const me = getCurrentUserFromToken();
     if (me?.email) values.createdBy = me.email;
     return values;
@@ -143,17 +180,54 @@ const RegistrySection = ({ kind }) => {
   const openCreate = () => {
     setEditing(null);
     setFormValues(defaultValues);
+    resetImport();
     setModalOpen(true);
   };
 
   const openEdit = (record) => {
     setEditing(record);
     setFormValues(recordToFormValues(kind, record));
+    resetImport();
     setModalOpen(true);
+  };
+
+  const resetImport = () => {
+    setImportOpen(false);
+    setImportText("");
+    setImportCandidates([]);
+    setImportMessage(null);
+    setImportSelected(0);
   };
 
   const setField = (key, value) =>
     setFormValues((prev) => ({ ...prev, [key]: value }));
+
+  const handleImportChange = (text) => {
+    setImportText(text);
+    const { candidates, message } = extractParamsFromJson(text);
+    setImportCandidates(candidates);
+    setImportMessage(message);
+    setImportSelected(0);
+  };
+
+  const handleImportApply = () => {
+    const sel = importCandidates[importSelected];
+    if (!sel) return;
+
+    const updates = {};
+    if (sel.name && hasField("name")) updates.name = sel.name;
+    if (sel.description && hasField("description")) updates.description = sel.description;
+    if (hasField("inputParameters")) {
+      updates.inputParameters = paramsToEditor(sel.inputParameters);
+    }
+    if (hasField("outputParameters")) {
+      updates.outputParameters = paramsToEditor(sel.outputParameters, { forceOutputKey: true });
+    }
+
+    setFormValues((prev) => ({ ...prev, ...updates }));
+    toast.success("JSON imported — you can continue editing.");
+    setImportOpen(false);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -243,6 +317,8 @@ const RegistrySection = ({ kind }) => {
     },
   ];
 
+  const selectedCandidate = importCandidates[importSelected];
+
   return (
     <div>
       {/* Section header */}
@@ -296,16 +372,32 @@ const RegistrySection = ({ kind }) => {
       <Dialog
         open={modalOpen}
         onClose={() => setModalOpen(false)}
-        maxWidth="sm"
+        maxWidth="md"
         fullWidth
         PaperProps={{
-          sx: { borderRadius: "16px", border: "1px solid #e2e8f0", backgroundColor: "#f8fafc" },
+          sx: {
+            borderRadius: "16px",
+            border: "1px solid #e2e8f0",
+            backgroundColor: "#f8fafc",
+            boxShadow: "0 20px 25px -5px rgba(0,0,0,0.08)",
+          },
         }}
       >
+        {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/80 bg-white">
-          <h3 className="text-[14px] font-bold text-slate-800">
-            {editing ? `Edit ${config.singular}` : `Add ${config.singular}`}
-          </h3>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="h-7 w-7 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0">
+              <Braces size={14} />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-[14px] font-bold text-slate-800 leading-tight">
+                {editing ? `Edit ${config.singular}` : `Add ${config.singular}`}
+              </h3>
+              <p className="text-[11px] text-slate-400 truncate">
+                {editing ? editing.name : "Create a new registry entry"}
+              </p>
+            </div>
+          </div>
           <IconButton size="small" onClick={() => setModalOpen(false)} className="!text-slate-400 hover:!text-slate-700">
             <X size={16} />
           </IconButton>
@@ -313,16 +405,145 @@ const RegistrySection = ({ kind }) => {
 
         <DialogContent sx={{ p: 0 }}>
           <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-            {config.fields.map((field) => (
-              <Field
-                key={field.key}
-                field={field}
-                value={formValues[field.key]}
-                onChange={(v) => setField(field.key, v)}
-                disabled={saving}
-              />
-            ))}
+            {/* Import JSON */}
+            <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setImportOpen((v) => !v)}
+                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors"
+              >
+                <span className="flex items-center gap-2">
+                  <FileJson size={15} className="text-indigo-600" />
+                  <span className="text-[12.5px] font-semibold text-slate-700">Import JSON</span>
+                  <span className="text-[11px] text-slate-400">
+                    paste a flow / node spec to auto-fill the parameters
+                  </span>
+                </span>
+                <ChevronDown
+                  size={15}
+                  className={`text-slate-400 transition-transform ${importOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {importOpen && (
+                <div className="px-4 pb-4 space-y-3 border-t border-slate-100">
+                  <textarea
+                    value={importText}
+                    onChange={(e) => handleImportChange(e.target.value)}
+                    placeholder='Paste a JSON spec here — e.g. { "inputParameters": [ { "key": "query", "type": "string", "value": "" } ], "outputParameters": [ { "key": "output", "type": "string", "value": "response" } ] }'
+                    rows={5}
+                    className="w-full px-3 py-2 text-[11.5px] font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 transition-all resize-y"
+                  />
+
+                  {importMessage && (
+                    <p className="text-[11.5px] text-amber-600">{importMessage}</p>
+                  )}
+
+                  {importCandidates.length > 0 && (
+                    <>
+                      {importCandidates.length > 1 && (
+                        <div>
+                          <label className="block text-[11px] font-semibold text-slate-600 mb-1.5">
+                            Select node to import from
+                          </label>
+                          <select
+                            value={importSelected}
+                            onChange={(e) => setImportSelected(Number(e.target.value))}
+                            className="w-full h-9 px-2.5 text-[12px] bg-white border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15"
+                          >
+                            {importCandidates.map((c, i) => (
+                              <option key={i} value={i}>
+                                {c.name || `Node ${i + 1}`} — {c.inputParameters.length} in /{" "}
+                                {c.outputParameters.length} out
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      {selectedCandidate && (
+                        <div className="flex items-center gap-3 text-[11.5px] text-slate-500">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-100">
+                            <Braces size={12} />
+                            {selectedCandidate.inputParameters.length} input parameter
+                            {selectedCandidate.inputParameters.length === 1 ? "" : "s"}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-100">
+                            <Braces size={12} />
+                            {selectedCandidate.outputParameters.length} output parameter
+                            {selectedCandidate.outputParameters.length === 1 ? "" : "s"}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleImportApply}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg shadow-xs transition-colors"
+                        >
+                          <Import size={13} />
+                          Apply Import
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Basic information */}
+            <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs p-4">
+              <SectionLabel hint="Required fields are marked *">Basic Information</SectionLabel>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {basicFields.map((field) => (
+                  <div
+                    key={field.key}
+                    className={
+                      field.type === "textarea" || field.type === "json"
+                        ? "sm:col-span-2"
+                        : "sm:col-span-1"
+                    }
+                  >
+                    <BasicField
+                      field={field}
+                      value={formValues[field.key]}
+                      onChange={(v) => setField(field.key, v)}
+                      disabled={saving}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Input parameters */}
+            {hasField("inputParameters") && (
+              <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs p-4">
+                <SectionLabel hint="Add as many input parameters as you need">
+                  Input Parameters
+                </SectionLabel>
+                <InputParametersEditor
+                  params={formValues.inputParameters || []}
+                  onChange={(v) => setField("inputParameters", v)}
+                />
+              </div>
+            )}
+
+            {/* Output parameters */}
+            {hasField("outputParameters") && (
+              <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs p-4">
+                <SectionLabel hint="Key is always fixed to 'output'">
+                  Output Parameters
+                </SectionLabel>
+                <OutputParametersEditor
+                  params={formValues.outputParameters || []}
+                  onChange={(v) => setField("outputParameters", v)}
+                />
+              </div>
+            )}
           </div>
+
+          {/* Footer */}
           <div className="px-5 py-3.5 border-t border-slate-200/80 bg-slate-50/60 flex items-center justify-end gap-2">
             <button
               onClick={() => setModalOpen(false)}
