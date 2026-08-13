@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { MessageCircle, X, Send, User, Bot, CheckCircle, Loader2, XCircle, Paperclip, FileText, Trash2, Mic, Square, Play, Pause, Volume2, VolumeX, Settings, MicOff } from "lucide-react"
 import { useDispatch, useSelector } from "react-redux"
 import { parseAndNormalizeFormData } from "@/utils/commonFunction"
+import { setUsage } from "@/redux/slices/studioSlice"
 
 // ============================================================================
 // DYNAMIC FORM COMPONENT (unchanged)
@@ -458,6 +459,16 @@ const StudioChatBot = ({
 
     if (data.thread_id) setThreadId(data.thread_id)
     if (data.session_id) setLocalSessionId(data.session_id)
+
+    // Capture run usage so the studio canvas widget can reflect token & cost.
+    if (data.token_usage !== undefined || data.price_usage !== undefined) {
+      dispatch(
+        setUsage({
+          token_usage: data.token_usage,
+          price_usage: data.price_usage,
+        })
+      );
+    }
 
     // Centralized status handling
     if (data.status) {

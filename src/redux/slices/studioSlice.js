@@ -367,6 +367,15 @@ const studioSlice = createSlice({
     clearNewFlowId: (state) => {
       state.newFlowId = null;
     },
+    setUsage: (state, action) => {
+      const payload = action.payload || {};
+      if (payload.token_usage !== undefined) {
+        state.tokenUsage = payload.token_usage;
+      }
+      if (payload.price_usage !== undefined) {
+        state.priceUsage = payload.price_usage;
+      }
+    },
 
   },
   extraReducers: (builder) => {
@@ -472,6 +481,8 @@ const studioSlice = createSlice({
       state.isFlowRunning = false;
       state.flowOutput = sanitizeOutput(action.payload);
       state.sessionId = action.payload.session_id;
+      state.tokenUsage = action.payload.token_usage ?? null;
+      state.priceUsage = action.payload.price_usage ?? null;
       console.log("flow output", state.flowOutput)
     });
     builder.addCase(runFlow.rejected, (state, action) => {
@@ -588,5 +599,5 @@ const generateSpecification = (flow, nodes, edges) => {
   return specification;
 };
 
-export const { updateSpecification, setNodes, setEdges, deleteNode, updateNodeConnections, updateNode, clearNewFlowId } = studioSlice.actions;
+export const { updateSpecification, setNodes, setEdges, deleteNode, updateNodeConnections, updateNode, clearNewFlowId, setUsage } = studioSlice.actions;
 export default studioSlice.reducer;
