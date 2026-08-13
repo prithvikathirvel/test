@@ -86,6 +86,7 @@ const FlowCanvas = memo(function FlowCanvas({
   onAddSpecNode,
   onAddNodes,
   onOpenNodeDetails,
+  sidebarCollapsed = false,
 }) {
   const {
     screenToFlowPosition,
@@ -540,7 +541,7 @@ const FlowCanvas = memo(function FlowCanvas({
           onToggleSnap={toggleSnap}
           onOpenSearch={openPalette}
         />
-        <TokenUsageWidget />
+        <TokenUsageWidget sidebarCollapsed={sidebarCollapsed} />
       </ReactFlow>
 
       <NodeContextMenu

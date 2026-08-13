@@ -20,6 +20,9 @@ const ProtectedRoute = ({ children }) => {
   useEffect(() => {
     if (authLoader) return;
     const path = normalizePath(pathname);
+    // The admin console manages its own (separate) authentication and must not
+    // be gated by the regular user session.
+    if (path === "/admin" || path.startsWith("/admin/")) return;
     if (!isAuthenticated && !PUBLIC_PATHS.has(path)) {
       router.push("/login");
     }

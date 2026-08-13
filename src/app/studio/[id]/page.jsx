@@ -641,6 +641,7 @@ const Studio = () => {
                                     onAddSpecNode={handleAddSpecNode}
                                     onAddNodes={handleAddNodes}
                                     onOpenNodeDetails={handleOpenNodeDetails}
+                                    sidebarCollapsed={!sidebarOpen}
                                 />
                             </div>
                         ) : (

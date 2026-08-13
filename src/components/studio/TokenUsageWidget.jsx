@@ -91,7 +91,7 @@ const Stat = ({ icon: Icon, label, value }) => (
  * when the components sidebar is collapsed (and its "Components" pill sits in
  * the top-left corner).
  */
-const TokenUsageWidget = () => {
+const TokenUsageWidget = ({ sidebarCollapsed = false }) => {
   const tokenUsage = useSelector((state) => state?.studio?.tokenUsage);
   const priceUsage = useSelector((state) => state?.studio?.priceUsage);
   const [open, setOpen] = useState(false);
@@ -116,7 +116,10 @@ const TokenUsageWidget = () => {
   }
 
   return (
-    <Panel position="top-left" className="!ml-3 !mt-12">
+    <Panel
+      position="top-left"
+      className={sidebarCollapsed ? "!ml-[140px] !mt-3" : "!ml-3 !mt-3"}
+    >
       <div className="relative">
         <button
           type="button"
