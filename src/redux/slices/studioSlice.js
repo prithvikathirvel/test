@@ -472,6 +472,8 @@ const studioSlice = createSlice({
       state.isFlowRunning = false;
       state.flowOutput = sanitizeOutput(action.payload);
       state.sessionId = action.payload.session_id;
+      state.tokenUsage = action.payload.token_usage ?? null;
+      state.priceUsage = action.payload.price_usage ?? null;
       console.log("flow output", state.flowOutput)
     });
     builder.addCase(runFlow.rejected, (state, action) => {
