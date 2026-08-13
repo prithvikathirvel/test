@@ -518,7 +518,7 @@ const FlowCanvas = memo(function FlowCanvas({
       >
         <Background color="#cbd5e1" gap={16} size={1} />
         <Controls className="!bg-white !border !border-slate-200 !rounded-lg !shadow-xs" />
-        <MiniMap
+        {/* <MiniMap
           pannable
           zoomable
           nodeColor={minimapNodeColor}
@@ -526,7 +526,7 @@ const FlowCanvas = memo(function FlowCanvas({
           maskColor={MINIMAP_MASK}
           style={MINIMAP_STYLE}
           className="!bottom-3 !right-3 !rounded-lg !border !border-slate-200 !shadow-sm"
-        />
+        /> */}
         <CanvasToolbar
           canUndo={canUndo}
           canRedo={canRedo}

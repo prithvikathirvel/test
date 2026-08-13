@@ -74,42 +74,31 @@ const getNodeIcon = (type, catalogTypes) => {
   }
 };
 
-/**
- * Node accent tokens.
- *
- * The previous design painted a full-bleed saturated gradient bar across the
- * top of every node. At canvas zoom levels those bars dominated the viewport,
- * fought with the app's calm slate/indigo shell, and made the node titles
- * (white on mid-tone gradients) hard to read. The refreshed treatment keeps the
- * same per-type hues for instant recognition but applies them as a thin rail +
- * tinted icon tile on a white card, matching the enterprise surface used by the
- * header, sidebar and modals.
- */
-/**
- * Muted SaaS accents — recognisable by type, never neon.
- * Rail is a 2px left border; the tile/chip stay pale so titles stay readable.
- */
-const NODE_ACCENTS = {
-  tool:       { rail: "#5b7fa6", tile: "bg-slate-50 text-slate-600 border-slate-200",     chip: "bg-slate-50 text-slate-600 border-slate-200",     ring: "rgba(91,127,166,0.28)" },
-  agent:      { rail: "#3d8f73", tile: "bg-emerald-50/70 text-emerald-700 border-emerald-100", chip: "bg-emerald-50 text-emerald-700 border-emerald-100", ring: "rgba(61,143,115,0.28)" },
-  model:      { rail: "#6f63a3", tile: "bg-violet-50/70 text-violet-700 border-violet-100", chip: "bg-violet-50 text-violet-700 border-violet-100", ring: "rgba(111,99,163,0.28)" },
-  inputs:     { rail: "#4d8f9a", tile: "bg-cyan-50/70 text-cyan-700 border-cyan-100",     chip: "bg-cyan-50 text-cyan-700 border-cyan-100",       ring: "rgba(77,143,154,0.28)" },
-  output:     { rail: "#b67a4a", tile: "bg-orange-50/70 text-orange-700 border-orange-100", chip: "bg-orange-50 text-orange-700 border-orange-100", ring: "rgba(182,122,74,0.28)" },
-  agentflow:  { rail: "#a06b84", tile: "bg-rose-50/70 text-rose-700 border-rose-100",     chip: "bg-rose-50 text-rose-700 border-rose-100",       ring: "rgba(160,107,132,0.28)" },
-  decision:   { rail: "#b08a3e", tile: "bg-amber-50/70 text-amber-700 border-amber-100",  chip: "bg-amber-50 text-amber-700 border-amber-100",     ring: "rgba(176,138,62,0.28)" },
-  conditions: { rail: "#b08a3e", tile: "bg-amber-50/70 text-amber-700 border-amber-100",  chip: "bg-amber-50 text-amber-700 border-amber-100",     ring: "rgba(176,138,62,0.28)" },
-  condition:  { rail: "#b08a3e", tile: "bg-amber-50/70 text-amber-700 border-amber-100",  chip: "bg-amber-50 text-amber-700 border-amber-100",     ring: "rgba(176,138,62,0.28)" },
-  iterator:   { rail: "#5c6aa8", tile: "bg-indigo-50/70 text-indigo-700 border-indigo-100", chip: "bg-indigo-50 text-indigo-700 border-indigo-100", ring: "rgba(92,106,168,0.28)" },
-  question:   { rail: "#6f63a3", tile: "bg-violet-50/70 text-violet-700 border-violet-100", chip: "bg-violet-50 text-violet-700 border-violet-100", ring: "rgba(111,99,163,0.28)" },
-  start:      { rail: "#4a9a6e", tile: "bg-emerald-50/70 text-emerald-700 border-emerald-100", chip: "bg-emerald-50 text-emerald-700 border-emerald-100", ring: "rgba(74,154,110,0.28)" },
+/** Uniform emerald accent for all node types. */
+const SHARED_ACCENT = {
+  bar: "#10b981",
+  iconBg: "bg-emerald-500",
+  chip: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  ring: "rgba(16,185,129,0.30)",
+  handle: "#10b981",
 };
 
-const DEFAULT_ACCENT = {
-  rail: "#94a3b8",
-  tile: "bg-slate-50 text-slate-600 border-slate-200",
-  chip: "bg-slate-50 text-slate-600 border-slate-200",
-  ring: "rgba(100,116,139,0.28)",
+const NODE_ACCENTS = {
+  tool:       SHARED_ACCENT,
+  agent:      SHARED_ACCENT,
+  model:      SHARED_ACCENT,
+  inputs:     SHARED_ACCENT,
+  output:     SHARED_ACCENT,
+  agentflow:  SHARED_ACCENT,
+  decision:   SHARED_ACCENT,
+  conditions: SHARED_ACCENT,
+  condition:  SHARED_ACCENT,
+  iterator:   SHARED_ACCENT,
+  question:   SHARED_ACCENT,
+  start:      SHARED_ACCENT,
 };
+
+const DEFAULT_ACCENT = SHARED_ACCENT;
 
 const getNodeAccent = (type) => NODE_ACCENTS[type?.toLowerCase()] || DEFAULT_ACCENT;
 
@@ -129,12 +118,12 @@ const getTypeLabel = (type) => {
 
 /** Shared handle geometry so every port on the canvas looks identical. */
 const handleStyle = (color, extra = {}) => ({
-  background: "#ffffff",
-  border: `1.5px solid ${color}`,
-  width: 9,
-  height: 9,
+  background: color,
+  border: `2px solid #ffffff`,
+  width: 10,
+  height: 10,
   borderRadius: 9999,
-  boxShadow: "0 0 0 2px #ffffff",
+  boxShadow: `0 0 0 1.5px ${color}40, 0 1px 3px rgba(0,0,0,0.1)`,
   ...extra,
 });
 
@@ -265,38 +254,40 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
 
   return (
     <div
-      className={`group relative w-[264px] bg-white rounded-lg border border-slate-200 transition-[box-shadow,border-color] duration-150 ${
-        selected ? "border-slate-300" : "hover:border-slate-300"
+      className={`group relative w-[272px] rounded-xl border transition-[box-shadow,border-color] duration-200 ${
+        selected ? "border-transparent" : "border-slate-200/80 hover:border-slate-300/90"
       }`}
       style={{
-        borderLeftWidth: 2,
-        borderLeftColor: accent.rail,
+        background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
         boxShadow: selected
-          ? `0 0 0 3px ${accent.ring}, 0 6px 16px -8px rgba(15,23,42,0.18)`
-          : "0 1px 2px rgba(15,23,42,0.04)",
+          ? `0 0 0 2px ${accent.handle}, 0 0 0 5px ${accent.ring}, 0 10px 25px -5px rgba(15,23,42,0.12)`
+          : "0 1px 4px rgba(15,23,42,0.07), 0 1px 2px rgba(15,23,42,0.04)",
       }}
     >
+      {/* Accent bar */}
+      <div className="h-1 rounded-t-[11px]" style={{ background: accent.bar }} />
+
       {/* Header */}
-      <div className="flex items-center gap-2.5 px-3 py-2.5">
+      <div className="flex items-center gap-3 px-3.5 py-3">
         <div
-          className={`shrink-0 h-7 w-7 rounded-md border flex items-center justify-center ${accent.tile}`}
+          className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center shadow-sm ${accent.iconBg}`}
         >
           {nodeType === "iterator" ? (
-            <span className="animate-[spin_3s_linear_infinite]">{icon}</span>
+            <span className="animate-[spin_3s_linear_infinite] text-white">{icon}</span>
           ) : (
-            icon
+            <span className="text-white">{icon}</span>
           )}
         </div>
 
         <div className="flex-1 min-w-0">
           <Tooltip title={nodeTitle} placement="top" arrow>
-            <h3 className="text-[13px] font-semibold text-slate-800 leading-5 truncate tracking-tight">
+            <h3 className="text-[13px] font-semibold text-slate-800 leading-5 truncate">
               {nodeTitle}
             </h3>
           </Tooltip>
           <div className="mt-0.5 flex items-center gap-1.5 min-h-[16px]">
             <span
-              className={`inline-flex items-center px-1.5 h-4 rounded text-[9.5px] font-medium uppercase tracking-wide border ${accent.chip}`}
+              className={`inline-flex items-center px-1.5 h-[18px] rounded-md text-[9.5px] font-semibold uppercase tracking-wide border ${accent.chip}`}
             >
               {typeLabel}
             </span>
@@ -382,7 +373,7 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
                   type="source"
                   position={Position.Right}
                   className="!absolute !top-1/2 !-translate-y-1/2 hover:!scale-125 transition-transform"
-                  style={handleStyle(accent.rail, { right: -6 })}
+                  style={handleStyle(accent.handle, { right: -6 })}
                 />
               </div>
             ))}
@@ -426,7 +417,7 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
           type="source"
           position={Position.Right}
           className="hover:!scale-125 transition-transform"
-          style={handleStyle(accent.rail, { right: -6, zIndex: 10 })}
+          style={handleStyle(accent.handle, { right: -6, zIndex: 10 })}
         />
       )}
 

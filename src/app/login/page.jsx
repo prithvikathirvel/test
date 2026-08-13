@@ -95,7 +95,7 @@ function LoginForm() {
                     type="text"
                     autoFocus
                     required
-                    placeholder="jane"
+                    placeholder="Enter your username or Email"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     className="w-full pl-9 pr-3 py-2 text-[13px] bg-white border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-400"

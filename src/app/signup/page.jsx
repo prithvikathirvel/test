@@ -106,7 +106,7 @@ export default function SignupPage() {
                 type="text"
                 autoFocus
                 required
-                placeholder="Jane Doe"
+                placeholder="Enter your full name"
                 value={name}
                 onChange={setName}
               />
@@ -115,7 +115,7 @@ export default function SignupPage() {
                 icon={<User size={15} className="text-slate-400" />}
                 type="text"
                 required
-                placeholder="jane"
+                placeholder="Choose a username"
                 value={username}
                 onChange={setUsername}
               />
@@ -124,7 +124,7 @@ export default function SignupPage() {
                 icon={<Mail size={15} className="text-slate-400" />}
                 type="email"
                 required
-                placeholder="jane@company.com"
+                placeholder="name@sifycorp.com"
                 value={email}
                 onChange={setEmail}
               />
