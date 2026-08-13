@@ -99,13 +99,30 @@ export default function AdminDashboardPage() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="px-6 py-5 max-w-6xl">
-          {active === "analytics" && <AnalyticsSection />}
-          {active === "tools" && <RegistrySection kind="tools" />}
-          {active === "models" && <RegistrySection kind="models" />}
-          {active === "agents" && <RegistrySection kind="agents" />}
-          {active === "users" && <UsersSection />}
+      <main className="flex-1 flex flex-col overflow-hidden">
+        {/* Studio-style top header */}
+        <div className="w-full bg-white border-b border-slate-200/80 px-5 py-2.5 flex items-center justify-between min-h-[52px] shadow-2xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="h-7 w-7 rounded-md bg-indigo-50 text-indigo-600 border border-indigo-100 flex items-center justify-center shrink-0">
+              <ShieldCheck size={14} />
+            </div>
+            <span className="text-[13.5px] font-semibold text-slate-800 tracking-tight truncate">
+              {NAV.find((n) => n.id === active)?.label || "Admin Console"}
+            </span>
+          </div>
+          <span className="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-mono text-slate-500 bg-slate-100 border border-slate-200">
+            restricted
+          </span>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <div className="px-6 py-5 max-w-6xl">
+            {active === "analytics" && <AnalyticsSection />}
+            {active === "tools" && <RegistrySection kind="tools" />}
+            {active === "models" && <RegistrySection kind="models" />}
+            {active === "agents" && <RegistrySection kind="agents" />}
+            {active === "users" && <UsersSection />}
+          </div>
         </div>
       </main>
     </div>
