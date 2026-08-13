@@ -219,10 +219,10 @@ already set the precedent for calling an absolute URL.)
 
 | Function | Endpoint |
 |---|---|
-| `listDictionaries({type, search, page, limit})` | `GET /api/dictionary` |
-| `createDictionary(payload)` | `POST /api/dictionary` (201) |
-| `updateDictionary(id, payload)` | `PUT /api/dictionary/:id` |
-| `deleteDictionary(id)` | `DELETE /api/dictionary/:id` |
+| `listDictionaries({type, search, page, limit})` | `GET /dictionary` |
+| `createDictionary(payload)` | `POST /dictionary` (201) |
+| `updateDictionary(id, payload)` | `PUT /dictionary/:id` |
+| `deleteDictionary(id)` | `DELETE /dictionary/:id` |
 
 Plus `validateDictionaryKey` (`^[A-Z0-9_]+$`, ≤64 chars) and
 `validateDictionaryValue` enforcing the type contract exactly

@@ -44,7 +44,7 @@ When an expression like `{{VARIABLE_KEY}}` is resolved at execution time, the ba
 ### A. List Global Dictionaries
 Retrieve all registered global dictionaries in the active workspace.
 
-- **Endpoint:** `GET /api/dictionary`
+- **Endpoint:** `GET /dictionary`
 - **Query Parameters (Optional):**
   - `type` (string): Filter by type (`text`, `number`, `boolean`, `object`, `array`)
   - `search` (string): Case-insensitive keyword search against `key` or `description`
@@ -121,7 +121,7 @@ Retrieve all registered global dictionaries in the active workspace.
 ### B. Create Global Dictionary Variable
 Register a new global key-value store entry.
 
-- **Endpoint:** `POST /api/dictionary`
+- **Endpoint:** `POST /dictionary`
 - **Headers:**
   - `Content-Type: application/json`
   - `Authorization: Bearer <JWT_TOKEN>`
@@ -183,7 +183,7 @@ Register a new global key-value store entry.
 ---
 
 ### C. Update Global Dictionary Variable
-- **Endpoint:** `PUT /api/dictionary/:id`
+- **Endpoint:** `PUT /dictionary/:id`
 - **Request Payload:**
 ```json
 {
@@ -203,7 +203,7 @@ Register a new global key-value store entry.
 ---
 
 ### D. Delete Global Dictionary Variable
-- **Endpoint:** `DELETE /api/dictionary/:id`
+- **Endpoint:** `DELETE /dictionary/:id`
 - **Success Response (`200 OK`)**:
 ```json
 {

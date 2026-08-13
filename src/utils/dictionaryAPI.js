@@ -123,7 +123,7 @@ const toApiPayload = ({ key, type, description, value }) => ({
 });
 
 /**
- * `GET /api/dictionary`
+ * `GET /dictionary`
  * @returns {Promise<{items: Array, total: number, page: number, limit: number}>}
  */
 export const listDictionaries = async (params = {}) => {
@@ -132,7 +132,7 @@ export const listDictionaries = async (params = {}) => {
   if (type && type !== "all") query.type = type;
   if (search) query.search = search;
 
-  const response = await DictionaryKit.get("/api/dictionary", { params: query });
+  const response = await DictionaryKit.get("/dictionary", { params: query });
   const data = response?.data?.data || {};
   const items = Array.isArray(data.items) ? data.items : [];
 
@@ -144,28 +144,28 @@ export const listDictionaries = async (params = {}) => {
   };
 };
 
-/** `POST /api/dictionary` → 201 Created. */
+/** `POST /dictionary` → 201 Created. */
 export const createDictionary = async (payload) => {
   const response = await DictionaryKit.post(
-    "/api/dictionary",
+    "/dictionary",
     toApiPayload(payload)
   );
   return mapDictionaryFromApi(response?.data?.data || {});
 };
 
-/** `PUT /api/dictionary/:id`. */
+/** `PUT /dictionary/:id`. */
 export const updateDictionary = async (id, payload) => {
   const response = await DictionaryKit.put(
-    `/api/dictionary/${encodeURIComponent(id)}`,
+    `/dictionary/${encodeURIComponent(id)}`,
     toApiPayload(payload)
   );
   return mapDictionaryFromApi(response?.data?.data || { id, ...payload });
 };
 
-/** `DELETE /api/dictionary/:id`. */
+/** `DELETE /dictionary/:id`. */
 export const deleteDictionary = async (id) => {
   const response = await DictionaryKit.delete(
-    `/api/dictionary/${encodeURIComponent(id)}`
+    `/dictionary/${encodeURIComponent(id)}`
   );
   return response?.data?.message || "Global dictionary variable deleted.";
 };

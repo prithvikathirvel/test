@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Bot, Workflow, Database, Layers, Cpu, Sparkles, TrendingUp } from "lucide-react";
+import { Bot, Workflow, Database, Layers, Cpu, Sparkles, TrendingUp,BrainCircuit } from "lucide-react";
 
 /**
  * Hero orbital visual.
@@ -121,59 +121,8 @@ export default function OrbitalVisual({ className = "" }) {
           dictionary page: uppercase micro-label, one large figure, a muted
           caption, and a slim delta row. Same vocabulary, no new visual style. */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <div className="relative w-[196px] rounded-2xl border border-slate-200 bg-white px-4 py-3.5 shadow-[0_12px_32px_-10px_rgba(15,23,42,0.28)]">
-          <div className="flex items-center justify-between">
-            <p className="text-[9.5px] font-semibold uppercase tracking-wider text-slate-400">
-              Active Executions
-            </p>
-            <span className="inline-flex items-center gap-1 rounded-full border border-emerald-100 bg-emerald-50 px-1.5 py-px text-[9px] font-semibold text-emerald-700">
-              <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
-              Live
-            </span>
-          </div>
-
-          <div className="mt-1.5 flex items-baseline gap-1.5">
-            <p className="text-[30px] font-bold leading-none tracking-tight text-slate-800">
-              1,284
-            </p>
-            <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-emerald-600">
-              <TrendingUp size={11} />
-              12.4%
-            </span>
-          </div>
-
-          <p className="mt-1 text-[10.5px] text-slate-400">Agent runs this week</p>
-
-          {/* Sparkline: static bars, so it renders identically on server and
-              client (no Math.random during SSR). */}
-          <div className="mt-3 flex items-end gap-[3px] h-8">
-            {SPARKLINE.map((height, index) => (
-              <span
-                key={index}
-                className={`flex-1 rounded-sm ${
-                  index === SPARKLINE.length - 1 ? "bg-indigo-500" : "bg-indigo-100"
-                }`}
-                style={{ height: `${height}%` }}
-              />
-            ))}
-          </div>
-
-          <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5">
-            <div>
-              <p className="text-[9px] uppercase tracking-wide text-slate-400">Latency</p>
-              <p className="text-[11.5px] font-semibold text-slate-700">42ms</p>
-            </div>
-            <div className="h-6 w-px bg-slate-100" />
-            <div>
-              <p className="text-[9px] uppercase tracking-wide text-slate-400">Success</p>
-              <p className="text-[11.5px] font-semibold text-slate-700">99.8%</p>
-            </div>
-            <div className="h-6 w-px bg-slate-100" />
-            <div>
-              <p className="text-[9px] uppercase tracking-wide text-slate-400">Nodes</p>
-              <p className="text-[11.5px] font-semibold text-slate-700">6</p>
-            </div>
-          </div>
+         <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-purple-600 to-[var(--primary-color)] flex items-center justify-center shadow-xl shadow-blue-500/25 animate-float-slow">
+                    <BrainCircuit size={36} className="text-white" />
         </div>
       </div>
 

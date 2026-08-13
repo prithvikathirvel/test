@@ -89,10 +89,10 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
           <Link href="/studio" className="flex items-center no-underline overflow-hidden">
             {isOpen ? (
               <Image
-                src="/agent-studio/branding/aurora-logo.png"
+                src="/agent-studio/branding/aurora-icon.png"
                 alt="Sify Aurora"
-                width={120}
-                height={36}
+                width={25}
+                height={25}
                 className="object-contain"
                 priority
                 unoptimized
