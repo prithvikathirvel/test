@@ -2,50 +2,72 @@
 
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser } from "@/redux/slices/authSlice";
-import { useRouter, useSearchParams } from "next/navigation";
+import { registerUser } from "@/redux/slices/authSlice";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   User,
   Lock,
   Eye,
   EyeOff,
+  Mail,
   ArrowRight,
   AlertCircle,
-  CheckCircle2,
 } from "lucide-react";
 import Image from "next/image";
 import BlurredLoader from "@/components/Common/BlurredLoader";
-import { Suspense } from "react";
 
-function LoginForm() {
+export default function SignupPage() {
+  const [name, setName] = useState("");
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
 
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const justRegistered = searchParams.get("registered") === "1";
   const dispatch = useDispatch();
   const { authLoader } = useSelector((state) => state.auth);
 
+  const canSubmit =
+    name.trim() &&
+    username.trim() &&
+    email.trim() &&
+    password.trim() &&
+    confirmPassword.trim();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) return;
-    setError(null);
+    if (!canSubmit) return;
 
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    setError(null);
     try {
-      await dispatch(loginUser({ username, password })).unwrap();
-      router.push("/studio");
+      const result = await dispatch(
+        registerUser({ name: name.trim(), username: username.trim(), email: email.trim(), password })
+      ).unwrap();
+      if (result?.signedIn) {
+        router.push("/studio");
+      } else {
+        router.push("/login?registered=1");
+      }
     } catch (err) {
-      setError(err.message || "Invalid credentials. Please verify and try again.");
+      setError(err.message || "Could not create the account. Please try again.");
     }
   };
 
   return (
     <>
-      {authLoader && <BlurredLoader title="Signing in..." />}
+      {authLoader && <BlurredLoader title="Creating account..." />}
 
       <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center px-4 py-10">
         <div className="w-full max-w-[400px]">
@@ -62,21 +84,14 @@ function LoginForm() {
               />
             </Link>
             <h1 className="text-[20px] font-semibold text-slate-900 tracking-tight">
-              Sign in
+              Create your account
             </h1>
             <p className="text-[13px] text-slate-500 mt-1">
-              Enter your credentials to open your workspace
+              Set up access to your Aurora workspace
             </p>
           </div>
 
           <div className="bg-white rounded-xl border border-slate-200 p-6">
-            {justRegistered && !error && (
-              <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-start gap-2 text-[12px] text-emerald-800">
-                <CheckCircle2 size={14} className="text-emerald-600 shrink-0 mt-0.5" />
-                <span>Account created. Sign in to continue.</span>
-              </div>
-            )}
-
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2 text-[12px] text-red-700">
                 <AlertCircle size={14} className="text-red-500 shrink-0 mt-0.5" />
@@ -85,23 +100,34 @@ function LoginForm() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-3.5">
-              <div>
-                <label className="block text-[11px] font-semibold text-slate-600 mb-1.5">
-                  Username
-                </label>
-                <div className="relative flex items-center">
-                  <User size={15} className="absolute left-3 text-slate-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    autoFocus
-                    required
-                    placeholder="jane"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2 text-[13px] bg-white border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-400"
-                  />
-                </div>
-              </div>
+              <Field
+                label="Full name"
+                icon={<User size={15} className="text-slate-400" />}
+                type="text"
+                autoFocus
+                required
+                placeholder="Jane Doe"
+                value={name}
+                onChange={setName}
+              />
+              <Field
+                label="Username"
+                icon={<User size={15} className="text-slate-400" />}
+                type="text"
+                required
+                placeholder="jane"
+                value={username}
+                onChange={setUsername}
+              />
+              <Field
+                label="Work email"
+                icon={<Mail size={15} className="text-slate-400" />}
+                type="email"
+                required
+                placeholder="jane@company.com"
+                value={email}
+                onChange={setEmail}
+              />
 
               <div>
                 <label className="block text-[11px] font-semibold text-slate-600 mb-1.5">
@@ -112,7 +138,7 @@ function LoginForm() {
                   <input
                     type={showPassword ? "text" : "password"}
                     required
-                    placeholder="••••••••"
+                    placeholder="At least 8 characters"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-9 pr-9 py-2 text-[13px] bg-white border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-400"
@@ -128,21 +154,31 @@ function LoginForm() {
                 </div>
               </div>
 
+              <Field
+                label="Confirm password"
+                icon={<Lock size={15} className="text-slate-400" />}
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="Repeat password"
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+              />
+
               <button
                 type="submit"
-                disabled={!username.trim() || !password.trim()}
+                disabled={!canSubmit}
                 className="w-full mt-1 py-2.5 px-4 rounded-lg text-[13px] font-semibold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
-                <span>Sign in</span>
+                <span>Create account</span>
                 <ArrowRight size={14} />
               </button>
             </form>
           </div>
 
           <p className="mt-5 text-center text-[13px] text-slate-500">
-            New to Aurora?{" "}
-            <Link href="/signup" className="font-medium text-slate-800 hover:underline no-underline">
-              Create an account
+            Already have an account?{" "}
+            <Link href="/login" className="font-medium text-slate-800 hover:underline no-underline">
+              Sign in
             </Link>
           </p>
         </div>
@@ -151,10 +187,20 @@ function LoginForm() {
   );
 }
 
-export default function LoginPage() {
+function Field({ label, icon, onChange, ...inputProps }) {
   return (
-    <Suspense fallback={null}>
-      <LoginForm />
-    </Suspense>
+    <div>
+      <label className="block text-[11px] font-semibold text-slate-600 mb-1.5">
+        {label}
+      </label>
+      <div className="relative flex items-center">
+        <span className="absolute left-3 pointer-events-none">{icon}</span>
+        <input
+          {...inputProps}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full pl-9 pr-3 py-2 text-[13px] bg-white border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-slate-400"
+        />
+      </div>
+    </div>
   );
 }

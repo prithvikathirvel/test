@@ -513,7 +513,10 @@ const generateSpecification = (flow, nodes, edges) => {
 
   const specification = {
     ...flow,
-    inputs: flow?.inputs || [],
+    inputs: (flow?.inputs || []).map((input) => ({
+      ...input,
+      scope: input?.scope === "global" ? "global" : "local",
+    })),
     graphSpec: {
       nodes: nodes.map(node => {
         const connections = nodeConnections[node.id] || [];

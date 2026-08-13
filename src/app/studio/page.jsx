@@ -9,11 +9,14 @@ import {
   Grid3X3,
   List,
   Sparkles,
+  Workflow,
+  Activity,
+  Timer,
+  CheckCircle2,
 } from "lucide-react";
 import { getAllFlows, saveFlow, updateSpecification, deleteFlow } from "@/redux/slices/studioSlice";
 import FlowDetailsModal from "@/components/studio/FlowDetailsModal";
 import { Box, Typography } from "@mui/material";
-import Grid from "@mui/material/Grid2";
 import InputBox from "@/components/Common/InputBox";
 import Pagination from "@/components/Common/Pagination";
 import { sortByField } from "@/utils/commonFunction";
@@ -161,55 +164,35 @@ const StudioListing = () => {
           <Box className="flex items-center gap-3">
             <button
               onClick={handleCreateStudio}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 shadow-xs transition-colors"
             >
               <Plus size={15} /> Create Flow
             </button>
           </Box>
         </Box>
 
-        {/* Minimal Metric Cards */}
-        <Grid container spacing={2.5} className="mb-8">
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Box className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                TOTAL FLOWS
-              </p>
-              <p className="text-3xl font-bold text-slate-800 mt-2">{flows.length}</p>
-              <p className="text-xs text-slate-400 mt-1">All time</p>
-            </Box>
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Box className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                ACTIVE RUNS
-              </p>
-              <p className="text-3xl font-bold text-slate-800 mt-2">0</p>
-              <p className="text-xs text-slate-400 mt-1">0 running</p>
-            </Box>
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Box className="bg-indigo-50/40 p-5 rounded-2xl border border-indigo-100 shadow-2xs">
-              <p className="text-[11px] font-semibold text-indigo-900/60 uppercase tracking-wider">
-                AVG RESPONSE TIME
-              </p>
-              <p className="text-3xl font-bold text-slate-800 mt-2">0ms</p>
-              <p className="text-xs text-slate-400 mt-1">Per node execution</p>
-            </Box>
-          </Grid>
-
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Box className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-2xs">
-              <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                SUCCESS RATE
-              </p>
-              <p className="text-3xl font-bold text-slate-800 mt-2">100%</p>
-              <p className="text-xs text-slate-400 mt-1">0 failed runs</p>
-            </Box>
-          </Grid>
-        </Grid>
+        <Box className="mb-6 grid grid-cols-2 lg:grid-cols-4 divide-x divide-slate-200 rounded-lg border border-slate-200 bg-white">
+          {[
+            { label: "Total flows", value: flows.length, Icon: Workflow },
+            { label: "Active runs", value: 0, Icon: Activity },
+            { label: "Avg response", value: "0ms", Icon: Timer },
+            { label: "Success rate", value: "100%", Icon: CheckCircle2 },
+          ].map(({ label, value, Icon }) => (
+            <div key={label} className="flex items-center gap-3 px-4 py-3.5">
+              <span className="h-8 w-8 shrink-0 rounded-md border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-500">
+                <Icon size={15} />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  {label}
+                </span>
+                <span className="block text-[17px] font-bold leading-tight text-slate-800 tabular-nums">
+                  {value}
+                </span>
+              </span>
+            </div>
+          ))}
+        </Box>
 
         {/* Controls Bar */}
         <Box className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-5">
@@ -282,8 +265,8 @@ const StudioListing = () => {
             />
           </div>
         ) : (
-          <Box className="flex flex-col items-center justify-center py-20 px-6 bg-white rounded-2xl border border-slate-200/80 shadow-2xs text-center">
-            <div className="h-10 w-10 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 flex items-center justify-center mb-3">
+          <Box className="flex flex-col items-center justify-center py-20 px-6 bg-white rounded-lg border border-slate-200 text-center">
+            <div className="h-10 w-10 rounded-md bg-slate-50 border border-slate-200 text-slate-500 flex items-center justify-center mb-3">
               <Sparkles size={18} />
             </div>
             <Typography variant="h6" className="!font-bold !text-slate-800 !tracking-tight mb-1 !text-base">
@@ -296,7 +279,7 @@ const StudioListing = () => {
             </Typography>
             <button
               onClick={handleCreateStudio}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition-colors"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-medium text-white bg-slate-900 hover:bg-slate-800 shadow-xs transition-colors"
             >
               <Plus size={15} /> Create Flow
             </button>

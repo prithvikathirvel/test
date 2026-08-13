@@ -222,12 +222,13 @@ const Studio = () => {
                 const flowInputs = spec?.inputs || [];
 
                 if (flowInputs.length > 0) {
-                    const updatedConfig = {
-                        ...flowRef.current,
-                        inputs: [...(flowRef.current?.inputs || []), ...flowInputs]
-                    };
-
-                    dispatch(updateSpecification(updatedConfig));
+                    const incoming = flowInputs.map((input) => ({
+                        ...input,
+                        scope: input.scope === "global" ? "global" : "local",
+                    }));
+                    dispatch(updateSpecification({
+                        inputs: [...(flowRef.current?.inputs || []), ...incoming],
+                    }));
                 }
             }
 
@@ -502,7 +503,8 @@ const Studio = () => {
     }, [dispatch]);
 
     const handleInputConfigSave = useCallback(() => {
-        toast.success('Input configurations saved successfully');
+        // Persistence + toast live in InputFieldConfiguration so we don't
+        // double-notify when the dictionary is saved.
     }, []);
 
     const voiceConfigRef = useRef(voiceConfig);

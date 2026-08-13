@@ -15,36 +15,49 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
+const ICON_SIZE = 16;
+
 const Menus = [
-  { 
-    title: "Flow Studio", 
-    icon: <LayoutDashboard size={18} />, 
-    path: "/studio" 
+  {
+    title: "Flow Studio",
+    icon: LayoutDashboard,
+    path: "/studio",
   },
-  { 
-    title: "Knowledge Base", 
-    icon: <BookOpen size={18} />, 
-    path: "/knowledge" 
+  {
+    title: "Knowledge Base",
+    icon: BookOpen,
+    path: "/knowledge",
   },
-  { 
-    title: "Knowledge Graph", 
-    icon: <Share2 size={18} />, 
-    path: "/knowledge-graph" 
+  {
+    title: "Knowledge Graph",
+    icon: Share2,
+    path: "/knowledge-graph",
   },
-  { 
-    title: "Dictionary", 
-    icon: <BookMarked size={18} />, 
-    path: "/dictionary" 
+  {
+    title: "Dictionary",
+    icon: BookMarked,
+    path: "/dictionary",
   },
-  { 
-    title: "Settings", 
-    icon: <Settings size={18} />, 
-    path: "/settings" 
+  {
+    title: "Settings",
+    icon: Settings,
+    path: "/settings",
   },
 ];
 
+const NavIcon = ({ icon: Icon, active }) => (
+  <span
+    className={`inline-flex h-5 w-5 items-center justify-center shrink-0 ${
+      active ? "text-indigo-600" : "text-slate-400"
+    }`}
+  >
+    <Icon size={ICON_SIZE} strokeWidth={1.75} />
+  </span>
+);
+
 export default function Sidenav({ open: initialOpen = true, onToggle }) {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const pathname = (rawPathname || "/").replace(/\/+$/, "") || "/";
   const [internalOpen, setInternalOpen] = useState(initialOpen);
 
   const isOpen = onToggle !== undefined ? initialOpen : internalOpen;
@@ -61,10 +74,10 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
     <Drawer
       variant="permanent"
       sx={{
-        width: isOpen ? 240 : 64,
+        width: isOpen ? 232 : 60,
         flexShrink: 0,
         "& .MuiDrawer-paper": {
-          width: isOpen ? 240 : 64,
+          width: isOpen ? 232 : 60,
           boxSizing: "border-box",
           backgroundColor: "#ffffff",
           color: "#1e293b",
@@ -82,32 +95,25 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
         },
       }}
     >
-      {/* Top Section */}
       <Box className="flex flex-col">
-        {/* Brand Header */}
-        <Box className={`flex items-center min-h-[56px] border-b border-gray-100 ${isOpen ? 'px-4 justify-between' : 'justify-center px-2'}`}>
-          <Link href="/studio" className="flex items-center no-underline overflow-hidden">
-            {isOpen ? (
-              <Image
-                src="/agent-studio/branding/aurora-icon.png"
-                alt="Sify Aurora"
-                width={25}
-                height={25}
-                className="object-contain"
-                priority
-                unoptimized
-              />
-            ) : (
-              <Image
-                src="/agent-studio/branding/aurora-icon.png"
-                alt="Aurora"
-                width={36}
-                height={36}
-                className="object-contain"
-                priority
-                unoptimized
-              />
-            )}
+        <Box
+          className={`flex items-center min-h-[52px] border-b border-gray-100 ${
+            isOpen ? "px-3 justify-between" : "justify-center px-0"
+          }`}
+        >
+          <Link
+            href="/studio"
+            className="flex items-center justify-center no-underline overflow-hidden h-8 w-8"
+          >
+            <Image
+              src="/agent-studio/branding/aurora-icon.png"
+              alt="Sify Aurora"
+              width={20}
+              height={20}
+              className="object-contain"
+              priority
+              unoptimized
+            />
           </Link>
 
           {isOpen && (
@@ -117,35 +123,35 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
                 size="small"
                 className="!text-slate-400 hover:!text-slate-700 hover:!bg-slate-100 !p-1.5 !rounded-md"
               >
-                <PanelLeftClose size={16} />
+                <PanelLeftClose size={15} />
               </IconButton>
             </Tooltip>
           )}
         </Box>
 
-        {/* Navigation Items */}
-        <Box className={`py-3 ${isOpen ? 'px-3' : 'px-2 flex flex-col items-center'}`}>
+        <Box className={`py-3 ${isOpen ? "px-2.5" : "px-0"}`}>
           {isOpen && (
-            <p className="px-1 pb-1.5 pt-0.5 text-[10px] font-semibold text-slate-400 uppercase tracking-widest select-none">
+            <p className="px-2 pb-1.5 pt-0.5 text-[10px] font-semibold text-slate-400 uppercase tracking-widest select-none">
               Workspace
             </p>
           )}
-          <div className="space-y-0.5 w-full flex flex-col items-center">
+          <div className={`space-y-0.5 w-full ${isOpen ? "" : "flex flex-col items-center"}`}>
             {Menus.map((menu) => {
-              const isActive = pathname === menu.path || pathname?.startsWith(menu.path + "/");
+              const isActive =
+                pathname === menu.path || pathname?.startsWith(menu.path + "/");
 
               if (!isOpen) {
                 return (
                   <Tooltip key={menu.title} title={menu.title} placement="right" arrow>
-                    <Link href={menu.path} className="no-underline block">
+                    <Link href={menu.path} className="no-underline flex justify-center">
                       <div
-                        className={`h-10 w-10 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                        className={`h-8 w-8 rounded-md flex items-center justify-center transition-colors cursor-pointer ${
                           isActive
-                            ? "bg-indigo-50 text-indigo-600 border border-indigo-200/80 shadow-2xs font-medium"
+                            ? "bg-slate-100 text-indigo-600"
                             : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
                         }`}
                       >
-                        {menu.icon}
+                        <NavIcon icon={menu.icon} active={isActive} />
                       </div>
                     </Link>
                   </Tooltip>
@@ -155,21 +161,21 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
               return (
                 <Link href={menu.path} key={menu.title} className="no-underline block w-full">
                   <div
-                    className={`relative flex items-center gap-2.5 w-full rounded-md px-3 py-[7px] transition-all cursor-pointer ${
+                    className={`relative flex items-center gap-2.5 w-full rounded-md px-2.5 py-[7px] transition-colors cursor-pointer ${
                       isActive
                         ? "bg-slate-100 text-slate-900"
                         : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                     }`}
                   >
                     {isActive && (
-                      <span className="absolute left-0 inset-y-[5px] w-[3px] rounded-r-full bg-indigo-600" />
+                      <span className="absolute left-0 inset-y-[5px] w-[2px] rounded-r-full bg-slate-700" />
                     )}
-                    <div className={`shrink-0 ${isActive ? "text-indigo-600" : "text-slate-400"}`}>
-                      {menu.icon}
-                    </div>
+                    <NavIcon icon={menu.icon} active={isActive} />
                     <Typography
                       className={`!text-[13px] !leading-tight ${
-                        isActive ? "!font-semibold !text-slate-800" : "!font-medium !text-slate-600"
+                        isActive
+                          ? "!font-semibold !text-slate-800"
+                          : "!font-medium !text-slate-600"
                       }`}
                     >
                       {menu.title}
@@ -182,8 +188,11 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
         </Box>
       </Box>
 
-      {/* Bottom Section */}
-      <Box className={`p-2.5 border-t border-gray-100 ${isOpen ? 'flex justify-end' : 'flex justify-center'}`}>
+      <Box
+        className={`p-2 border-t border-gray-100 ${
+          isOpen ? "flex justify-end" : "flex justify-center"
+        }`}
+      >
         <Tooltip title={isOpen ? "Collapse sidebar" : "Expand sidebar"} placement="right">
           <IconButton
             onClick={handleToggle}

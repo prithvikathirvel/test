@@ -16,7 +16,9 @@ import {
 } from "lucide-react";
 import OrbitalVisual from "./OrbitalVisual";
 
-export default function HeroSection({ handleDrawerOpen }) {
+export default function HeroSection({ handleDrawerOpen, onSignIn, onGetStarted }) {
+  const start = onGetStarted || handleDrawerOpen;
+  const signIn = onSignIn || handleDrawerOpen;
   return (
     <Box className="relative overflow-hidden bg-[#f8fafc] pt-16 pb-20 lg:pt-24 lg:pb-32">
       {/* Animated ambient blobs */}
@@ -68,14 +70,14 @@ export default function HeroSection({ handleDrawerOpen }) {
             style={{ animationDelay: "320ms" }}
           >
             <button
-              onClick={handleDrawerOpen}
-              className="w-full sm:w-auto px-6 py-3 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 transition-all shadow-xs shadow-indigo-500/20 hover:shadow-indigo-500/30 hover:shadow-md flex items-center justify-center gap-2"
+              onClick={start}
+              className="w-full sm:w-auto px-6 py-3 rounded-xl text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 active:bg-slate-900 transition-all shadow-xs flex items-center justify-center gap-2"
             >
               <span>Get Started Free</span>
               <ArrowRight size={14} />
             </button>
             <button
-              onClick={handleDrawerOpen}
+              onClick={signIn}
               className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-all flex items-center justify-center gap-2"
             >
               <Play size={13} className="fill-slate-700" />

@@ -170,7 +170,7 @@ const StudioHeader = ({
           onClick={onConfigureInputsClick}
           className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors"
         >
-          <Sliders size={13} /> Inputs
+          <Sliders size={13} /> Dictionary
         </button>
 
         <button

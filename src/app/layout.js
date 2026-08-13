@@ -18,17 +18,20 @@ const inter = Geist({
 // Paths that should not show the global navigation sidebar
 const pathsWithoutNav = [
   "/login",
-  "/", 
-  "/test"
+  "/signup",
+  "/",
+  "/test",
 ];
 
 export default function RootLayout({ children }) {
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
+  const normalizedPath = (pathname || "/").replace(/\/+$/, "") || "/";
+
   // Studio Canvas route (/studio/[id]) manages its own full-screen canvas and should NOT display the global sidebar
-  const isStudioCanvas = pathname.startsWith("/studio/") && pathname !== "/studio";
-  const shouldShowNav = !pathsWithoutNav.includes(pathname) && !isStudioCanvas;
+  const isStudioCanvas = normalizedPath.startsWith("/studio/") && normalizedPath !== "/studio";
+  const shouldShowNav = !pathsWithoutNav.includes(normalizedPath) && !isStudioCanvas;
 
   return (
     <html lang="en" className="h-full">

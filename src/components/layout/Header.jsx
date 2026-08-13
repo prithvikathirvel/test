@@ -1,14 +1,25 @@
 "use client";
 
 import { Typography, Box, Avatar, Menu, MenuItem, Divider } from "@mui/material";
-import { Settings, LogOut, User, ChevronDown, Bell, Search, ShieldCheck } from "lucide-react";
+import { Settings, LogOut, User, ChevronDown, ShieldCheck } from "lucide-react";
 import { useState } from "react";
-import { redirect } from "next/navigation";
+import { useDispatch, useSelector } from "react-redux";
+import { useRouter } from "next/navigation";
 import { convertToTitleCase } from "@/utils/commonFunction";
+import { logout } from "@/redux/slices/authSlice";
+import { getDisplayName, getEmail, getInitials, getUsername } from "@/utils/userProfile";
 
 export default function Header({ title = "Home Page" }) {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+  const dispatch = useDispatch();
+  const router = useRouter();
+  const user = useSelector((state) => state.auth.user);
+
+  const displayName = getDisplayName(user);
+  const email = getEmail(user);
+  const username = getUsername(user);
+  const initials = getInitials(user);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -19,13 +30,14 @@ export default function Header({ title = "Home Page" }) {
   };
 
   const handleLogout = () => {
-    redirect("/login");
+    handleClose();
+    dispatch(logout());
+    router.push("/login");
   };
 
   return (
     <Box className="w-full border-b border-slate-200/80 bg-white/95 backdrop-blur-md sticky top-0 z-40">
       <Box className="flex items-center justify-between px-6 py-2 min-h-[64px]">
-        {/* Page Title & Breadcrumb */}
         <Box className="flex items-center gap-3">
           <Typography className="text-[15px] !font-semibold !text-slate-900 !tracking-tight">
             {convertToTitleCase(title)}
@@ -36,7 +48,6 @@ export default function Header({ title = "Home Page" }) {
           </span>
         </Box>
 
-        {/* User / Workspace Actions */}
         <Box className="flex items-center gap-3">
           <Box
             onClick={handleClick}
@@ -48,26 +59,25 @@ export default function Header({ title = "Home Page" }) {
                 height: 32,
                 fontSize: "12px",
                 fontWeight: 600,
-                backgroundColor: "#eff6ff",
-                color: "#2563eb",
-                border: "1px solid #dbeafe",
+                backgroundColor: "#f8fafc",
+                color: "#334155",
+                border: "1px solid #e2e8f0",
               }}
             >
-              PK
+              {initials}
             </Avatar>
             <Box sx={{ display: { xs: "none", sm: "block" } }}>
               <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#0f172a", lineHeight: 1.2 }}>
-                Prithvi
+                {displayName}
               </Typography>
               <Typography sx={{ fontSize: "11px", color: "#64748b", lineHeight: 1.2 }}>
-                Enterprise Admin
+                {email || username || "Signed in"}
               </Typography>
             </Box>
             <ChevronDown size={14} className="text-slate-400" />
           </Box>
         </Box>
 
-        {/* Account Dropdown */}
         <Menu
           id="account-menu"
           anchorEl={anchorEl}
@@ -90,18 +100,28 @@ export default function Header({ title = "Home Page" }) {
           anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         >
           <Box sx={{ p: 2, borderBottom: "1px solid #f1f5f9" }}>
-            <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Prithvi Kathirvel</Typography>
-            <Typography sx={{ fontSize: "12px", color: "#64748b", mt: 0.25 }}>prithvi@example.com</Typography>
+            <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>
+              {displayName}
+            </Typography>
+            {email && (
+              <Typography sx={{ fontSize: "12px", color: "#64748b", mt: 0.25 }}>{email}</Typography>
+            )}
           </Box>
 
           <Box sx={{ py: 1 }}>
-            <MenuItem sx={{ py: 1, px: 2, gap: 1.5, fontSize: "13px", color: "#334155", borderRadius: "6px" }}>
+            <MenuItem
+              sx={{ py: 1, px: 2, gap: 1.5, fontSize: "13px", color: "#334155", borderRadius: "6px" }}
+              onClick={() => router.push("/settings")}
+            >
               <User size={16} className="text-slate-400" />
-              User Profile
+              Profile
             </MenuItem>
-            <MenuItem sx={{ py: 1, px: 2, gap: 1.5, fontSize: "13px", color: "#334155", borderRadius: "6px" }}>
+            <MenuItem
+              sx={{ py: 1, px: 2, gap: 1.5, fontSize: "13px", color: "#334155", borderRadius: "6px" }}
+              onClick={() => router.push("/settings")}
+            >
               <Settings size={16} className="text-slate-400" />
-              Workspace Settings
+              Settings
             </MenuItem>
           </Box>
 
@@ -116,9 +136,7 @@ export default function Header({ title = "Home Page" }) {
                 fontSize: "13px",
                 color: "#dc2626",
                 borderRadius: "6px",
-                "&:hover": {
-                  backgroundColor: "#fef2f2",
-                },
+                "&:hover": { backgroundColor: "#fef2f2" },
               }}
               onClick={handleLogout}
             >

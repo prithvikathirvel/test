@@ -1,32 +1,29 @@
-'use client';
+"use client";
 
-import { useRouter, usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
-import BlurredLoader from '../Common/BlurredLoader';
-// Public pages under your basePath
-const publicPaths = ['/agent-studio/']; 
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { useSelector } from "react-redux";
+
+const PUBLIC_PATHS = new Set(["/", "/login", "/signup"]);
+
+const normalizePath = (pathname = "") => {
+  if (!pathname) return "/";
+  const trimmed = pathname.replace(/\/+$/, "");
+  return trimmed || "/";
+};
 
 const ProtectedRoute = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const [isLoading, setIsLoading] = useState(true);
-
   const { isAuthenticated, authLoader } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (authLoader) return;
-    const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
-    // Protect everything except login page
-    if (!isAuthenticated && !isPublicPath) {
-      router.push('/');  // ✅ Correct redirect
-      return;
+    const path = normalizePath(pathname);
+    if (!isAuthenticated && !PUBLIC_PATHS.has(path)) {
+      router.push("/login");
     }
-
-    setIsLoading(false);
   }, [isAuthenticated, authLoader, pathname, router]);
-
-  
 
   return children;
 };

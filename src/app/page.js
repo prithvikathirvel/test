@@ -24,12 +24,8 @@ import {
   CheckCircle2,
   Sparkles
 } from "lucide-react";
-import LoginDrawer from "@/components/Drawer/LoginDrawer";
 import HeroSection from "@/components/Dashboard/HeroSection";
-import { useDispatch, useSelector } from "react-redux";
-import { loginUser } from "@/redux/slices/authSlice";
 import { useRouter } from "next/navigation";
-import BlurredLoader from "@/components/Common/BlurredLoader";
 
 const features = [
   {
@@ -88,34 +84,15 @@ const steps = [
 ];
 
 export default function Home() {
-  const [open, setOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [error, setError] = useState(null);
-
   const router = useRouter();
-  const dispatch = useDispatch();
-  const { authLoader } = useSelector((state) => state.auth);
 
-  const handleLogin = async (username, password) => {
-    try {
-      await dispatch(loginUser({ username, password })).unwrap();
-      router.push("/studio");
-    } catch (err) {
-      setError(err.message || "Invalid credentials. Please verify and try again.");
-    }
-  };
-
-  const handleDrawerOpen = () => {
-    setOpen(true);
-    setError(null);
-  };
+  const goToLogin = () => router.push("/login");
+  const goToSignup = () => router.push("/signup");
 
   return (
     <>
-      {authLoader && <BlurredLoader title="Authenticating..." />}
-
       <div className="min-h-screen bg-[#f8fafc] flex flex-col text-slate-900">
-        <LoginDrawer open={open} setOpen={setOpen} handleLogin={handleLogin} error={error} />
 
         {/* Global Navigation Header */}
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200/80">
@@ -145,14 +122,14 @@ export default function Home() {
               {/* Action Buttons */}
               <div className="hidden md:flex items-center gap-3">
                 <button
-                  onClick={handleDrawerOpen}
+                  onClick={goToLogin}
                   className="px-3.5 py-1.5 rounded-lg text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                 >
                   Sign In
                 </button>
                 <button
-                  onClick={handleDrawerOpen}
-                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 shadow-xs transition-colors"
+                  onClick={goToSignup}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 shadow-xs transition-colors"
                 >
                   Get Started
                 </button>
@@ -176,10 +153,16 @@ export default function Home() {
                 <a href="#integrations" onClick={() => setMobileOpen(false)} className="px-2 py-1.5 rounded hover:bg-slate-100">Integrations</a>
                 <div className="pt-2 flex flex-col gap-2">
                   <button
-                    onClick={() => { setMobileOpen(false); handleDrawerOpen(); }}
-                    className="w-full py-2 text-center text-xs font-semibold text-white bg-indigo-600 rounded-lg"
+                    onClick={() => { setMobileOpen(false); goToLogin(); }}
+                    className="w-full py-2 text-center text-xs font-semibold text-slate-800 bg-white border border-slate-200 rounded-lg"
                   >
                     Sign In
+                  </button>
+                  <button
+                    onClick={() => { setMobileOpen(false); goToSignup(); }}
+                    className="w-full py-2 text-center text-xs font-semibold text-white bg-slate-900 rounded-lg"
+                  >
+                    Create account
                   </button>
                 </div>
               </div>
@@ -188,7 +171,7 @@ export default function Home() {
         </header>
 
         {/* Hero Section */}
-        <HeroSection handleDrawerOpen={handleDrawerOpen} />
+        <HeroSection onSignIn={goToLogin} onGetStarted={goToSignup} />
 
         {/* Metrics Strip */}
         <section className="py-12 bg-white border-y border-slate-200/80">
@@ -298,16 +281,16 @@ export default function Home() {
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <button
-                  onClick={handleDrawerOpen}
+                  onClick={goToSignup}
                   className="w-full sm:w-auto px-6 py-3 rounded-xl text-xs font-semibold text-slate-900 bg-white hover:bg-slate-100 transition-colors shadow-xs"
                 >
                   Get Started Free
                 </button>
                 <button
-                  onClick={handleDrawerOpen}
+                  onClick={goToLogin}
                   className="w-full sm:w-auto px-5 py-3 rounded-xl text-xs font-semibold text-slate-300 hover:text-white border border-slate-700 hover:bg-slate-800 transition-colors"
                 >
-                  Contact Sales
+                  Sign in
                 </button>
               </div>
             </div>
