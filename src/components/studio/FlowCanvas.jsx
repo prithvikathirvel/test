@@ -12,6 +12,7 @@ import ReactFlow, {
 import FlowEdge from "@/components/FlowNodes/FlowEdge";
 import ConnectionLine from "@/components/FlowNodes/ConnectionLine";
 import CanvasToolbar from "@/components/studio/CanvasToolbar";
+import TokenUsageWidget from "@/components/studio/TokenUsageWidget";
 import NodeContextMenu from "@/components/studio/NodeContextMenu";
 import NodeSearchPalette from "@/components/studio/NodeSearchPalette";
 import useUndoRedo from "@/hooks/useUndoRedo";
@@ -85,6 +86,7 @@ const FlowCanvas = memo(function FlowCanvas({
   onAddSpecNode,
   onAddNodes,
   onOpenNodeDetails,
+  sidebarCollapsed = false,
 }) {
   const {
     screenToFlowPosition,
@@ -539,6 +541,7 @@ const FlowCanvas = memo(function FlowCanvas({
           onToggleSnap={toggleSnap}
           onOpenSearch={openPalette}
         />
+        <TokenUsageWidget sidebarCollapsed={sidebarCollapsed} />
       </ReactFlow>
 
       <NodeContextMenu

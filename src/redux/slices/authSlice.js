@@ -3,6 +3,7 @@ import initialRootState from "../initialRootState";
 import axios from "axios";
 import { showToaster } from "@/utils/commonFunction";
 import { sanitizeUserPayload } from "@/utils/userProfile";
+import { decodeJwt, getCurrentUserFromToken, userFromJwt } from "@/utils/jwt";
 
 const AUTH_HOST = "https://apidev.sifymodernization.digital";
 const initialState = initialRootState.auth;
@@ -51,7 +52,9 @@ export const loginUser = createAsyncThunk(
       );
       const accessToken = data?.access_token || data?.accessToken || data?.token;
       persistSession(accessToken);
-      return toUser(data);
+      // Prefer the identity decoded from the JWT (preferred_username, email,
+      // roles) over the sparse token-only login response body.
+      return userFromJwt(decodeJwt(accessToken)) || toUser(data);
     } catch (error) {
       const errorMessage = error.response?.data?.error || error.response?.data?.message || "Login failed";
       showToaster("error", errorMessage);
@@ -72,7 +75,10 @@ export const registerUser = createAsyncThunk(
       const accessToken = data?.access_token || data?.accessToken || data?.token;
       if (accessToken) {
         persistSession(accessToken);
-        return { signedIn: true, user: toUser(data) };
+        return {
+          signedIn: true,
+          user: userFromJwt(decodeJwt(accessToken)) || toUser(data),
+        };
       }
       return { signedIn: false, user: toUser(data) };
     } catch (error) {
@@ -98,6 +104,15 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.user = null;
       clearSession();
+    },
+    /**
+     * Re-derives the profile from the persisted JWT. Runs on app start so a
+     * user who returns with a stored token (but no freshly returned login
+     * payload) still gets a real name/email in the header & settings.
+     */
+    hydrateUserFromToken: (state) => {
+      const user = getCurrentUserFromToken();
+      if (user) state.user = user;
     },
   },
   extraReducers: (builder) => {
@@ -133,5 +148,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { login, logout } = authSlice.actions;
+export const { login, logout, hydrateUserFromToken } = authSlice.actions;
 export default authSlice.reducer;

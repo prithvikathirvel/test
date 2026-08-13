@@ -31,7 +31,10 @@ export default function RootLayout({ children }) {
 
   // Studio Canvas route (/studio/[id]) manages its own full-screen canvas and should NOT display the global sidebar
   const isStudioCanvas = normalizedPath.startsWith("/studio/") && normalizedPath !== "/studio";
-  const shouldShowNav = !pathsWithoutNav.includes(normalizedPath) && !isStudioCanvas;
+  // The admin console (/admin, /admin/dashboard) has its own chrome and is
+  // intentionally hidden from the regular workspace navigation.
+  const isAdmin = normalizedPath === "/admin" || normalizedPath.startsWith("/admin/");
+  const shouldShowNav = !pathsWithoutNav.includes(normalizedPath) && !isStudioCanvas && !isAdmin;
 
   return (
     <html lang="en" className="h-full">
