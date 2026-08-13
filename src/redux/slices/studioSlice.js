@@ -367,6 +367,15 @@ const studioSlice = createSlice({
     clearNewFlowId: (state) => {
       state.newFlowId = null;
     },
+    setUsage: (state, action) => {
+      const payload = action.payload || {};
+      if (payload.token_usage !== undefined) {
+        state.tokenUsage = payload.token_usage;
+      }
+      if (payload.price_usage !== undefined) {
+        state.priceUsage = payload.price_usage;
+      }
+    },
 
   },
   extraReducers: (builder) => {
@@ -590,5 +599,5 @@ const generateSpecification = (flow, nodes, edges) => {
   return specification;
 };
 
-export const { updateSpecification, setNodes, setEdges, deleteNode, updateNodeConnections, updateNode, clearNewFlowId } = studioSlice.actions;
+export const { updateSpecification, setNodes, setEdges, deleteNode, updateNodeConnections, updateNode, clearNewFlowId, setUsage } = studioSlice.actions;
 export default studioSlice.reducer;

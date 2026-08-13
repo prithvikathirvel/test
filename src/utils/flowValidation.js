@@ -4,6 +4,26 @@
  * @param {Array} nodes - List of ReactFlow node objects on the canvas
  * @returns {Object} { isValid: boolean, errors: Array, warnings: Array }
  */
+/**
+ * Resolves the variable name an output parameter maps to.
+ *
+ * New format: `{ key: "output", value: "response" }` — the name is `value`.
+ * Legacy format: `{ key: "formatted_output", value: "" }` — the name is `key`.
+ * Prefer `value` when it is a non-empty string, otherwise fall back gracefully.
+ */
+const resolveOutputVariableName = (param) => {
+  if (typeof param === "string") return param;
+  if (!param || typeof param !== "object") return "";
+
+  const value = param.value;
+  if (typeof value === "string" && value.trim() !== "") return value;
+
+  if (typeof param.key === "string" && param.key.trim() !== "") return param.key;
+  if (typeof param.name === "string" && param.name.trim() !== "") return param.name;
+
+  return "";
+};
+
 export const validateFlowOutputVariables = (nodes = []) => {
   const errors = [];
   const warnings = [];
@@ -20,10 +40,13 @@ export const validateFlowOutputVariables = (nodes = []) => {
     const nodeSeenKeys = new Set();
 
     outputParams.forEach((param, paramIndex) => {
+      // An output parameter's *variable name* now lives in `value` (the `key`
+      // is always the fixed literal "output"). Fall back to `key`/`name` for
+      // legacy payloads where the variable name was stored on the key.
       const rawKey = typeof param === "object" && param !== null
-        ? (param.key || param.name || "")
+        ? resolveOutputVariableName(param)
         : String(param || "");
-      
+
       const key = rawKey.trim();
 
       // Check 1: Empty Output Variable Name

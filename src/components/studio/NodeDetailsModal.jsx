@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import {
   Typography,
   Box,
@@ -42,8 +42,8 @@ import { getNodeColor } from '@/utils/commonFunction';
 import { getParameterComponent } from './InputParameterComponents';
 import CustomAccordion from '@/components/Common/CustomAccordion';
 import OutputParameterComponents from './OutputParameterComponents';
-import JsonOutputDrawer from './JsonOutputDrawer';
-import { updateNode, runFlow } from '@/redux/slices/studioSlice';
+import NodeTestModal from './NodeTestModal';
+import { updateNode } from '@/redux/slices/studioSlice';
 import { getNodeDocs, toDisplayString } from './nodeDocsData';
 
 const InfoItem = ({ label, value, icon }) => (
@@ -274,10 +274,8 @@ const NodeDetailsModal = ({
   const [localInputParams, setLocalInputParams] = useState([]);
   const [localOutputParams, setLocalOutputParams] = useState([]);
   const [isDirty, setIsDirty] = useState(false);
-  const [outputDrawerOpen, setOutputDrawerOpen] = useState(false);
-  const [output, setOutput] = useState(null);
+  const [nodeTestOpen, setNodeTestOpen] = useState(false);
   const [copiedExample, setCopiedExample] = useState(false);
-  const isFlowRunning = useSelector((state) => state.studio.isFlowRunning);
 
   useEffect(() => {
     if (node?.data) {
@@ -309,23 +307,9 @@ const NodeDetailsModal = ({
     }
   };
 
-  const handleTestClick = async () => {
+  const handleTestClick = () => {
     if (!node?.id) return;
-    setOutputDrawerOpen(true);
-
-    try {
-      const response = await dispatch(
-        runFlow({
-          data: { test: node.id, agent_id: flowId },
-          onSuccess: () => {
-            console.log('Flow executed successfully');
-          },
-        })
-      ).unwrap();
-      setOutput(response);
-    } catch (error) {
-      console.error('Test execution error:', error);
-    }
+    setNodeTestOpen(true);
   };
 
   const handleSaveChanges = () => {
@@ -668,24 +652,25 @@ const NodeDetailsModal = ({
                 </Box>
               </Box>
 
-              {/* Quick Test Execution Widget */}
+              {/* Node Test Widget */}
               <Box className="p-4 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
                 <Typography className="!text-[12.5px] !font-bold !text-slate-800 mb-1.5 flex items-center justify-between">
                   <span className="flex items-center gap-2">
                     <Sparkles size={14} className="text-indigo-600" />
-                    Test Execution
+                    Node Test
                   </span>
                 </Typography>
                 <Typography className="!text-[11.5px] !text-slate-500 mb-3.5">
-                  Execute this node in isolation to preview output variables.
+                  Run this node in isolation with its own parameters to preview
+                  its output.
                 </Typography>
 
                 <button
                   onClick={handleTestClick}
                   disabled={loading}
-                  className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 rounded-lg shadow-xs transition-colors"
                 >
-                  <PlayIcon size={13} className="fill-slate-700 text-slate-700" /> Run Node Test
+                  <PlayIcon size={13} className="fill-white text-white" /> Run Node Test
                 </button>
               </Box>
             </Box>
@@ -765,12 +750,10 @@ const NodeDetailsModal = ({
         </Drawer>
       )}
 
-      <JsonOutputDrawer
-        open={outputDrawerOpen}
-        onClose={() => setOutputDrawerOpen(false)}
-        outputData={output}
-        title={`${node?.data?.name || 'Node'} Execution Output`}
-        status={isFlowRunning ? 'pending' : 'success'}
+      <NodeTestModal
+        open={nodeTestOpen}
+        onClose={() => setNodeTestOpen(false)}
+        node={node}
       />
     </>
   );
