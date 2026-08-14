@@ -5,16 +5,19 @@ import InputBox from '@/components/Common/InputBox';
 import CustomButton from '@/components/Common/CustomButton';
 
 const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
+  const initialDescription = initialData?.description || initialData?.graphSpec?.description || '';
+  const isClone = Boolean(initialData?.__clone);
+
   const [flowDetails, setFlowDetails] = useState({
     name: initialData?.name || '',
-    description: initialData?.graphSpec?.description || '',
+    description: initialDescription,
   });
 
   useEffect(() => {
     if (initialData) {
       setFlowDetails({
         name: initialData?.name || '',
-        description: initialData?.graphSpec?.description || '',
+        description: initialData?.description || initialData?.graphSpec?.description || '',
       });
     }
   }, [initialData]);
@@ -55,7 +58,7 @@ const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
           </div>
           <div>
             <Typography className="!text-[15px] !font-bold !text-slate-900">
-              {initialData?.name ? 'Edit Flow Specification' : 'Create Agentic Flow'}
+              {isClone ? 'Clone Flow' : initialData?.name ? 'Edit Flow Specification' : 'Create Agentic Flow'}
             </Typography>
             <Typography className="!text-[12px] !text-slate-500">
               Configure flow name and behavioral description
@@ -98,7 +101,7 @@ const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
           onClick={handleSubmit}
           disabled={!flowDetails.name?.trim() || !flowDetails.description?.trim()}
         >
-          {initialData?.name ? 'Save Changes' : 'Create Flow'}
+          {isClone ? 'Clone Flow' : initialData?.name ? 'Save Changes' : 'Create Flow'}
         </CustomButton>
       </DialogActions>
     </Dialog>

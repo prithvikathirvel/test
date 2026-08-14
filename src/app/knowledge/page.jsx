@@ -214,72 +214,10 @@ const KnowledgePage = () => {
                 </Box>
 
                 {/* ---------------- Workspace ---------------- */}
-                <Box className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_400px] gap-5 items-start">
-                    {/* ===== Main column: the library ===== */}
-                    <Box className="min-w-0 rounded-lg border border-slate-200 bg-white">
-                        <Box className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-b border-slate-200">
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-[12px] font-semibold uppercase tracking-wider text-slate-500">
-                                    Sources
-                                </h2>
-                                <span className="text-[11px] font-medium text-slate-400">
-                                    {filteredSources.length}
-                                    {searchKnowledge ? ` of ${sources.length}` : ""}
-                                </span>
-                            </div>
-
-                            <InputBox
-                                placeholder="Search sources..."
-                                value={searchKnowledge}
-                                isShowLabel={false}
-                                height="34px"
-                                onChange={setSearchKnowledge}
-                                className="w-full sm:w-64 bg-white"
-                                icon={<Search className="text-slate-400" size={15} />}
-                            />
-                        </Box>
-
-                        {loading && sources.length === 0 ? (
-                            <Box className="flex flex-col items-center justify-center py-16">
-                                <CircularProgress size={26} sx={{ color: '#4f46e5' }} />
-                                <p className="text-xs text-slate-400 mt-3">Loading sources...</p>
-                            </Box>
-                        ) : error ? (
-                            <Box className="m-4 flex items-start gap-2.5 rounded-md border border-red-200 bg-red-50 px-3.5 py-3">
-                                <AlertCircle size={16} className="text-red-500 shrink-0 mt-px" />
-                                <div className="min-w-0">
-                                    <p className="text-[12.5px] font-semibold text-red-700">
-                                        Could not load sources
-                                    </p>
-                                    <p className="text-[11.5px] text-red-600/90 break-words">{error}</p>
-                                </div>
-                            </Box>
-                        ) : filteredSources.length > 0 ? (
-                            <KnowledgeListingTableView
-                                filteredFlows={filteredSources}
-                                handleOpenStudio={(row) => console.log("Open", row)}
-                                handleDeleteKnowledge={handleDeleteKnowledge}
-                            />
-                        ) : (
-                            <Box className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                                <span className="h-11 w-11 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center mb-3">
-                                    <FileText size={20} className="text-slate-400" />
-                                </span>
-                                <p className="text-[13px] font-semibold text-slate-700">
-                                    {searchKnowledge ? "No matching sources" : "No sources yet"}
-                                </p>
-                                <p className="text-[11.5px] text-slate-400 mt-1 max-w-xs">
-                                    {searchKnowledge
-                                        ? "Try a different search term."
-                                        : "Add documents from the ingestion panel to make them available to your agents."}
-                                </p>
-                            </Box>
-                        )}
-                    </Box>
-
-                    {/* ===== Side rail: ingestion ===== */}
-                    <Box className="rounded-lg border border-slate-200 bg-white lg:sticky lg:top-5 flex flex-col lg:max-h-[calc(100vh-2.5rem)]">
-                        <Box className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-200 shrink-0">
+                <Box className="space-y-5">
+                    {/* ===== Add documents (full width, above the table) ===== */}
+                    <Box className="rounded-lg border border-slate-200 bg-white">
+                        <Box className="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-200">
                             <h2 className="text-[12px] font-semibold uppercase tracking-wider text-slate-500">
                                 Add documents
                             </h2>
@@ -290,23 +228,23 @@ const KnowledgePage = () => {
                             )}
                         </Box>
 
-                        <Box className="p-4 min-h-0 overflow-y-auto">
-                            {/* Compact dropzone — a form control, not a hero panel. */}
+                        <Box className="p-4">
+                            {/* Dropzone — full width form control. */}
                             <div
                                 onDragOver={handleDragOver}
                                 onDragLeave={handleDragLeave}
                                 onDrop={handleDrop}
-                                className={`rounded-md border border-dashed px-4 py-6 text-center transition-colors ${
+                                className={`rounded-md border border-dashed px-4 py-7 text-center transition-colors ${
                                     isDragging
                                         ? "border-indigo-400 bg-indigo-50/50"
                                         : "border-slate-300 bg-slate-50/60 hover:border-slate-400"
                                 }`}
                             >
                                 <CloudUpload
-                                    size={22}
+                                    size={24}
                                     className={isDragging ? "text-indigo-500 mx-auto" : "text-slate-400 mx-auto"}
                                 />
-                                <p className="mt-2 text-[12.5px] font-semibold text-slate-700">
+                                <p className="mt-2 text-[13px] font-semibold text-slate-700">
                                     {isDragging ? "Drop to stage files" : "Drag files here"}
                                 </p>
 
@@ -322,7 +260,7 @@ const KnowledgePage = () => {
                                 <button
                                     type="button"
                                     onClick={() => fileInputRef.current?.click()}
-                                    className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                                    className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-[12px] font-medium text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500/40"
                                 >
                                     <FolderOpen size={13} /> Browse
                                 </button>
@@ -350,7 +288,7 @@ const KnowledgePage = () => {
                                         </button>
                                     </div>
 
-                                    <div className="space-y-2.5">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
                                         {selectedFiles.map((item, index) => {
                                             const invalid = item.knowledgeBaseName.trim() === "";
                                             return (
@@ -422,26 +360,89 @@ const KnowledgePage = () => {
                                         </div>
                                     )}
 
-                                    <CustomButton
-                                        variant="contained"
-                                        color="primary"
-                                        fullWidth
-                                        startIcon={
-                                            isUploading
-                                                ? <CircularProgress size={13} color="inherit" />
-                                                : <CloudUpload size={15} />
-                                        }
-                                        onClick={handleUpload}
-                                        disabled={isUploading || !isFormValid}
-                                        className="!mt-3 !rounded-md !text-[13px]"
-                                    >
-                                        {isUploading
-                                            ? 'Uploading...'
-                                            : `Upload ${selectedFiles.length} ${selectedFiles.length === 1 ? 'file' : 'files'}`}
-                                    </CustomButton>
+                                    <div className="mt-3 flex justify-end">
+                                        <CustomButton
+                                            variant="contained"
+                                            color="primary"
+                                            startIcon={
+                                                isUploading
+                                                    ? <CircularProgress size={13} color="inherit" />
+                                                    : <CloudUpload size={15} />
+                                            }
+                                            onClick={handleUpload}
+                                            disabled={isUploading || !isFormValid}
+                                            className="!rounded-md !text-[13px]"
+                                        >
+                                            {isUploading
+                                                ? 'Uploading...'
+                                                : `Upload ${selectedFiles.length} ${selectedFiles.length === 1 ? 'file' : 'files'}`}
+                                        </CustomButton>
+                                    </div>
                                 </div>
                             )}
                         </Box>
+                    </Box>
+
+                    {/* ===== Sources table (full width) ===== */}
+                    <Box className="min-w-0 rounded-lg border border-slate-200 bg-white">
+                        <Box className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 border-b border-slate-200">
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-[12px] font-semibold uppercase tracking-wider text-slate-500">
+                                    Sources
+                                </h2>
+                                <span className="text-[11px] font-medium text-slate-400">
+                                    {filteredSources.length}
+                                    {searchKnowledge ? ` of ${sources.length}` : ""}
+                                </span>
+                            </div>
+
+                            <InputBox
+                                placeholder="Search sources..."
+                                value={searchKnowledge}
+                                isShowLabel={false}
+                                height="34px"
+                                onChange={setSearchKnowledge}
+                                className="w-full sm:w-64 bg-white"
+                                icon={<Search className="text-slate-400" size={15} />}
+                            />
+                        </Box>
+
+                        {loading && sources.length === 0 ? (
+                            <Box className="flex flex-col items-center justify-center py-16">
+                                <CircularProgress size={26} sx={{ color: '#4f46e5' }} />
+                                <p className="text-xs text-slate-400 mt-3">Loading sources...</p>
+                            </Box>
+                        ) : error ? (
+                            <Box className="m-4 flex items-start gap-2.5 rounded-md border border-red-200 bg-red-50 px-3.5 py-3">
+                                <AlertCircle size={16} className="text-red-500 shrink-0 mt-px" />
+                                <div className="min-w-0">
+                                    <p className="text-[12.5px] font-semibold text-red-700">
+                                        Could not load sources
+                                    </p>
+                                    <p className="text-[11.5px] text-red-600/90 break-words">{error}</p>
+                                </div>
+                            </Box>
+                        ) : filteredSources.length > 0 ? (
+                            <KnowledgeListingTableView
+                                filteredFlows={filteredSources}
+                                handleOpenStudio={(row) => console.log("Open", row)}
+                                handleDeleteKnowledge={handleDeleteKnowledge}
+                            />
+                        ) : (
+                            <Box className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                                <span className="h-11 w-11 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center mb-3">
+                                    <FileText size={20} className="text-slate-400" />
+                                </span>
+                                <p className="text-[13px] font-semibold text-slate-700">
+                                    {searchKnowledge ? "No matching sources" : "No sources yet"}
+                                </p>
+                                <p className="text-[11.5px] text-slate-400 mt-1 max-w-xs">
+                                    {searchKnowledge
+                                        ? "Try a different search term."
+                                        : "Add documents above to make them available to your agents."}
+                                </p>
+                            </Box>
+                        )}
                     </Box>
                 </Box>
             </Box>

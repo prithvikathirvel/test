@@ -305,15 +305,20 @@ export const recordToFormValues = (kind, record) => {
 };
 
 /**
- * Extracts input/output parameters from a pasted JSON spec.
+ * Extracts registry fields (name, description, tags, type, version,
+ * specifications) and input/output parameters from a pasted JSON spec.
  *
  * Accepts, in order of precedence:
  *   1. A plain array of parameters            -> input parameters.
- *   2. A node object with `inputParameters` / `outputParameters`.
+ *   2. A node object with `inputParameters` / `outputParameters` (and any of
+ *      the scalar fields above).
  *   3. A flow object with `graphSpec.nodes`  -> every node becomes a candidate
  *      the user can pick from.
  *
- * @returns {{ candidates: Array<{ name, inputParameters, outputParameters }>, message: string|null }}
+ * @returns {{ candidates: Array<{
+ *   name, description, tags, type, version, specifications,
+ *   inputParameters, outputParameters
+ * }>, message: string|null }}
  */
 export const extractParamsFromJson = (text) => {
   if (!text || !String(text).trim()) {
@@ -327,36 +332,47 @@ export const extractParamsFromJson = (text) => {
     return { candidates: [], message: `Invalid JSON: ${err.message}` };
   }
 
+  const emptyCandidate = () => ({
+    name: null,
+    description: null,
+    tags: null,
+    type: null,
+    version: null,
+    specifications: null,
+    inputParameters: [],
+    outputParameters: [],
+  });
+
+  const fromObject = (obj) => {
+    const c = emptyCandidate();
+    if (obj?.name) c.name = obj.name;
+    else if (obj?.displayName) c.name = obj.displayName;
+    if (obj?.description) c.description = obj.description;
+    if (obj?.tags != null) c.tags = Array.isArray(obj.tags) ? obj.tags : [];
+    if (obj?.type) c.type = obj.type;
+    if (obj?.version != null) c.version = obj.version;
+    if (obj?.specifications != null) c.specifications = obj.specifications;
+    c.inputParameters = Array.isArray(obj?.inputParameters) ? obj.inputParameters : [];
+    c.outputParameters = Array.isArray(obj?.outputParameters) ? obj.outputParameters : [];
+    return c;
+  };
+
   // 1. Plain array of parameters.
   if (Array.isArray(json)) {
-    return {
-      candidates: [{ name: null, inputParameters: json, outputParameters: [] }],
-      message: null,
-    };
+    const c = emptyCandidate();
+    c.inputParameters = json;
+    return { candidates: [c], message: null };
   }
 
   if (json && typeof json === "object") {
     // 2. A single node object.
     if (Array.isArray(json.inputParameters) || Array.isArray(json.outputParameters)) {
-      return {
-        candidates: [
-          {
-            name: json.name || json.displayName || null,
-            inputParameters: Array.isArray(json.inputParameters) ? json.inputParameters : [],
-            outputParameters: Array.isArray(json.outputParameters) ? json.outputParameters : [],
-          },
-        ],
-        message: null,
-      };
+      return { candidates: [fromObject(json)], message: null };
     }
 
     // 3. A full flow.
     if (json.graphSpec && Array.isArray(json.graphSpec.nodes)) {
-      const nodes = json.graphSpec.nodes.map((n) => ({
-        name: n?.name || n?.displayName || n?.node_id || "Node",
-        inputParameters: Array.isArray(n?.inputParameters) ? n.inputParameters : [],
-        outputParameters: Array.isArray(n?.outputParameters) ? n.outputParameters : [],
-      }));
+      const nodes = json.graphSpec.nodes.map((n) => fromObject(n));
       if (nodes.length === 0) {
         return { candidates: [], message: "No nodes found in this flow." };
       }

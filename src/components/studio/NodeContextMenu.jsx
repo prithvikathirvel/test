@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useEffect, useRef } from "react";
-import { Copy, Trash2, Crosshair, Settings2 } from "lucide-react";
+import { Copy, Trash2, Crosshair, Settings2, Unplug } from "lucide-react";
 
 const itemClass =
   "flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs text-slate-700 transition-colors hover:bg-slate-100";
@@ -17,6 +17,7 @@ const NodeContextMenu = memo(function NodeContextMenu({
   onDelete,
   onFocus,
   onOpenDetails,
+  onDisconnect,
 }) {
   const ref = useRef(null);
 
@@ -56,6 +57,9 @@ const NodeContextMenu = memo(function NodeContextMenu({
       </button>
       <button type="button" className={itemClass} onClick={() => onFocus(menu.id)}>
         <Crosshair size={13} className="text-slate-400" /> Focus node
+      </button>
+      <button type="button" className={itemClass} onClick={() => onDisconnect(menu.id)}>
+        <Unplug size={13} className="text-slate-400" /> Disconnect connections
       </button>
       <div className="my-1 h-px bg-slate-100" />
       <button

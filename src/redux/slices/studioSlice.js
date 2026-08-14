@@ -5,6 +5,17 @@ import { showToaster } from "@/utils/commonFunction";
 import axios from "axios";
 import { sanitizeOutput } from "@/utils/commonFunction";
 import { serializeFlowInputs } from "@/utils/templateRef";
+import { getCurrentUserFromToken } from "@/utils/jwt";
+
+/**
+ * The signed-in user's stable identity (`sub` claim from the JWT). Used as
+ * `createdBy` so ownership is tied to the real user rather than the hard-coded
+ * "user" placeholder.
+ */
+const currentUserId = () => {
+  const user = getCurrentUserFromToken();
+  return user?.sub || null;
+};
 
 const initialState = initialRootState.studio;
 
@@ -86,8 +97,13 @@ export const updateFlow = createAsyncThunk('flow/updateFlow', async (data) => {
   console.log('Updating flow data...');
   try {
     const { id, updatedData, onSuccess } = data
+    const userId = currentUserId();
     const payload = updatedData && typeof updatedData === "object"
-      ? { ...updatedData, inputs: serializeFlowInputs(updatedData.inputs) }
+      ? {
+          ...updatedData,
+          inputs: serializeFlowInputs(updatedData.inputs),
+          createdBy: userId || updatedData.createdBy || "user",
+        }
       : updatedData;
     const response = await APIKit.put(`/agent-flow/${id}`, payload);
     showToaster('success', 'Flow updated successfully');
@@ -114,7 +130,11 @@ export const getAllFlows = createAsyncThunk('flow/getAllFlows', async () => {
 export const saveFlow = createAsyncThunk('studio/saveFlow', async ({ data, onSuccess }) => {
   try {
     console.log(data, 'hey222');
-    const response = await APIKit.post(`/agent-flow`, data);
+    const userId = currentUserId();
+    const payload = data && typeof data === "object"
+      ? { ...data, createdBy: userId || data.createdBy || "user" }
+      : data;
+    const response = await APIKit.post(`/agent-flow`, payload);
     showToaster('success', 'Flow saved successfully');
     onSuccess();
     return response.data;

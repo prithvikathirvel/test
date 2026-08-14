@@ -18,6 +18,8 @@ import {
   ChevronDown,
   Import,
   Braces,
+  Download,
+  Lock,
 } from "lucide-react";
 import CustomTable from "@/components/Common/CustomTable";
 import ConfirmDialog from "@/components/Common/ConfirmDialog";
@@ -63,7 +65,7 @@ const SectionLabel = ({ children, hint }) => (
 );
 
 /** Simple text / textarea / toggle field for the basic-info card. */
-const BasicField = ({ field, value, onChange, disabled }) => {
+const BasicField = ({ field, value, onChange, disabled, readOnly = false }) => {
   if (field.type === "toggle") {
     return (
       <div className="flex items-center justify-between gap-4 px-3 py-2.5 rounded-lg bg-slate-50 border border-slate-200">
@@ -107,15 +109,27 @@ const BasicField = ({ field, value, onChange, disabled }) => {
         {field.label}
         {field.required && <span className="text-red-500"> *</span>}
       </label>
-      <input
-        type="text"
-        value={value ?? ""}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={field.placeholder}
-        className="w-full px-3 py-2 text-[13px] bg-white border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 transition-all"
-      />
+      {readOnly ? (
+        <div className="flex items-center gap-1.5 w-full px-3 py-2 rounded-lg bg-slate-100 border border-slate-200 text-slate-500 cursor-not-allowed">
+          <Lock size={12} className="text-slate-400 shrink-0" />
+          <span className="text-[13px] font-mono truncate">{value ?? ""}</span>
+        </div>
+      ) : (
+        <input
+          type="text"
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={field.placeholder}
+          className="w-full px-3 py-2 text-[13px] bg-white border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 transition-all"
+        />
+      )}
       {field.key === "tags" && (
         <p className="text-[10.5px] text-slate-400 mt-1">Comma-separated list.</p>
+      )}
+      {readOnly && (
+        <p className="text-[10.5px] text-slate-400 mt-1">
+          Fixed to <span className="font-mono">{value}</span> for this registry.
+        </p>
       )}
     </div>
   );
@@ -123,6 +137,9 @@ const BasicField = ({ field, value, onChange, disabled }) => {
 
 const RegistrySection = ({ kind }) => {
   const config = REGISTRY_CONFIG[kind];
+
+  // The `type` field is derived from the registry, not user-editable.
+  const fixedType = kind === "tools" ? "tool" : kind === "models" ? "model" : "agent";
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -172,10 +189,12 @@ const RegistrySection = ({ kind }) => {
       else if (f.type === "params" || f.type === "outputParams") values[f.key] = [];
       else values[f.key] = "";
     });
+    // The registry type is fixed, never user-editable.
+    values.type = fixedType;
     const me = getCurrentUserFromToken();
     if (me?.email) values.createdBy = me.email;
     return values;
-  }, [config.fields]);
+  }, [config.fields, fixedType]);
 
   const openCreate = () => {
     setEditing(null);
@@ -186,7 +205,8 @@ const RegistrySection = ({ kind }) => {
 
   const openEdit = (record) => {
     setEditing(record);
-    setFormValues(recordToFormValues(kind, record));
+    // Rehydrate from the record, then pin the registry type.
+    setFormValues({ ...recordToFormValues(kind, record), type: fixedType });
     resetImport();
     setModalOpen(true);
   };
@@ -217,6 +237,14 @@ const RegistrySection = ({ kind }) => {
     const updates = {};
     if (sel.name && hasField("name")) updates.name = sel.name;
     if (sel.description && hasField("description")) updates.description = sel.description;
+    if (Array.isArray(sel.tags) && hasField("tags")) updates.tags = sel.tags.join(", ");
+    if (sel.version != null && hasField("version")) updates.version = String(sel.version);
+    if (sel.specifications && hasField("specifications")) {
+      updates.specifications =
+        typeof sel.specifications === "object"
+          ? JSON.stringify(sel.specifications, null, 2)
+          : String(sel.specifications);
+    }
     if (hasField("inputParameters")) {
       updates.inputParameters = paramsToEditor(sel.inputParameters);
     }
@@ -224,9 +252,34 @@ const RegistrySection = ({ kind }) => {
       updates.outputParameters = paramsToEditor(sel.outputParameters, { forceOutputKey: true });
     }
 
+    // The registry `type` is fixed and must never be overridden by an import.
+    delete updates.type;
+
     setFormValues((prev) => ({ ...prev, ...updates }));
     toast.success("JSON imported — you can continue editing.");
     setImportOpen(false);
+  };
+
+  const handleExport = () => {
+    const payload = buildPayload(kind, formValues);
+    const json = JSON.stringify(payload, null, 2);
+
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(json).catch(() => {});
+    }
+
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const baseName = (payload.name || config.singular.toLowerCase()).replace(/\s+/g, "-");
+    a.download = `${baseName}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    toast.success("Exported JSON (copied to clipboard).");
   };
 
   const handleSave = async () => {
@@ -405,25 +458,37 @@ const RegistrySection = ({ kind }) => {
 
         <DialogContent sx={{ p: 0 }}>
           <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
-            {/* Import JSON */}
+            {/* Import / Export JSON */}
             <div className="rounded-xl border border-slate-200/80 bg-white shadow-2xs overflow-hidden">
-              <button
-                type="button"
-                onClick={() => setImportOpen((v) => !v)}
-                className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors"
-              >
-                <span className="flex items-center gap-2">
-                  <FileJson size={15} className="text-indigo-600" />
-                  <span className="text-[12.5px] font-semibold text-slate-700">Import JSON</span>
-                  <span className="text-[11px] text-slate-400">
-                    paste a flow / node spec to auto-fill the parameters
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setImportOpen((v) => !v)}
+                  className="flex-1 flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors"
+                >
+                  <span className="flex items-center gap-2">
+                    <FileJson size={15} className="text-indigo-600" />
+                    <span className="text-[12.5px] font-semibold text-slate-700">Import JSON</span>
+                    <span className="hidden sm:inline text-[11px] text-slate-400">
+                      paste a flow / node spec to auto-fill the fields
+                    </span>
                   </span>
-                </span>
-                <ChevronDown
-                  size={15}
-                  className={`text-slate-400 transition-transform ${importOpen ? "rotate-180" : ""}`}
-                />
-              </button>
+                  <ChevronDown
+                    size={15}
+                    className={`text-slate-400 transition-transform ${importOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                <div className="border-l border-slate-100 h-6" />
+                <button
+                  type="button"
+                  onClick={handleExport}
+                  className="flex items-center gap-1.5 px-3 py-3 text-[12.5px] font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors"
+                  title="Export the current fields as JSON"
+                >
+                  <Download size={14} />
+                  <span className="hidden sm:inline">Export</span>
+                </button>
+              </div>
 
               {importOpen && (
                 <div className="px-4 pb-4 space-y-3 border-t border-slate-100">
@@ -510,6 +575,7 @@ const RegistrySection = ({ kind }) => {
                       value={formValues[field.key]}
                       onChange={(v) => setField(field.key, v)}
                       disabled={saving}
+                      readOnly={field.key === "type"}
                     />
                   </div>
                 ))}
