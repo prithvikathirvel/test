@@ -56,6 +56,8 @@ const initialRootState = {
     flowOutput: null,
     isFlowRunning:false,
     sessionId: null,
+    tokenUsage: null,
+    priceUsage: null,
     mcpTools: [],
     mcpToolLoader: false,
   }

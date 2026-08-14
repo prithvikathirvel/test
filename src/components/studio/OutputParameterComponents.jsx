@@ -2,21 +2,28 @@
 
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import { Variable } from "lucide-react";
+import { Variable, Lock } from "lucide-react";
 
+/**
+ * Output parameter editor.
+ *
+ * An output parameter always carries a fixed key (`output`) and a *changeable*
+ * value (e.g. `response`, `final_output`) that maps the node result into
+ * downstream nodes. The key is rendered read-only while the value is editable.
+ */
 const OutputParameterComponents = ({ param, index, onUpdate, color = "#4f46e5" }) => {
   const isObject = typeof param === "object" && param !== null;
-  const keyName = isObject ? (param.key || param.name || "") : String(param || "");
+  const keyName = isObject ? (param.key || param.name || "output") : String(param || "output");
+  const value = isObject ? (param.value ?? "") : "";
   const paramType = isObject ? (param.type || "text") : "text";
 
-  const handleKeyChange = (e) => {
-    const newKey = e.target.value;
-    if (onUpdate) {
-      if (isObject) {
-        onUpdate({ ...param, key: newKey, name: newKey });
-      } else {
-        onUpdate(newKey);
-      }
+  const handleValueChange = (e) => {
+    const newValue = e.target.value;
+    if (!onUpdate) return;
+    if (isObject) {
+      onUpdate({ ...param, value: newValue });
+    } else {
+      onUpdate(newValue);
     }
   };
 
@@ -37,15 +44,27 @@ const OutputParameterComponents = ({ param, index, onUpdate, color = "#4f46e5" }
         </span>
       </div>
 
+      {/* Fixed output key — always "output" */}
       <div>
         <label className="block text-[11px] font-medium text-slate-500 mb-1">
-          Output Variable Name
+          Output Key
+        </label>
+        <div className="flex items-center gap-1.5 w-full px-3 py-2 text-xs font-mono bg-slate-100 border border-slate-200 rounded-lg text-slate-500 cursor-not-allowed">
+          <Lock size={11} className="text-slate-400 shrink-0" />
+          <span className="truncate">{keyName}</span>
+        </div>
+      </div>
+
+      {/* Changeable output value — e.g. "response" / "final_output" */}
+      <div>
+        <label className="block text-[11px] font-medium text-slate-500 mb-1">
+          Output Value
         </label>
         <input
           type="text"
-          value={keyName}
-          onChange={handleKeyChange}
-          placeholder="e.g. output_result"
+          value={value}
+          onChange={handleValueChange}
+          placeholder="e.g. response, final_output"
           className="w-full px-3 py-2 text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/15 transition-all"
         />
       </div>

@@ -31,6 +31,8 @@ const StudioListing = () => {
   const router = useRouter();
   const flows = useSelector((state) => state.studio.flows || []);
   const [flowDetailsModalOpen, setFlowDetailsModalOpen] = useState(false);
+  // The flow being cloned (null for a fresh create).
+  const [cloneTarget, setCloneTarget] = useState(null);
   const newFlowId = useSelector((state) => state.studio.newFlowId);
   const studioSaveFlowLoader = useSelector((state) => state.studio.studioSaveFlowLoader);
   const [searchTerm, setSearchTerm] = useState("");
@@ -92,6 +94,34 @@ const StudioListing = () => {
   };
 
   const handleFlowDetailsSubmit = (details) => {
+    if (cloneTarget) {
+      // Clone: send the *entire* flow spec (graphSpec, inputs, voice config…)
+      // but drop `id` / `agent_id` so the backend generates fresh ones.
+      const { id, agent_id, createdAt, updatedAt, __clone, ...cloneBase } = details;
+      const cloneSpec = {
+        ...cloneBase,
+        name: details.name,
+        description: details.description,
+        type: details.type || "flow",
+        graphSpec: {
+          ...(details.graphSpec || {}),
+          description: details.description,
+        },
+      };
+
+      dispatch(
+        saveFlow({
+          data: cloneSpec,
+          onSuccess: () => {
+            setCloneTarget(null);
+            dispatch(updateSpecification(cloneSpec));
+            dispatch(getAllFlows());
+          },
+        })
+      );
+      return;
+    }
+
     const initialSpec = {
       name: details.name,
       description: details.description,
@@ -129,6 +159,18 @@ const StudioListing = () => {
   };
 
   const handleCreateStudio = () => {
+    setCloneTarget(null);
+    setFlowDetailsModalOpen(true);
+  };
+
+  const handleCloneFlow = (flow) => {
+    // Normalise the alternate `agent_name` / `agent_description` shapes so the
+    // clone modal + submit read a consistent `name` / `description`.
+    setCloneTarget({
+      ...flow,
+      name: flow?.name || flow?.agent_name || "Untitled Flow",
+      description: flow?.description || flow?.agent_description || "",
+    });
     setFlowDetailsModalOpen(true);
   };
 
@@ -242,6 +284,7 @@ const StudioListing = () => {
                 filteredFlows={paginatedFlows}
                 handleOpenStudio={handleOpenStudio}
                 handleDeleteFlow={handleDeleteFlow}
+                handleCloneFlow={handleCloneFlow}
               />
             )}
 
@@ -283,8 +326,20 @@ const StudioListing = () => {
 
       <FlowDetailsModal
         open={flowDetailsModalOpen}
-        onClose={() => setFlowDetailsModalOpen(false)}
+        onClose={() => {
+          setFlowDetailsModalOpen(false);
+          setCloneTarget(null);
+        }}
         onSubmit={handleFlowDetailsSubmit}
+        initialData={
+          cloneTarget
+            ? {
+                ...cloneTarget,
+                __clone: true,
+                name: `${cloneTarget.name || cloneTarget.agent_name || "Untitled Flow"} - Clone`,
+              }
+            : null
+        }
       />
 
       {/* Destructive-action guard for flow deletion */}

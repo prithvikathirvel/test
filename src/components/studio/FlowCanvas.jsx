@@ -12,6 +12,7 @@ import ReactFlow, {
 import FlowEdge from "@/components/FlowNodes/FlowEdge";
 import ConnectionLine from "@/components/FlowNodes/ConnectionLine";
 import CanvasToolbar from "@/components/studio/CanvasToolbar";
+import TokenUsageWidget from "@/components/studio/TokenUsageWidget";
 import NodeContextMenu from "@/components/studio/NodeContextMenu";
 import NodeSearchPalette from "@/components/studio/NodeSearchPalette";
 import useUndoRedo from "@/hooks/useUndoRedo";
@@ -85,6 +86,7 @@ const FlowCanvas = memo(function FlowCanvas({
   onAddSpecNode,
   onAddNodes,
   onOpenNodeDetails,
+  sidebarCollapsed = false,
 }) {
   const {
     screenToFlowPosition,
@@ -381,6 +383,24 @@ const FlowCanvas = memo(function FlowCanvas({
     [closeContextMenu, getNodes, setCenter]
   );
 
+  /* Disconnects every edge touching a node, leaving the node in place. Uses the
+     same `deleteElements` path as regular edge deletion, so React Flow fires the
+     usual `onEdgesDelete` + `onEdgesChange` callbacks and the debounced edges
+     effect re-derives the specification (`next`, condition paths, etc.) exactly
+     as it would for a manual multi-edge delete. */
+  const handleContextDisconnect = useCallback(
+    (nodeId) => {
+      closeContextMenu();
+      const connectedEdges = getEdges().filter(
+        (edge) => edge.source === nodeId || edge.target === nodeId
+      );
+      if (connectedEdges.length === 0) return;
+      takeSnapshot();
+      deleteElements({ edges: connectedEdges });
+    },
+    [closeContextMenu, getEdges, deleteElements, takeSnapshot]
+  );
+
   const handleContextOpenDetails = useCallback(
     (nodeId) => {
       closeContextMenu();
@@ -539,6 +559,7 @@ const FlowCanvas = memo(function FlowCanvas({
           onToggleSnap={toggleSnap}
           onOpenSearch={openPalette}
         />
+        <TokenUsageWidget sidebarCollapsed={sidebarCollapsed} />
       </ReactFlow>
 
       <NodeContextMenu
@@ -548,6 +569,7 @@ const FlowCanvas = memo(function FlowCanvas({
         onDelete={handleContextDelete}
         onFocus={handleContextFocus}
         onOpenDetails={handleContextOpenDetails}
+        onDisconnect={handleContextDisconnect}
       />
 
       <NodeSearchPalette

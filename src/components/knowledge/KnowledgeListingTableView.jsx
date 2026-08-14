@@ -32,12 +32,12 @@ const STATUS_STYLES = {
  * pixel minimum. Source takes the slack because it is the only free-text field.
  */
 const COLUMNS = [
-  { key: 'source', label: 'Source', width: '38%' },
-  { key: 'format', label: 'Format', width: '12%' },
-  { key: 'size', label: 'Size', width: '12%' },
-  { key: 'uploaded', label: 'Uploaded', width: '16%' },
-  { key: 'status', label: 'Status', width: '14%' },
-  { key: 'actions', label: '', width: '8%', align: 'right' },
+  { key: 'source', label: 'Source', width: '28%' },
+  { key: 'format', label: 'Format', width: '11%' },
+  { key: 'size', label: 'Size', width: '11%' },
+  { key: 'uploaded', label: 'Uploaded', width: '18%' },
+  { key: 'status', label: 'Status', width: '16%' },
+  { key: 'actions', label: '', width: '16%', align: 'right' },
 ];
 
 const KnowledgeListingTableView = ({

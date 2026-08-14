@@ -7,6 +7,7 @@ import {
   ArrowUp,
   ArrowDown,
   ChevronsUpDown,
+  Copy,
 } from 'lucide-react';
 import { timeAgo } from '@/utils/commonFunction';
 
@@ -65,10 +66,10 @@ const compareVersions = (a, b) => {
 };
 
 const COLUMNS = [
-  { key: 'name', label: 'Flow', sortable: true, width: '46%' },
-  { key: 'version', label: 'Version', sortable: true, width: '14%' },
-  { key: 'updatedAt', label: 'Last updated', sortable: true, width: '22%' },
-  { key: 'actions', label: '', sortable: false, width: '18%', align: 'right' },
+  { key: 'name', label: 'Flow', sortable: true, width: '38%' },
+  { key: 'version', label: 'Version', sortable: true, width: '12%' },
+  { key: 'updatedAt', label: 'Last updated', sortable: true, width: '18%' },
+  { key: 'actions', label: '', sortable: false, width: '32%', align: 'right' },
 ];
 
 const SortIcon = ({ state }) => {
@@ -82,7 +83,7 @@ const SortIcon = ({ state }) => {
   );
 };
 
-const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDeleteFlow }) => {
+const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDeleteFlow, handleCloneFlow }) => {
   // `null` = keep the order the page already applied (updatedAt desc).
   const [sort, setSort] = useState(null);
 
@@ -195,12 +196,12 @@ const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDele
                               },
                             }}
                           >
-                            <span className="block text-[11.5px] text-slate-500 truncate cursor-default">
+                            <span className="block text-[11px] text-slate-500 truncate max-w-[220px] cursor-default">
                               {description}
                             </span>
                           </Tooltip>
                         ) : (
-                          <span className="block text-[11.5px] text-slate-400 italic">
+                          <span className="block text-[11px] text-slate-400 italic">
                             No description
                           </span>
                         )}
@@ -236,6 +237,16 @@ const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDele
                       >
                         Open <ArrowUpRight size={13} />
                       </button>
+                      <Tooltip title="Clone flow">
+                        <button
+                          type="button"
+                          aria-label={`Clone ${flowName(flow)}`}
+                          onClick={() => handleCloneFlow && handleCloneFlow(flow)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 text-[12px] font-medium text-slate-700 bg-white hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 border border-slate-200 rounded-md transition-colors focus:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo-500/40"
+                        >
+                          <Copy size={13} /> Clone
+                        </button>
+                      </Tooltip>
                       <Tooltip title="Delete flow">
                         <button
                           type="button"
