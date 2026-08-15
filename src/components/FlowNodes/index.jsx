@@ -53,6 +53,8 @@ const selectNodeTypeKeys = createSelector([selectCatalogTypes], (types) =>
 
 const getNodeIcon = (type, catalogTypes) => {
   switch (type?.toLowerCase()) {
+    case "react_agent":
+    case "react_agent_v2": return <Bot size={16} />;
     case "decision": return <GitBranch size={16} />;
     case "iterator": return <RotateCcw size={16} />;
     case "inputs": return <TextCursorInput size={16} />;
@@ -78,6 +80,8 @@ const getNodeIcon = (type, catalogTypes) => {
 const NODE_ACCENTS = {
   tool:       { bar: "#6366f1", iconBg: "bg-indigo-500",  chip: "bg-indigo-50 text-indigo-700 border-indigo-200",   ring: "rgba(99,102,241,0.18)", handle: "#6366f1" },
   agent:      { bar: "#10b981", iconBg: "bg-emerald-500", chip: "bg-emerald-50 text-emerald-700 border-emerald-200", ring: "rgba(16,185,129,0.18)", handle: "#10b981" },
+  react_agent:{ bar: "#10b981", iconBg: "bg-emerald-500", chip: "bg-emerald-50 text-emerald-700 border-emerald-200", ring: "rgba(16,185,129,0.18)", handle: "#10b981" },
+  react_agent_v2:{ bar: "#10b981", iconBg: "bg-emerald-500", chip: "bg-emerald-50 text-emerald-700 border-emerald-200", ring: "rgba(16,185,129,0.18)", handle: "#10b981" },
   model:      { bar: "#8b5cf6", iconBg: "bg-violet-500",  chip: "bg-violet-50 text-violet-700 border-violet-200",   ring: "rgba(139,92,246,0.18)", handle: "#8b5cf6" },
   inputs:     { bar: "#0ea5e9", iconBg: "bg-sky-500",     chip: "bg-sky-50 text-sky-700 border-sky-200",           ring: "rgba(14,165,233,0.18)", handle: "#0ea5e9" },
   output:     { bar: "#64748b", iconBg: "bg-slate-500",   chip: "bg-slate-100 text-slate-600 border-slate-200",     ring: "rgba(100,116,139,0.18)", handle: "#64748b" },
@@ -100,6 +104,8 @@ const TYPE_LABELS = {
   inputs: "Input",
   conditions: "Condition",
   iterator: "Loop",
+  react_agent: "ReAct Agent",
+  react_agent_v2: "ReAct Agent",
 };
 const getTypeLabel = (type) => {
   if (!type) return "Node";
@@ -115,7 +121,6 @@ const handleStyle = (color, extra = {}) => ({
   width: 10,
   height: 10,
   borderRadius: 9999,
-  boxShadow: `0 0 0 1.5px ${color}40, 0 1px 3px rgba(0,0,0,0.1)`,
   ...extra,
 });
 
@@ -144,7 +149,7 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
 
   const accent = getNodeAccent(type);
   const icon = useMemo(() => getNodeIcon(type, catalogTypes), [type, catalogTypes]);
-  const nodeType = type?.toLowerCase() || data?.type?.toLowerCase();
+  const nodeType = type?.toLowerCase() || data?.type?.toLowerCase() || data?.nodeType?.toLowerCase();
   const optionColors = OPTION_COLORS;
 
   // Extract condition data from inputParameters for condition nodes
@@ -243,26 +248,26 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
   // animated the drag transform. Both are narrowed to what is visible.
   const typeLabel = getTypeLabel(nodeType);
   const nodeTitle = data.displayName || data.name || typeLabel;
+  const isReactAgent = nodeType === "react_agent" || nodeType === "react_agent_v2";
+  const paramValue = (key) => data.inputParameters?.find((param) => param.key === key)?.value;
+  const reactAgentTools = isReactAgent ? (paramValue("tools") || []) : [];
+  const reactAgentModel = isReactAgent ? paramValue("model") : null;
+  const reactAgentMemory = isReactAgent ? paramValue("memory_mode") : null;
+  const reactAgentIterations = isReactAgent ? paramValue("max_iterations") : null;
 
   return (
     <div
-      className={`group relative w-[272px] rounded-xl border transition-[box-shadow,border-color] duration-200 ${
-        selected ? "border-slate-300" : "border-slate-200/80 hover:border-slate-300/90"
+      className={`group relative w-[286px] min-h-[104px] rounded-xl border bg-white transition-[border-color,background-color] duration-200 ${
+        selected ? "border-slate-400 bg-slate-50/40" : "border-slate-200 hover:border-slate-300"
       }`}
-      style={{
-        background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
-        boxShadow: selected
-          ? `0 0 0 3px ${accent.ring}, 0 4px 12px -4px rgba(15,23,42,0.10)`
-          : "0 1px 4px rgba(15,23,42,0.07), 0 1px 2px rgba(15,23,42,0.04)",
-      }}
     >
       {/* Accent bar */}
       <div className="h-1 rounded-t-[11px]" style={{ background: accent.bar }} />
 
       {/* Header */}
-      <div className="flex items-center gap-3 px-3.5 py-3">
+      <div className="flex items-center gap-3 px-3.5 py-4">
         <div
-          className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center shadow-sm ${accent.iconBg}`}
+          className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center ${accent.iconBg}`}
         >
           {nodeType === "iterator" ? (
             <span className="animate-[spin_3s_linear_infinite] text-white">{icon}</span>
@@ -291,6 +296,32 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
           </div>
         </div>
       </div>
+
+      {/* ReAct Agent Summary */}
+      {isReactAgent && (
+        <div className="px-3.5 pb-3 -mt-1">
+          <div className="grid grid-cols-3 gap-1.5">
+            <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1.5">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Model</p>
+              <p className="mt-0.5 truncate font-mono text-[10.5px] text-slate-700">{reactAgentModel || "—"}</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1.5">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Tools</p>
+              <p className="mt-0.5 text-[10.5px] font-semibold text-slate-700">{Array.isArray(reactAgentTools) ? reactAgentTools.length : 0}</p>
+            </div>
+            <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1.5">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Loop</p>
+              <p className="mt-0.5 truncate text-[10.5px] text-slate-700">{reactAgentIterations ? `max ${reactAgentIterations}` : "—"}</p>
+            </div>
+          </div>
+          {reactAgentMemory && (
+            <div className="mt-1.5 flex items-center justify-between rounded-lg border border-slate-200 bg-white px-2.5 py-1.5">
+              <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">Memory</span>
+              <span className="truncate text-[11px] text-slate-600">{reactAgentMemory}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Question/Options Content */}
       {shouldShowOptionsUI && (
@@ -486,6 +517,8 @@ export const useNodeTypes = () => {
       condition: CustomNode,
       inputs: CustomNode,
       start: CustomNode,
+      react_agent: CustomNode,
+      react_agent_v2: CustomNode,
     };
 
     typeSignature

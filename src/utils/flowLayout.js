@@ -49,6 +49,8 @@ export const calculateNodeHeight = (node) => {
     height = 110;
   } else if (nodeType === "tool") {
     height = 100;
+  } else if (nodeType === "react_agent" || nodeType === "react_agent_v2") {
+    height = 130;
   } else if (nodeType === "agent") {
     height = 105;
   } else if (nodeType === "model") {
