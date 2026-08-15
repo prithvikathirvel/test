@@ -50,7 +50,9 @@ export const calculateNodeHeight = (node) => {
   } else if (nodeType === "tool") {
     height = 100;
   } else if (nodeType === "react_agent" || nodeType === "react_agent_v2") {
-    height = 130;
+    const promptParam = node.inputParameters?.find((param) => param.key === "system_prompt");
+    const promptLength = String(promptParam?.value || "").length;
+    height = 118 + Math.min(28, Math.ceil(promptLength / 90) * 14);
   } else if (nodeType === "agent") {
     height = 105;
   } else if (nodeType === "model") {

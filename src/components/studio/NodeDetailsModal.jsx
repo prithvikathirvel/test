@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Drawer,
   Dialog,
@@ -301,6 +301,53 @@ const createEmptyToolParameter = () => ({
   enum: null,
 });
 
+const valueToConfigValue = (value) => {
+  if (value === undefined || value === null) return '';
+  return value;
+};
+
+const getNodeInputParameters = (tool = {}) =>
+  Array.isArray(tool.inputParameters)
+    ? tool.inputParameters
+    : Array.isArray(tool.inputs)
+      ? tool.inputs
+      : [];
+
+const toolToCanonicalSchema = (tool = {}) => {
+  const inputParameters = getNodeInputParameters(tool);
+  const config = inputParameters.reduce((acc, param) => {
+    const key = param?.key || param?.name;
+    if (!key) return acc;
+    acc[key] = valueToConfigValue(param.value);
+    return acc;
+  }, {});
+
+  return {
+    name: tool.displayName || tool.name || tool.tool_name || 'Selected Tool',
+    description: tool.description || 'Describe what this tool returns and when the agent should use it.',
+    node_type: tool.type || tool.node_type || 'API caller',
+    config,
+    parameters: [],
+  };
+};
+
+const findRegisteredToolForSchema = (schema = {}, registeredTools = []) => {
+  const schemaName = String(schema.name || schema.tool_name || '').toLowerCase();
+  const schemaType = String(schema.node_type || schema.type || '').toLowerCase();
+  const configKeys = new Set(Object.keys(schema.config || {}));
+
+  return registeredTools.find((tool) => {
+    const names = [tool.name, tool.displayName, tool.tool_name].map((value) => String(value || '').toLowerCase());
+    const type = String(tool.type || tool.node_type || '').toLowerCase();
+    const inputKeys = getNodeInputParameters(tool).map((input) => input?.key || input?.name).filter(Boolean);
+    const configMatches = inputKeys.length > 0 && inputKeys.every((key) => configKeys.has(key));
+
+    return (schemaName && names.includes(schemaName))
+      || (schemaType && type === schemaType && configMatches)
+      || (schemaType && type === schemaType && schemaName && names.some((name) => name.includes(schemaName)));
+  });
+};
+
 const FieldShell = ({ label, hint, children, badge }) => (
   <div className="space-y-1.5">
     <div className="flex items-start justify-between gap-2">
@@ -429,10 +476,11 @@ const ReactAgentMemoryPanel = ({ localInputParams, onInputChange, nodeColor }) =
   );
 };
 
-const ReactAgentToolsPanel = ({ localInputParams, onInputChange }) => {
+const ReactAgentToolsPanel = ({ localInputParams, onInputChange, availableTools = [] }) => {
   const toolsParam = getParamByKey(localInputParams, 'tools');
   const tools = Array.isArray(toolsParam?.value) ? toolsParam.value : [];
   const [openIndex, setOpenIndex] = useState(0);
+  const [toolSearch, setToolSearch] = useState('');
 
   useEffect(() => {
     if (openIndex > Math.max(tools.length - 1, 0)) setOpenIndex(Math.max(tools.length - 1, 0));
@@ -454,6 +502,18 @@ const ReactAgentToolsPanel = ({ localInputParams, onInputChange }) => {
     setOpenIndex((current) => Math.max(0, Math.min(current, tools.length - 2)));
   };
 
+  const filteredAvailableTools = availableTools.filter((tool) => {
+    const haystack = `${tool.name || ''} ${tool.displayName || ''} ${tool.description || ''} ${tool.type || ''}`.toLowerCase();
+    return haystack.includes(toolSearch.trim().toLowerCase());
+  });
+
+  const selectRegisteredTool = (tool) => {
+    const next = [...tools, toolToCanonicalSchema(tool)];
+    updateTools(next);
+    setOpenIndex(next.length - 1);
+    setToolSearch('');
+  };
+
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
@@ -469,6 +529,27 @@ const ReactAgentToolsPanel = ({ localInputParams, onInputChange }) => {
             <Plus size={13} /> Add tool
           </button>
         </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-3">
+        <FieldShell label="Add from registered tools" hint="Search /tools and select a node. Its inputParameters are copied into config so you can edit values here.">
+          <SimpleInput value={toolSearch} onChange={setToolSearch} placeholder="Search API caller, email, web search, retrieval..." />
+        </FieldShell>
+        {toolSearch.trim() && (
+          <div className="mt-2 max-h-52 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/60 p-1.5">
+            {filteredAvailableTools.length > 0 ? filteredAvailableTools.slice(0, 12).map((tool, idx) => (
+              <button key={tool.id || tool.key || idx} onClick={() => selectRegisteredTool(tool)} className="flex w-full items-start gap-2 rounded-md px-2.5 py-2 text-left hover:bg-white hover:border-slate-200 border border-transparent transition-colors">
+                <Wrench size={13} className="mt-0.5 shrink-0 text-slate-500" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[12px] font-semibold text-slate-800">{tool.displayName || tool.name || 'Unnamed tool'}</span>
+                  <span className="mt-0.5 block line-clamp-2 text-[10.5px] leading-snug text-slate-400">{tool.description || tool.type || 'No description'}</span>
+                </span>
+              </button>
+            )) : (
+              <div className="p-3 text-center text-[11.5px] text-slate-400">No registered tools found for this search.</div>
+            )}
+          </div>
+        )}
       </div>
 
       {tools.length === 0 ? (
@@ -491,7 +572,6 @@ const ReactAgentToolsPanel = ({ localInputParams, onInputChange }) => {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-[12.5px] font-semibold text-slate-800">{tool.name || tool.tool_name || 'Unnamed Tool'}</span>
-                      <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-slate-500">{tool.node_type || tool.type || 'node'}</span>
                     </div>
                     <p className="mt-0.5 truncate text-[10.5px] text-slate-400">id: {safeId || 'generated from name'} · {parameters.length} input{parameters.length === 1 ? '' : 's'}</p>
                   </div>
@@ -500,21 +580,18 @@ const ReactAgentToolsPanel = ({ localInputParams, onInputChange }) => {
 
                 {isOpen && (
                   <div className="space-y-5 border-t border-slate-100 bg-slate-50/30 p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3">
                       <FieldShell label="Name" hint="Human name shown to the model. It becomes a safe id automatically." badge={safeId || 'safe id'}>
-                        <SimpleInput value={tool.name || tool.tool_name || ''} onChange={(value) => updateTool(index, { name: value })} placeholder="Get Product Details" />
+                        <SimpleInput value={tool.name || tool.tool_name || ''} onChange={(value) => updateTool(index, { name: value, node_type: tool.node_type || tool.type || 'API caller' })} placeholder="Get Product Details" />
                       </FieldShell>
-                      <FieldShell label="Node type" hint="Must match a registered NodeRegistry type. Unknown types are skipped safely.">
-                        <SimpleInput value={tool.node_type || tool.type || ''} onChange={(value) => updateTool(index, { node_type: value })} placeholder="API caller" />
-                      </FieldShell>
-                      <div className="md:col-span-2">
+                      <div>
                         <FieldShell label="Description" hint="Most important field for tool selection: say what it returns and when to use it.">
                           <SimpleTextarea value={tool.description || ''} onChange={(value) => updateTool(index, { description: value })} rows={3} placeholder="Get full details of one product by numeric id..." />
                         </FieldShell>
                       </div>
                     </div>
 
-                    <ToolConfigEditor config={config} onChange={(configValue) => updateToolConfig(index, configValue)} />
+                    <ToolConfigEditor config={config} registeredTool={findRegisteredToolForSchema(tool, availableTools)} onChange={(configValue) => updateToolConfig(index, configValue)} />
                     <ToolParameterEditor parameters={parameters} onChange={(nextParams) => updateToolParameters(index, nextParams)} />
                   </div>
                 )}
@@ -527,8 +604,14 @@ const ReactAgentToolsPanel = ({ localInputParams, onInputChange }) => {
   );
 };
 
-const ToolConfigEditor = ({ config, onChange }) => {
+const ToolConfigEditor = ({ config, registeredTool, onChange }) => {
   const entries = Object.entries(config || {});
+  const registeredInputs = getNodeInputParameters(registeredTool);
+  const metaByKey = registeredInputs.reduce((acc, input) => {
+    const key = input?.key || input?.name;
+    if (key) acc[key] = input;
+    return acc;
+  }, {});
   const [newKey, setNewKey] = useState('');
   const [newValue, setNewValue] = useState('');
 
@@ -565,13 +648,24 @@ const ToolConfigEditor = ({ config, onChange }) => {
         </div>
       </div>
       <div className="space-y-2">
-        {entries.map(([key, value]) => (
-          <div key={key} className="grid grid-cols-12 gap-2 items-start">
-            <input value={key} disabled className={`${reactInputClass} col-span-4 bg-slate-50 font-mono text-[11.5px]`} />
-            <textarea value={typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value ?? '')} onChange={(event) => setConfigValue(key, event.target.value)} rows={typeof value === 'object' ? 3 : 1} className={`${reactInputClass} col-span-7 font-mono text-[11.5px] resize-y`} />
-            <button onClick={() => removeConfigKey(key)} className="col-span-1 mt-1 rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>
-          </div>
-        ))}
+        {entries.map(([key, value]) => {
+          const meta = metaByKey[key];
+          return (
+            <div key={key} className="rounded-lg border border-slate-200 bg-slate-50/50 p-2.5">
+              <div className="mb-1.5 flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate font-mono text-[11.5px] font-semibold text-slate-700">{key}</p>
+                  {meta?.description && <p className="mt-0.5 line-clamp-2 text-[10.5px] leading-snug text-slate-400">{meta.description}</p>}
+                </div>
+                {meta?.type && <span className="rounded-md bg-white px-1.5 py-0.5 text-[9.5px] font-semibold uppercase text-slate-500 border border-slate-200">{meta.type}</span>}
+              </div>
+              <div className="grid grid-cols-12 gap-2 items-start">
+                <textarea value={typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value ?? '')} onChange={(event) => setConfigValue(key, event.target.value)} rows={typeof value === 'object' ? 3 : 1} className={`${reactInputClass} col-span-11 font-mono text-[11.5px] resize-y`} />
+                <button onClick={() => removeConfigKey(key)} className="col-span-1 mt-1 rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>
+              </div>
+            </div>
+          );
+        })}
         <div className="grid grid-cols-12 gap-2 items-center border-t border-slate-100 pt-2">
           <div className="col-span-4"><SimpleInput value={newKey} onChange={setNewKey} placeholder="timeout" mono /></div>
           <div className="col-span-7"><SimpleInput value={newValue} onChange={setNewValue} placeholder="20 or {{value}} or JSON" mono /></div>
@@ -591,7 +685,7 @@ const ToolParameterEditor = ({ parameters, onChange }) => {
     <div className="rounded-lg border border-slate-200 bg-white p-3">
       <div className="mb-3 flex items-start justify-between gap-2">
         <div>
-          <h5 className="text-[12px] font-semibold text-slate-800">LLM Parameters</h5>
+          <h5 className="text-[12px] font-semibold text-slate-800">Dynamic Parameters</h5>
           <p className="text-[10.5px] text-slate-400">Typed arguments the model must fill before calling the tool. Omit them only when the node needs no dynamic inputs.</p>
         </div>
         <button onClick={addParam} className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50"><Plus size={12} /> Add field</button>
@@ -668,6 +762,7 @@ const NodeDetailsModal = ({
   onOpenExecutionOutput,
 }) => {
   const dispatch = useDispatch();
+  const registeredTools = useSelector((state) => state.studio.tools || []);
   // Default to big screen centered modal
   const [isExpanded, setIsExpanded] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
@@ -865,7 +960,7 @@ const NodeDetailsModal = ({
                   <ReactAgentMemoryPanel localInputParams={localInputParams} onInputChange={handleInputChange} nodeColor={nodeColor} />
                 )}
                 {isReactAgentNode && activeTab === 3 && (
-                  <ReactAgentToolsPanel localInputParams={localInputParams} onInputChange={handleInputChange} />
+                  <ReactAgentToolsPanel localInputParams={localInputParams} onInputChange={handleInputChange} availableTools={registeredTools} />
                 )}
                 {isReactAgentNode && activeTab === 4 && (
                   <ReactAgentOutputPanel localOutputParams={localOutputParams} onOutputParamUpdate={handleOutputParamUpdate} nodeColor={nodeColor} />
@@ -1103,7 +1198,7 @@ const NodeDetailsModal = ({
                   <ReactAgentMemoryPanel localInputParams={localInputParams} onInputChange={handleInputChange} nodeColor={nodeColor} />
                 </CustomAccordion>
                 <CustomAccordion title="Tools" icon={<Wrench size={14} />} emptyStateMessage="No tools configured.">
-                  <ReactAgentToolsPanel localInputParams={localInputParams} onInputChange={handleInputChange} />
+                  <ReactAgentToolsPanel localInputParams={localInputParams} onInputChange={handleInputChange} availableTools={registeredTools} />
                 </CustomAccordion>
                 <CustomAccordion title="Output" icon={<OutputIcon size={14} />} emptyStateMessage="No output parameters configured.">
                   <ReactAgentOutputPanel localOutputParams={localOutputParams} onOutputParamUpdate={handleOutputParamUpdate} nodeColor={nodeColor} />

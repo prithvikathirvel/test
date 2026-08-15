@@ -250,16 +250,14 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
   const nodeTitle = data.displayName || data.name || typeLabel;
   const isReactAgent = nodeType === "react_agent" || nodeType === "react_agent_v2";
   const paramValue = (key) => data.inputParameters?.find((param) => param.key === key)?.value;
-  const reactAgentTools = isReactAgent ? (paramValue("tools") || []) : [];
-  const reactAgentModel = isReactAgent ? paramValue("model") : null;
-  const reactAgentMemory = isReactAgent ? paramValue("memory_mode") : null;
-  const reactAgentIterations = isReactAgent ? paramValue("max_iterations") : null;
+  const reactAgentPrompt = isReactAgent ? paramValue("system_prompt") : null;
 
   return (
     <div
-      className={`group relative w-[286px] min-h-[104px] rounded-xl border bg-white transition-[border-color,background-color] duration-200 ${
+      className={`group relative w-[286px] rounded-xl border bg-white transition-[border-color,background-color,box-shadow] duration-200 ${
         selected ? "border-slate-400 bg-slate-50/40" : "border-slate-200 hover:border-slate-300"
       }`}
+      style={selected ? { boxShadow: `0 0 0 3px ${accent.ring}` } : undefined}
     >
       {/* Accent bar */}
       <div className="h-1 rounded-t-[11px]" style={{ background: accent.bar }} />
@@ -297,29 +295,20 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
         </div>
       </div>
 
-      {/* ReAct Agent Summary */}
+      {/* ReAct Agent Preview */}
       {isReactAgent && (
         <div className="px-3.5 pb-3 -mt-1">
-          <div className="grid grid-cols-3 gap-1.5">
-            <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1.5">
-              <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Model</p>
-              <p className="mt-0.5 truncate font-mono text-[10.5px] text-slate-700">{reactAgentModel || "—"}</p>
+          <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-3 py-2">
+            <div className="mb-1 flex items-center justify-between gap-2">
+              <span className="text-[9.5px] font-semibold uppercase tracking-wide text-slate-400">Instruction</span>
+              <span className="rounded-md border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9.5px] font-semibold text-emerald-700">
+                ReAct
+              </span>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1.5">
-              <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Tools</p>
-              <p className="mt-0.5 text-[10.5px] font-semibold text-slate-700">{Array.isArray(reactAgentTools) ? reactAgentTools.length : 0}</p>
-            </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50/60 px-2 py-1.5">
-              <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-400">Loop</p>
-              <p className="mt-0.5 truncate text-[10.5px] text-slate-700">{reactAgentIterations ? `max ${reactAgentIterations}` : "—"}</p>
-            </div>
+            <p className="line-clamp-2 break-words text-[11px] leading-snug text-slate-600">
+              {reactAgentPrompt || data.description || "Configure prompt, memory, tools and output from the node details panel."}
+            </p>
           </div>
-          {reactAgentMemory && (
-            <div className="mt-1.5 flex items-center justify-between rounded-lg border border-slate-200 bg-white px-2.5 py-1.5">
-              <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">Memory</span>
-              <span className="truncate text-[11px] text-slate-600">{reactAgentMemory}</span>
-            </div>
-          )}
         </div>
       )}
 
