@@ -130,7 +130,7 @@ function LoginForm() {
 
               <button
                 type="submit"
-                disabled={!username.trim() || !password.trim()}
+                disabled={!username.trim() || !password.trim() || authLoader}
                 className="w-full mt-1 py-2.5 px-4 rounded-lg text-[13px] font-semibold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
                 <span>Sign in</span>

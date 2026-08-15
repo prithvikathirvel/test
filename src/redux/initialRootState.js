@@ -30,7 +30,8 @@ const initialRootState = {
     isAuthenticated: false,
     user: null,
     authLoader: false, 
-    authError: null
+    authError: null,
+    sessionHydrated: false,
   },
   knowledge: initialKnowledgeState,
   knowledgeGraph: initialKnowledgeGraphState,

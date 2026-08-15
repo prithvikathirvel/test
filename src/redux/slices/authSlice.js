@@ -3,7 +3,7 @@ import initialRootState from "../initialRootState";
 import axios from "axios";
 import { showToaster } from "@/utils/commonFunction";
 import { sanitizeUserPayload } from "@/utils/userProfile";
-import { decodeJwt, getCurrentUserFromToken, userFromJwt } from "@/utils/jwt";
+import { decodeJwt, getCurrentUserFromToken, userFromJwt, hasValidSession } from "@/utils/jwt";
 
 const AUTH_HOST = "https://apidev.sifymodernization.digital";
 const initialState = initialRootState.auth;
@@ -48,7 +48,7 @@ export const loginUser = createAsyncThunk(
       const { data } = await axios.post(
         `${AUTH_HOST}/login`,
         { username, password },
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" }, timeout: 15000 }
       );
       const accessToken = data?.access_token || data?.accessToken || data?.token;
       persistSession(accessToken);
@@ -70,7 +70,7 @@ export const registerUser = createAsyncThunk(
       const { data } = await axios.post(
         `${AUTH_HOST}/register`,
         { name, username, email, password },
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" }, timeout: 15000 }
       );
       const accessToken = data?.access_token || data?.accessToken || data?.token;
       if (accessToken) {
@@ -111,8 +111,14 @@ const authSlice = createSlice({
      * payload) still gets a real name/email in the header & settings.
      */
     hydrateUserFromToken: (state) => {
-      const user = getCurrentUserFromToken();
-      if (user) state.user = user;
+      if (hasValidSession()) {
+        const user = getCurrentUserFromToken();
+        if (user) {
+          state.user = user;
+          state.isAuthenticated = true;
+        }
+      }
+      state.sessionHydrated = true;
     },
   },
   extraReducers: (builder) => {

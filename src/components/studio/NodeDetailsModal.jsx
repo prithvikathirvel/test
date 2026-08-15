@@ -1,17 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import {
-  Typography,
-  Box,
   Drawer,
   Dialog,
-  Divider,
-  Stack,
   IconButton,
   Tooltip,
   TextField,
-  Tabs,
-  Tab,
 } from '@mui/material';
 import {
   X as CloseIcon,
@@ -27,7 +21,6 @@ import {
   Trash2 as DeleteIcon,
   Edit as EditIcon,
   Play as PlayIcon,
-  Save as SaveIcon,
   Maximize2,
   Minimize2,
   Sliders,
@@ -35,8 +28,6 @@ import {
   BookOpen,
   Copy,
   Check,
-  ArrowRight,
-  HelpCircle,
 } from 'lucide-react';
 import { getNodeColor } from '@/utils/commonFunction';
 import { getParameterComponent } from './InputParameterComponents';
@@ -47,54 +38,50 @@ import { updateNode } from '@/redux/slices/studioSlice';
 import { getNodeDocs, toDisplayString } from './nodeDocsData';
 
 const InfoItem = ({ label, value, icon }) => (
-  <Box key={label} className="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
-    <Stack direction="row" alignItems="center" spacing={1} sx={{ color: '#64748b' }}>
+  <div key={label} className="flex justify-between items-center py-2 group">
+    <div className="flex items-center gap-2 text-slate-500">
       {icon}
-      <Typography variant="body2" className="!text-[12.5px] !text-slate-600">
-        {label}
-      </Typography>
-    </Stack>
-    <Typography variant="body2" className="!text-[12.5px] !font-medium !text-slate-800">
+      <span className="text-[12px]">{label}</span>
+    </div>
+    <span className="text-[12px] font-medium text-slate-800">
       {value ?? 'N/A'}
-    </Typography>
-  </Box>
+    </span>
+  </div>
 );
 
 const DescriptionSection = ({ description }) => (
-  <Box className="mb-4">
-    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-      <DescriptionIcon className="text-slate-400" size={15} />
-      <Typography className="!text-[12.5px] !font-semibold !text-slate-700">Description</Typography>
-    </Stack>
-    <Box className="p-3 rounded-lg bg-slate-50 border border-slate-200/80">
-      <Typography className="!text-[12.5px] !text-slate-600 !leading-relaxed">
-        {description || 'No description available.'}
-      </Typography>
-    </Box>
-  </Box>
+  <div className="mb-3">
+    <div className="flex items-center gap-1.5 mb-1.5">
+      <DescriptionIcon className="text-slate-400" size={13} />
+      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Description</span>
+    </div>
+    <p className="text-[12.5px] text-slate-600 leading-relaxed">
+      {description || 'No description available.'}
+    </p>
+  </div>
 );
 
 const TagsSection = ({ tags }) => (
-  <Box className="mb-4">
-    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-      <TagsIcon className="text-slate-400" size={15} />
-      <Typography className="!text-[12.5px] !font-semibold !text-slate-700">Tags</Typography>
-    </Stack>
-    <Box className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 flex flex-wrap gap-1.5">
+  <div className="mb-3">
+    <div className="flex items-center gap-1.5 mb-1.5">
+      <TagsIcon className="text-slate-400" size={13} />
+      <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Tags</span>
+    </div>
+    <div className="flex flex-wrap gap-1.5">
       {tags && tags.length > 0 ? (
         tags.map((tag, index) => (
           <span
             key={index}
-            className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-white border border-slate-200 text-slate-700 shadow-2xs"
+            className="inline-flex items-center px-2 py-0.5 rounded-md text-[10.5px] font-medium bg-slate-100 text-slate-600"
           >
             {tag}
           </span>
         ))
       ) : (
-        <Typography className="!text-[11px] !text-slate-400">No tags configured</Typography>
+        <span className="text-[11px] text-slate-400 italic">No tags</span>
       )}
-    </Box>
-  </Box>
+    </div>
+  </div>
 );
 
 const ModalHeader = ({
@@ -138,12 +125,14 @@ const ModalHeader = ({
   };
 
   return (
-    <Box className="flex justify-between items-center px-6 py-3.5 border-b border-slate-200/80 bg-slate-50/70">
-      <Box className="flex items-center gap-3 min-w-0">
-        <span
-          className="h-2.5 w-2.5 rounded-full shrink-0 shadow-2xs"
-          style={{ backgroundColor: color || '#4f46e5' }}
-        />
+    <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100 bg-white shrink-0">
+      <div className="flex items-center gap-3 min-w-0">
+        <div
+          className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0 shadow-sm"
+          style={{ backgroundColor: color || '#6366f1' }}
+        >
+          <SettingsIcon size={15} className="text-white" />
+        </div>
         {isEditing ? (
           <TextField
             value={editedName}
@@ -151,66 +140,64 @@ const ModalHeader = ({
             onKeyPress={handleKeyPress}
             size="small"
             autoFocus
-            className="min-w-[220px] bg-white"
-            sx={{ '& input': { fontSize: '13.5px', py: '5px' } }}
+            className="min-w-[200px]"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px',
+                fontSize: '13px',
+                '& fieldset': { borderColor: '#e2e8f0' },
+                '&:hover fieldset': { borderColor: '#cbd5e1' },
+                '&.Mui-focused fieldset': { borderColor: '#94a3b8' },
+              },
+              '& input': { py: '6px' },
+            }}
           />
         ) : (
-          <Box className="min-w-0">
-            <Typography className="!font-bold !text-[14.5px] !text-slate-800 !tracking-tight !truncate">
+          <div className="min-w-0">
+            <h3 className="text-[14.5px] font-semibold text-slate-900 truncate leading-tight">
               {editedName || 'Undefined Node'}
-            </Typography>
-            <Typography className="!text-[10.5px] !text-slate-400 font-mono uppercase tracking-wider">
+            </h3>
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
               {type || 'Custom Node'}
-            </Typography>
-          </Box>
+            </span>
+          </div>
         )}
 
-        <IconButton
+        <button
           onClick={handleEditClick}
-          size="small"
-          className="!text-slate-400 hover:!text-slate-700 !p-1"
+          className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
           title={isEditing ? 'Save Name' : 'Edit Name'}
         >
           <EditIcon size={13} />
-        </IconButton>
-      </Box>
+        </button>
+      </div>
 
-      {/* Action Controls */}
-      <Box className="flex items-center gap-2">
+      <div className="flex items-center gap-2">
         {isDirty && (
-          <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-            Unsaved Changes
+          <span className="hidden sm:inline-flex items-center gap-1.5 text-[10.5px] font-medium text-amber-700 bg-amber-50 border border-amber-100 px-2 py-1 rounded-md">
+            <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+            Unsaved
           </span>
         )}
 
-        <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-slate-200 shadow-2xs">
-          <Tooltip title="Test Node Execution">
+        <button
+          onClick={handleSaveChanges}
+          disabled={!isDirty || disabled || loading}
+          className="px-3 py-1.5 text-[12px] font-medium text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-30 disabled:cursor-not-allowed rounded-lg transition-colors"
+        >
+          Save
+        </button>
+
+        <div className="flex items-center gap-0.5 ml-1">
+          <Tooltip title="Test Node">
             <IconButton
               onClick={handleTestClick}
               disabled={loading}
               size="small"
-              className="!p-1.5 !text-slate-700 hover:!bg-slate-50 !rounded-md"
+              className="!p-1.5 !text-slate-500 hover:!text-emerald-600 hover:!bg-emerald-50 !rounded-md"
             >
-              <PlayIcon size={14} className="fill-slate-700" />
+              <PlayIcon size={14} />
             </IconButton>
-          </Tooltip>
-
-          <Tooltip title={isDirty ? "Save Changes" : "No changes to save"}>
-            <span>
-              <IconButton
-                onClick={handleSaveChanges}
-                disabled={!isDirty || disabled || loading}
-                size="small"
-                className={`!p-1.5 !rounded-md transition-all ${
-                  isDirty
-                    ? '!text-indigo-600 !bg-indigo-50 hover:!bg-indigo-100'
-                    : '!text-slate-400 hover:!bg-slate-50'
-                }`}
-              >
-                <SaveIcon size={14} />
-              </IconButton>
-            </span>
           </Tooltip>
 
           <Tooltip title="Delete Node">
@@ -223,13 +210,13 @@ const ModalHeader = ({
             </IconButton>
           </Tooltip>
 
-          <div className="h-4 w-px bg-slate-200 mx-0.5" />
+          <div className="h-4 w-px bg-slate-200 mx-1" />
 
-          <Tooltip title={isExpanded ? "Collapse to Side Panel" : "Expand to Centered Modal"}>
+          <Tooltip title={isExpanded ? "Dock to side" : "Expand"}>
             <IconButton
               onClick={toggleExpand}
               size="small"
-              className="!p-1.5 !text-slate-600 hover:!text-slate-900 hover:!bg-slate-50 !rounded-md"
+              className="!p-1.5 !text-slate-500 hover:!text-slate-800 hover:!bg-slate-100 !rounded-md"
             >
               {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
             </IconButton>
@@ -245,8 +232,8 @@ const ModalHeader = ({
             </IconButton>
           </Tooltip>
         </div>
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 
@@ -405,107 +392,88 @@ const NodeDetailsModal = ({
           fullWidth
           PaperProps={{
             sx: {
-              height: '84vh',
-              borderRadius: '16px',
+              height: '82vh',
+              borderRadius: '12px',
               border: '1px solid #e2e8f0',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.08)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.12)',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
-              backgroundColor: '#f8fafc',
+              backgroundColor: '#ffffff',
             },
           }}
         >
           <ModalHeader {...headerProps} />
 
-          {/* Modal Center 2-Column Body */}
-          <Box className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-0">
-            {/* Left Main Area (8 Cols) */}
-            <Box className="lg:col-span-8 border-r border-slate-200/80 bg-white flex flex-col h-full overflow-hidden">
-              <Box className="px-6 pt-3 border-b border-slate-100 flex items-center justify-between">
-                <Tabs
-                  value={activeTab}
-                  onChange={(e, val) => setActiveTab(val)}
-                  sx={{
-                    minHeight: '38px',
-                    '& .MuiTab-root': {
-                      fontSize: '12.5px',
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      minHeight: '38px',
-                      color: '#64748b',
-                      '&.Mui-selected': { color: '#4f46e5' },
-                    },
-                    '& .MuiTabs-indicator': { backgroundColor: '#4f46e5', height: 2 },
-                  }}
-                >
-                  <Tab
-                    icon={<InputIcon size={14} />}
-                    iconPosition="start"
-                    label={`Inputs (${localInputParams?.length || 0})`}
-                  />
-                  <Tab
-                    icon={<OutputIcon size={14} />}
-                    iconPosition="start"
-                    label={`Outputs (${localOutputParams?.length || 0})`}
-                  />
-                  <Tab
-                    icon={<BookOpen size={14} />}
-                    iconPosition="start"
-                    label="Docs & Examples"
-                  />
-                </Tabs>
-              </Box>
+          <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
+            {/* Left Main Area */}
+            <div className="lg:col-span-8 border-r border-slate-100 flex flex-col h-full overflow-hidden">
+              {/* Pill-style tab bar */}
+              <div className="flex items-center gap-0.5 px-5 py-1.5 border-b border-slate-100 bg-slate-50/50">
+                {[
+                  { idx: 0, icon: <InputIcon size={13} />, label: `Inputs (${localInputParams?.length || 0})` },
+                  { idx: 1, icon: <OutputIcon size={13} />, label: `Outputs (${localOutputParams?.length || 0})` },
+                  { idx: 2, icon: <BookOpen size={13} />, label: "Docs" },
+                ].map((t) => (
+                  <button
+                    key={t.idx}
+                    onClick={() => setActiveTab(t.idx)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors ${
+                      activeTab === t.idx
+                        ? "bg-white text-slate-800 shadow-sm border border-slate-200"
+                        : "text-slate-500 hover:text-slate-700 hover:bg-white/60"
+                    }`}
+                  >
+                    {t.icon}
+                    {t.label}
+                  </button>
+                ))}
+              </div>
 
-              <Box className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="flex-1 overflow-y-auto px-5 py-5">
                 {/* Tab 0: Input Parameters */}
                 {activeTab === 0 && (
-                  <Box>
-                    <Box className="mb-4">
-                      <Typography className="!text-[13.5px] !font-bold !text-slate-800">
-                        Input Parameters
-                      </Typography>
-                      <Typography className="!text-[11.5px] !text-slate-400">
-                        Configure variable values and connectors for this node.
-                      </Typography>
-                    </Box>
+                  <div>
+                    <div className="mb-4">
+                      <h4 className="text-[13px] font-semibold text-slate-800">Input Parameters</h4>
+                      <p className="text-[11.5px] text-slate-400 mt-0.5">
+                        Configure values and connectors for this node.
+                      </p>
+                    </div>
 
                     {localInputParams?.length > 0 ? (
-                      <Stack spacing={2.5}>
+                      <div className="space-y-3">
                         {localInputParams.map((param, index) => (
-                          <Box
+                          <div
                             key={index}
-                            className="p-4 bg-slate-50/60 rounded-xl border border-slate-200/80 shadow-2xs hover:border-slate-300 transition-all"
+                            className="p-4 rounded-lg border border-slate-200 hover:border-slate-300 transition-colors bg-white"
                           >
                             {getParameterComponent(param, nodeColor, (params) => handleInputChange(params), localInputParams, 'inputParameters')}
-                          </Box>
+                          </div>
                         ))}
-                      </Stack>
+                      </div>
                     ) : (
-                      <Box className="py-14 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
-                        <Sliders size={24} className="mx-auto text-slate-300 mb-1.5" />
-                        <Typography className="!text-xs !font-semibold !text-slate-600">
-                          No Input Parameters
-                        </Typography>
-                      </Box>
+                      <div className="py-16 text-center border border-dashed border-slate-200 rounded-lg">
+                        <Sliders size={20} className="mx-auto text-slate-300 mb-2" />
+                        <p className="text-[12px] font-medium text-slate-500">No Input Parameters</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">This node has no configurable inputs.</p>
+                      </div>
                     )}
-                  </Box>
+                  </div>
                 )}
 
                 {/* Tab 1: Output Parameters */}
                 {activeTab === 1 && (
-                  <Box>
-                    <Box className="mb-4">
-                      <Typography className="!text-[13.5px] !font-bold !text-slate-800">
-                        Output Parameters
-                      </Typography>
-                      <Typography className="!text-[11.5px] !text-slate-400">
-                        Edit output variable names to map values into downstream nodes.
-                      </Typography>
-                    </Box>
+                  <div>
+                    <div className="mb-4">
+                      <h4 className="text-[13px] font-semibold text-slate-800">Output Parameters</h4>
+                      <p className="text-[11.5px] text-slate-400 mt-0.5">
+                        Map output values to downstream nodes.
+                      </p>
+                    </div>
 
                     {localOutputParams?.length > 0 ? (
-                      <Stack spacing={2.5}>
+                      <div className="space-y-3">
                         {localOutputParams.map((param, index) => (
                           <OutputParameterComponents
                             key={index}
@@ -515,211 +483,197 @@ const NodeDetailsModal = ({
                             onUpdate={(updated) => handleOutputParamUpdate(index, updated)}
                           />
                         ))}
-                      </Stack>
+                      </div>
                     ) : (
-                      <Box className="py-14 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
-                        <OutputIcon size={24} className="mx-auto text-slate-300 mb-1.5" />
-                        <Typography className="!text-xs !font-semibold !text-slate-600">
-                          No Output Parameters Configured
-                        </Typography>
-                      </Box>
+                      <div className="py-16 text-center border border-dashed border-slate-200 rounded-lg">
+                        <OutputIcon size={20} className="mx-auto text-slate-300 mb-2" />
+                        <p className="text-[12px] font-medium text-slate-500">No Output Parameters</p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">This node has no configured outputs.</p>
+                      </div>
                     )}
-                  </Box>
+                  </div>
                 )}
 
-                {/* Tab 2: Documentation & Interactive Examples */}
+                {/* Tab 2: Documentation */}
                 {activeTab === 2 && (
-                  <Box className="space-y-5">
-                    {/* Summary & When to Use */}
-                    <Box className="p-4 bg-indigo-50/40 rounded-xl border border-indigo-100">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <Sparkles size={15} className="text-indigo-600" />
-                        <Typography className="!text-[13px] !font-bold !text-slate-800">
+                  <div className="space-y-5">
+                    <div className="p-4 rounded-lg border border-slate-200 bg-slate-50/50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles size={14} className="text-slate-600" />
+                        <h4 className="text-[13px] font-semibold text-slate-800">
                           {toDisplayString(nodeDocs?.title, "Node Documentation")}
-                        </Typography>
+                        </h4>
                       </div>
-                      <Typography className="!text-[12.5px] !text-slate-600 !leading-relaxed mb-3">
+                      <p className="text-[12px] text-slate-600 leading-relaxed">
                         {toDisplayString(nodeDocs?.summary) || toDisplayString(description)}
-                      </Typography>
+                      </p>
                       {nodeDocs?.whenToUse && (
-                        <div className="text-[12px] text-indigo-900/80 bg-white/80 p-2.5 rounded-lg border border-indigo-100/60">
-                          <strong className="text-indigo-950 font-semibold">When to use: </strong>
+                        <div className="mt-3 text-[11.5px] text-slate-600 bg-white p-2.5 rounded-md border border-slate-200">
+                          <span className="font-semibold text-slate-700">When to use: </span>
                           {toDisplayString(nodeDocs.whenToUse)}
                         </div>
                       )}
-                    </Box>
+                    </div>
 
-                    {/* Field Reference Guide */}
                     {nodeDocs?.parameters?.length > 0 && (
-                      <Box>
-                        <Typography className="!text-[12.5px] !font-bold !text-slate-800 mb-2">
-                          Input Fields Reference
-                        </Typography>
+                      <div>
+                        <h5 className="text-[12px] font-semibold text-slate-700 mb-2">Field Reference</h5>
                         <div className="space-y-2">
                           {nodeDocs.parameters.map((p, pIdx) => (
-                            <div key={pIdx} className="p-3 bg-slate-50/80 rounded-lg border border-slate-200 text-xs space-y-1">
-                              <div className="flex items-center justify-between">
-                                <span className="font-mono font-bold text-slate-800">{toDisplayString(p.name)}</span>
-                                <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-white text-slate-600 border border-slate-200">
-                                  {toDisplayString(p.type, "text")} {p.required ? "• required" : "• optional"}
+                            <div key={pIdx} className="p-3 rounded-md border border-slate-200 bg-white">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-mono text-[11.5px] font-semibold text-slate-800">{toDisplayString(p.name)}</span>
+                                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500">
+                                  {toDisplayString(p.type, "text")} · {p.required ? "required" : "optional"}
                                 </span>
                               </div>
-                              <p className="text-slate-500 text-[11.5px]">{toDisplayString(p.description)}</p>
+                              <p className="text-[11px] text-slate-500">{toDisplayString(p.description)}</p>
                               {toDisplayString(p.example) && (
-                                <div className="mt-1 font-mono text-[11px] text-slate-600 bg-white px-2 py-1 rounded border border-slate-200/60 whitespace-pre-wrap break-words max-h-32 overflow-auto">
-                                  <span className="text-slate-400">Example: </span>
+                                <div className="mt-1.5 font-mono text-[10.5px] text-slate-600 bg-slate-50 px-2 py-1 rounded border border-slate-100 whitespace-pre-wrap break-words max-h-28 overflow-auto">
+                                  <span className="text-slate-400">e.g. </span>
                                   {toDisplayString(p.example)}
                                 </div>
                               )}
                             </div>
                           ))}
                         </div>
-                      </Box>
+                      </div>
                     )}
 
-                    {/* Example Pipeline Workflow */}
                     {nodeDocs?.exampleWorkflow && (
-                      <Box>
-                        <Typography className="!text-[12.5px] !font-bold !text-slate-800 mb-1.5">
-                          Recommended Flow Pipeline
-                        </Typography>
-                        <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs font-mono text-slate-700 flex items-center gap-1.5 overflow-x-auto">
+                      <div>
+                        <h5 className="text-[12px] font-semibold text-slate-700 mb-1.5">Pipeline Example</h5>
+                        <div className="p-3 bg-slate-50 rounded-md border border-slate-200 text-[11px] font-mono text-slate-600 overflow-x-auto">
                           {toDisplayString(nodeDocs.exampleWorkflow)}
                         </div>
-                      </Box>
+                      </div>
                     )}
 
-                    {/* Copyable Sample Payload */}
                     {nodeDocs?.exampleConfig && (
-                      <Box>
+                      <div>
                         <div className="flex items-center justify-between mb-2">
-                          <Typography className="!text-[12.5px] !font-bold !text-slate-800">
-                            Sample Payload
-                          </Typography>
+                          <h5 className="text-[12px] font-semibold text-slate-700">Sample Payload</h5>
                           <button
                             onClick={handleCopyExample}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-md shadow-2xs transition-colors"
+                            className="inline-flex items-center gap-1 px-2 py-1 text-[11px] font-medium text-slate-600 bg-white hover:bg-slate-50 border border-slate-200 rounded-md transition-colors"
                           >
-                            {copiedExample ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
-                            <span>{copiedExample ? "Copied!" : "Copy Payload"}</span>
+                            {copiedExample ? <Check size={12} className="text-emerald-600" /> : <Copy size={12} />}
+                            <span>{copiedExample ? "Copied" : "Copy"}</span>
                           </button>
                         </div>
-                        <pre className="p-3.5 bg-slate-900 text-slate-200 rounded-xl text-xs font-mono overflow-auto max-h-48">
+                        <pre className="p-3 bg-slate-900 text-slate-300 rounded-lg text-[11px] font-mono overflow-auto max-h-44 leading-relaxed">
                           <code>{JSON.stringify(nodeDocs.exampleConfig, null, 2)}</code>
                         </pre>
-                      </Box>
+                      </div>
                     )}
-                  </Box>
+                  </div>
                 )}
-              </Box>
+              </div>
 
-              {/* Bottom Footer Actions */}
-              <Box className="px-6 py-3 border-t border-slate-100 bg-slate-50/60 flex items-center justify-between">
-                <Typography className="!text-[11.5px] !text-slate-400">
-                  {isDirty ? 'Unsaved changes' : 'All changes saved'}
-                </Typography>
-                <Box className="flex items-center gap-2">
+              {/* Footer */}
+              <div className="px-5 py-2.5 border-t border-slate-100 flex items-center justify-between bg-white">
+                <span className="text-[11px] text-slate-400">
+                  {isDirty ? 'You have unsaved changes' : 'Up to date'}
+                </span>
+                <div className="flex items-center gap-2">
                   <button
                     onClick={onClose}
-                    className="px-3 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-800 bg-white border border-slate-200 rounded-lg shadow-2xs"
+                    className="px-3 py-1.5 text-[12px] font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-50 rounded-md transition-colors"
                   >
-                    Close
+                    Cancel
                   </button>
                   <button
                     onClick={handleSaveChanges}
                     disabled={!isDirty || disabled || loading}
-                    className="px-3.5 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 rounded-lg shadow-xs"
+                    className="px-3.5 py-1.5 text-[12px] font-medium text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed rounded-md transition-colors"
                   >
                     Save Changes
                   </button>
-                </Box>
-              </Box>
-            </Box>
+                </div>
+              </div>
+            </div>
 
-            {/* Right Inspector Panel (4 Cols) */}
-            <Box className="lg:col-span-4 bg-slate-50 flex flex-col h-full overflow-y-auto p-5 space-y-4">
-              <Box className="p-4 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
-                <Typography className="!text-[12.5px] !font-bold !text-slate-800 mb-3 flex items-center gap-2">
-                  <InfoIcon size={14} className="text-indigo-600" />
-                  Node Information
-                </Typography>
+            {/* Right Panel */}
+            <div className="lg:col-span-4 flex flex-col h-full overflow-y-auto p-4 space-y-3 bg-slate-50/50">
+              {/* Node Info Card */}
+              <div className="p-4 bg-white rounded-lg border border-slate-200">
+                <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-slate-100">
+                  <InfoIcon size={13} className="text-slate-500" />
+                  <span className="text-[12px] font-semibold text-slate-700">Details</span>
+                </div>
                 <DescriptionSection description={description} />
                 <TagsSection tags={tags} />
-                <Box className="mt-3 pt-2.5 border-t border-slate-100">
+                <div className="pt-2 border-t border-slate-100 space-y-0">
                   {basicInfo.map((item) => (
                     <InfoItem key={item.label} {...item} />
                   ))}
-                </Box>
-              </Box>
+                </div>
+              </div>
 
-              {/* Node Test Widget */}
-              <Box className="p-4 bg-white rounded-xl border border-slate-200/80 shadow-2xs">
-                <Typography className="!text-[12.5px] !font-bold !text-slate-800 mb-1.5 flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Sparkles size={14} className="text-indigo-600" />
-                    Node Test
-                  </span>
-                </Typography>
-                <Typography className="!text-[11.5px] !text-slate-500 mb-3.5">
-                  Run this node in isolation with its own parameters to preview
-                  its output.
-                </Typography>
-
+              {/* Quick Test Card */}
+              <div className="p-4 bg-white rounded-lg border border-slate-200">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <PlayIcon size={13} className="text-slate-500" />
+                  <span className="text-[12px] font-semibold text-slate-700">Quick Test</span>
+                </div>
+                <p className="text-[11px] text-slate-400 mb-3">
+                  Run this node in isolation to preview output.
+                </p>
                 <button
                   onClick={handleTestClick}
                   disabled={loading}
-                  className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 rounded-lg shadow-xs transition-colors"
+                  className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-[12px] font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 disabled:opacity-50 rounded-md transition-colors"
                 >
-                  <PlayIcon size={13} className="fill-white text-white" /> Run Node Test
+                  <PlayIcon size={12} /> Run Test
                 </button>
-              </Box>
-            </Box>
-          </Box>
+              </div>
+            </div>
+          </div>
         </Dialog>
       ) : (
-        /* ─── DOCKED RIGHT SLIDE-OVER DRAWER VIEW ─── */
+        /* ─── DOCKED RIGHT DRAWER VIEW ─── */
         <Drawer
           anchor="right"
           open={open}
           onClose={onClose}
           PaperProps={{
             sx: {
-              width: 560,
+              width: 520,
               maxWidth: '100%',
               backgroundColor: '#ffffff',
               borderLeft: '1px solid #e2e8f0',
               display: 'flex',
               flexDirection: 'column',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.08)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.12)',
             },
           }}
         >
           <ModalHeader {...headerProps} />
 
-          <Box sx={{ flexGrow: 1, overflowY: 'auto', p: 3 }} className="space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {sections.displayInputParameters && (
               <CustomAccordion
                 title="Input Parameters"
-                icon={<InputIcon size={16} />}
+                icon={<InputIcon size={14} />}
                 emptyStateMessage="No input parameters available."
               >
-                <Stack spacing={2}>
+                <div className="space-y-2.5">
                   {localInputParams.map((param, index) => (
-                    <Box key={index} className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+                    <div key={index} className="p-3 rounded-md border border-slate-200 bg-white">
                       {getParameterComponent(param, nodeColor, (params) => handleInputChange(params), localInputParams, 'inputParameters')}
-                    </Box>
+                    </div>
                   ))}
-                </Stack>
+                </div>
               </CustomAccordion>
             )}
 
             {sections.displayOutputParameters && (
               <CustomAccordion
                 title="Output Parameters"
-                icon={<OutputIcon size={16} />}
+                icon={<OutputIcon size={14} />}
                 emptyStateMessage="No output parameters configured."
               >
-                <Stack spacing={2}>
+                <div className="space-y-2.5">
                   {localOutputParams.map((param, index) => (
                     <OutputParameterComponents
                       key={index}
@@ -729,24 +683,22 @@ const NodeDetailsModal = ({
                       onUpdate={(updated) => handleOutputParamUpdate(index, updated)}
                     />
                   ))}
-                </Stack>
+                </div>
               </CustomAccordion>
             )}
 
-            <Divider sx={{ my: 1.5, borderColor: '#f1f5f9' }} />
-
             {sections.displayBasicInformation && (
-              <Box className="p-3 bg-slate-50 rounded-lg border border-slate-200">
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200">
                 <DescriptionSection description={description} />
                 <TagsSection tags={tags} />
-                <Box className="mt-2 pt-2 border-t border-slate-200">
+                <div className="pt-2 border-t border-slate-100">
                   {basicInfo.map((item) => (
                     <InfoItem key={item.label} {...item} />
                   ))}
-                </Box>
-              </Box>
+                </div>
+              </div>
             )}
-          </Box>
+          </div>
         </Drawer>
       )}
 

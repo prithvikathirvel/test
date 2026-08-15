@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Box, Drawer, Typography, Tooltip, IconButton } from "@mui/material";
+import { Box, Drawer, Tooltip, IconButton } from "@mui/material";
 import {
   LayoutDashboard,
   Settings,
@@ -76,13 +76,14 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
       sx={{
         width: isOpen ? 232 : 60,
         flexShrink: 0,
+        transition: "width 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
         "& .MuiDrawer-paper": {
           width: isOpen ? 232 : 60,
           boxSizing: "border-box",
           backgroundColor: "#ffffff",
           color: "#1e293b",
           borderRight: "1px solid #e5e7eb",
-          transition: "width 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: "width 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
           overflowX: "hidden",
           display: "flex",
           flexDirection: "column",
@@ -96,27 +97,27 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
       }}
     >
       <Box className="flex flex-col">
-        <Box
-          className={`flex items-center min-h-[52px] border-b border-gray-100 ${
-            isOpen ? "px-3 justify-between" : "justify-center px-0"
-          }`}
-        >
+        <Box className="flex items-center min-h-[52px] border-b border-gray-100 px-3">
           <Link
             href="/studio"
-            className="flex items-center justify-center no-underline overflow-hidden h-8 w-8"
+            className="flex items-center justify-center no-underline overflow-hidden h-8 w-8 shrink-0"
           >
             <Image
-              src="/agent-studio/branding/aurora-icon.png"
+              src="/agent-studio/branding/aurora-logo.png"
               alt="Sify Aurora"
-              width={20}
-              height={20}
+              width={80}
+              height={80}
               className="object-contain"
               priority
               unoptimized
             />
           </Link>
 
-          {isOpen && (
+          <div
+            className={`ml-auto transition-opacity duration-200 ${
+              isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+          >
             <Tooltip title="Collapse sidebar" placement="right">
               <IconButton
                 onClick={handleToggle}
@@ -126,73 +127,60 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
                 <PanelLeftClose size={15} />
               </IconButton>
             </Tooltip>
-          )}
+          </div>
         </Box>
 
-        <Box className={`py-3 ${isOpen ? "px-2.5" : "px-0"}`}>
-          {isOpen && (
-            <p className="px-2 pb-1.5 pt-0.5 text-[10px] font-semibold text-slate-400 uppercase tracking-widest select-none">
-              Workspace
-            </p>
-          )}
-          <div className={`space-y-0.5 w-full ${isOpen ? "" : "flex flex-col items-center"}`}>
+        <Box className="py-3 px-2">
+          <p
+            className={`px-2 pb-1.5 pt-0.5 text-[10px] font-semibold text-slate-400 uppercase tracking-widest select-none whitespace-nowrap overflow-hidden transition-opacity duration-200 ${
+              isOpen ? "opacity-100" : "opacity-0 h-0 p-0 m-0"
+            }`}
+          >
+            Workspace
+          </p>
+          <div className="space-y-0.5 w-full">
             {Menus.map((menu) => {
               const isActive =
                 pathname === menu.path || pathname?.startsWith(menu.path + "/");
 
-              if (!isOpen) {
-                return (
-                  <Tooltip key={menu.title} title={menu.title} placement="right" arrow>
-                    <Link href={menu.path} className="no-underline flex justify-center">
-                      <div
-                        className={`h-8 w-8 rounded-md flex items-center justify-center transition-colors cursor-pointer ${
-                          isActive
-                            ? "bg-slate-100 text-indigo-600"
-                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
-                        }`}
-                      >
-                        <NavIcon icon={menu.icon} active={isActive} />
-                      </div>
-                    </Link>
-                  </Tooltip>
-                );
-              }
-
               return (
-                <Link href={menu.path} key={menu.title} className="no-underline block w-full">
-                  <div
-                    className={`relative flex items-center gap-2.5 w-full rounded-md px-2.5 py-[7px] transition-colors cursor-pointer ${
-                      isActive
-                        ? "bg-slate-100 text-slate-900"
-                        : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    {isActive && (
-                      <span className="absolute left-0 inset-y-[5px] w-[2px] rounded-r-full bg-slate-700" />
-                    )}
-                    <NavIcon icon={menu.icon} active={isActive} />
-                    <Typography
-                      className={`!text-[13px] !leading-tight ${
+                <Tooltip
+                  key={menu.title}
+                  title={isOpen ? "" : menu.title}
+                  placement="right"
+                  arrow
+                >
+                  <Link href={menu.path} className="no-underline block w-full">
+                    <div
+                      className={`relative flex items-center gap-2.5 w-full rounded-md px-2.5 py-[7px] transition-colors cursor-pointer ${
                         isActive
-                          ? "!font-semibold !text-slate-800"
-                          : "!font-medium !text-slate-600"
+                          ? "bg-slate-100 text-slate-900"
+                          : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
                       }`}
                     >
-                      {menu.title}
-                    </Typography>
-                  </div>
-                </Link>
+                      {isActive && (
+                        <span className="absolute left-0 inset-y-[5px] w-[2px] rounded-r-full bg-slate-700" />
+                      )}
+                      <span className="shrink-0">
+                        <NavIcon icon={menu.icon} active={isActive} />
+                      </span>
+                      <span
+                        className={`whitespace-nowrap overflow-hidden transition-[opacity,max-width] duration-200 text-[13px] leading-tight ${
+                          isActive ? "font-semibold text-slate-800" : "font-medium text-slate-600"
+                        } ${isOpen ? "opacity-100 max-w-[160px]" : "opacity-0 max-w-0"}`}
+                      >
+                        {menu.title}
+                      </span>
+                    </div>
+                  </Link>
+                </Tooltip>
               );
             })}
           </div>
         </Box>
       </Box>
 
-      <Box
-        className={`p-2 border-t border-gray-100 ${
-          isOpen ? "flex justify-end" : "flex justify-center"
-        }`}
-      >
+      <Box className="p-2 border-t border-gray-100 flex justify-center">
         <Tooltip title={isOpen ? "Collapse sidebar" : "Expand sidebar"} placement="right">
           <IconButton
             onClick={handleToggle}

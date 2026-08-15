@@ -74,31 +74,23 @@ const getNodeIcon = (type, catalogTypes) => {
   }
 };
 
-/** Uniform emerald accent for all node types. */
-const SHARED_ACCENT = {
-  bar: "#10b981",
-  iconBg: "bg-emerald-500",
-  chip: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  ring: "rgba(16,185,129,0.30)",
-  handle: "#10b981",
-};
-
+/** Per-type solid accents — distinct colors, no gradients. */
 const NODE_ACCENTS = {
-  tool:       SHARED_ACCENT,
-  agent:      SHARED_ACCENT,
-  model:      SHARED_ACCENT,
-  inputs:     SHARED_ACCENT,
-  output:     SHARED_ACCENT,
-  agentflow:  SHARED_ACCENT,
-  decision:   SHARED_ACCENT,
-  conditions: SHARED_ACCENT,
-  condition:  SHARED_ACCENT,
-  iterator:   SHARED_ACCENT,
-  question:   SHARED_ACCENT,
-  start:      SHARED_ACCENT,
+  tool:       { bar: "#6366f1", iconBg: "bg-indigo-500",  chip: "bg-indigo-50 text-indigo-700 border-indigo-200",   ring: "rgba(99,102,241,0.18)", handle: "#6366f1" },
+  agent:      { bar: "#10b981", iconBg: "bg-emerald-500", chip: "bg-emerald-50 text-emerald-700 border-emerald-200", ring: "rgba(16,185,129,0.18)", handle: "#10b981" },
+  model:      { bar: "#8b5cf6", iconBg: "bg-violet-500",  chip: "bg-violet-50 text-violet-700 border-violet-200",   ring: "rgba(139,92,246,0.18)", handle: "#8b5cf6" },
+  inputs:     { bar: "#0ea5e9", iconBg: "bg-sky-500",     chip: "bg-sky-50 text-sky-700 border-sky-200",           ring: "rgba(14,165,233,0.18)", handle: "#0ea5e9" },
+  output:     { bar: "#64748b", iconBg: "bg-slate-500",   chip: "bg-slate-100 text-slate-600 border-slate-200",     ring: "rgba(100,116,139,0.18)", handle: "#64748b" },
+  agentflow:  { bar: "#ec4899", iconBg: "bg-pink-500",    chip: "bg-pink-50 text-pink-700 border-pink-200",         ring: "rgba(236,72,153,0.18)", handle: "#ec4899" },
+  decision:   { bar: "#f59e0b", iconBg: "bg-amber-500",   chip: "bg-amber-50 text-amber-700 border-amber-200",     ring: "rgba(245,158,11,0.18)", handle: "#f59e0b" },
+  conditions: { bar: "#f59e0b", iconBg: "bg-amber-500",   chip: "bg-amber-50 text-amber-700 border-amber-200",     ring: "rgba(245,158,11,0.18)", handle: "#f59e0b" },
+  condition:  { bar: "#f59e0b", iconBg: "bg-amber-500",   chip: "bg-amber-50 text-amber-700 border-amber-200",     ring: "rgba(245,158,11,0.18)", handle: "#f59e0b" },
+  iterator:   { bar: "#6366f1", iconBg: "bg-indigo-500",  chip: "bg-indigo-50 text-indigo-700 border-indigo-200",   ring: "rgba(99,102,241,0.18)", handle: "#6366f1" },
+  question:   { bar: "#a855f7", iconBg: "bg-purple-500",  chip: "bg-purple-50 text-purple-700 border-purple-200",   ring: "rgba(168,85,247,0.18)", handle: "#a855f7" },
+  start:      { bar: "#10b981", iconBg: "bg-emerald-500", chip: "bg-emerald-50 text-emerald-700 border-emerald-200", ring: "rgba(16,185,129,0.18)", handle: "#10b981" },
 };
 
-const DEFAULT_ACCENT = SHARED_ACCENT;
+const DEFAULT_ACCENT = { bar: "#94a3b8", iconBg: "bg-slate-400", chip: "bg-slate-100 text-slate-600 border-slate-200", ring: "rgba(100,116,139,0.18)", handle: "#94a3b8" };
 
 const getNodeAccent = (type) => NODE_ACCENTS[type?.toLowerCase()] || DEFAULT_ACCENT;
 
@@ -255,12 +247,12 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
   return (
     <div
       className={`group relative w-[272px] rounded-xl border transition-[box-shadow,border-color] duration-200 ${
-        selected ? "border-transparent" : "border-slate-200/80 hover:border-slate-300/90"
+        selected ? "border-slate-300" : "border-slate-200/80 hover:border-slate-300/90"
       }`}
       style={{
         background: "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
         boxShadow: selected
-          ? `0 0 0 2px ${accent.handle}, 0 0 0 5px ${accent.ring}, 0 10px 25px -5px rgba(15,23,42,0.12)`
+          ? `0 0 0 3px ${accent.ring}, 0 4px 12px -4px rgba(15,23,42,0.10)`
           : "0 1px 4px rgba(15,23,42,0.07), 0 1px 2px rgba(15,23,42,0.04)",
       }}
     >

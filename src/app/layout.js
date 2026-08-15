@@ -21,6 +21,7 @@ const pathsWithoutNav = [
   "/signup",
   "/",
   "/test",
+  "/demo",
 ];
 
 export default function RootLayout({ children }) {

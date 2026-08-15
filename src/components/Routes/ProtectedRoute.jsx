@@ -4,7 +4,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
 
-const PUBLIC_PATHS = new Set(["/", "/login", "/signup"]);
+const PUBLIC_PATHS = new Set(["/", "/login", "/signup", "/demo"]);
 
 const normalizePath = (pathname = "") => {
   if (!pathname) return "/";
@@ -15,18 +15,23 @@ const normalizePath = (pathname = "") => {
 const ProtectedRoute = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
-  const { isAuthenticated, authLoader } = useSelector((state) => state.auth);
+  const { isAuthenticated, sessionHydrated } = useSelector((state) => state.auth);
+
+  const path = normalizePath(pathname);
+  const isPublic =
+    PUBLIC_PATHS.has(path) ||
+    path === "/admin" ||
+    path.startsWith("/admin/");
 
   useEffect(() => {
-    if (authLoader) return;
-    const path = normalizePath(pathname);
-    // The admin console manages its own (separate) authentication and must not
-    // be gated by the regular user session.
-    if (path === "/admin" || path.startsWith("/admin/")) return;
-    if (!isAuthenticated && !PUBLIC_PATHS.has(path)) {
-      router.push("/login");
+    if (!sessionHydrated) return;
+    if (!isAuthenticated && !isPublic) {
+      router.replace("/login");
     }
-  }, [isAuthenticated, authLoader, pathname, router]);
+  }, [isAuthenticated, sessionHydrated, isPublic, router]);
+
+  if (!sessionHydrated) return null;
+  if (!isAuthenticated && !isPublic) return null;
 
   return children;
 };
