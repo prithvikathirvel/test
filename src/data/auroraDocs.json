@@ -1,0 +1,295 @@
+{
+  "meta": {
+    "productName": "Aurora Agent Studio",
+    "title": "Product Documentation",
+    "subtitle": "A concise guide for building, validating, testing, and operating agentic workflows.",
+    "version": "1.0.0",
+    "updatedAt": "2026-08-16",
+    "audience": ["workflow builders", "admins", "developers", "operators"]
+  },
+  "quickStart": {
+    "title": "Build your first flow",
+    "steps": [
+      {
+        "title": "Create or import",
+        "body": "Start from a blank flow, paste a flow JSON, or import a JSON file. Imported flows are checked for schema validity and output-name collisions."
+      },
+      {
+        "title": "Add nodes",
+        "body": "Drag nodes from the library, connect them on the canvas, and configure each node from its details modal."
+      },
+      {
+        "title": "Validate outputs",
+        "body": "Every output variable should be unique. Use the collision warning modal to rename outputs or intentionally ignore warnings."
+      },
+      {
+        "title": "Save and deploy",
+        "body": "Save the full flow JSON. Unsaved changes are tracked for canvas changes and node modal edits."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "id": "flow-studio",
+      "label": "Flow Studio",
+      "icon": "Workflow",
+      "summary": "Create and maintain visual agent workflows.",
+      "description": "Flow Studio is the main workspace for creating flows, arranging nodes, managing edges, editing flow details, cloning, importing, and bulk-managing workflows.",
+      "features": [
+        "Blank, paste, and file-import creation modes",
+        "Modern canvas with selectable nodes and subtle colored focus states",
+        "Unsaved-change guard before leaving a flow",
+        "Multi-select delete across paginated flow lists",
+        "JSON spec view for advanced users"
+      ],
+      "howTo": [
+        "Open Studio Flows.",
+        "Click Create Flow.",
+        "Choose Blank, Paste, or Import.",
+        "Review validation warnings, then create the flow.",
+        "Open the flow and configure nodes."
+      ],
+      "dataShape": {
+        "name": "Customer Support Flow",
+        "description": "Routes customer questions to the correct tool or agent.",
+        "type": "flow",
+        "graphSpec": {
+          "nodes": [],
+          "edges": []
+        },
+        "inputs": []
+      },
+      "tips": [
+        "Use clear flow names; they appear in listings and the studio header.",
+        "Keep graphSpec.description empty. Flow description belongs at the root level.",
+        "Use import preview to confirm node names before creating from JSON."
+      ]
+    },
+    {
+      "id": "react-agent",
+      "label": "ReAct Agent",
+      "icon": "Bot",
+      "summary": "Configure autonomous agents with prompts, memory, tools, and outputs.",
+      "description": "The ReAct Agent node follows a reasoning/action pattern. It can use configured tools, maintain memory, and return a final response into a named output variable.",
+      "features": [
+        "Dedicated tabs: Configuration, Prompt, Memory, Tools, Output, Info",
+        "Tool picker for registered tools and MCP tools",
+        "Dynamic parameters for model-filled tool arguments",
+        "Config mapping from selected tool input parameters",
+        "Output variable mapping for downstream nodes"
+      ],
+      "howTo": [
+        "Open the ReAct Agent node details.",
+        "Set the model and runtime values in Configuration.",
+        "Write the system instructions in Prompt.",
+        "Configure memory mode and context.",
+        "Add tools from the Tools tab and map config values.",
+        "Set the final output variable in Output."
+      ],
+      "dataShape": {
+        "type": "react_agent",
+        "inputParameters": [
+          { "key": "model", "value": "llama3", "type": "string" },
+          { "key": "system_prompt", "value": "You are a helpful agent.", "type": "text" },
+          {
+            "key": "tools",
+            "type": "array",
+            "value": [
+              {
+                "name": "get_all_products",
+                "description": "Fetch all products.",
+                "node_type": "API Caller",
+                "config": { "method": "GET", "url": "https://dummyjson.com/products" },
+                "parameters": []
+              }
+            ]
+          }
+        ],
+        "outputParameters": [
+          { "key": "output", "value": "agent_response", "type": "string" }
+        ]
+      },
+      "tips": [
+        "Tool name is what the LLM sees; node_type is the executable registered node type.",
+        "Use placeholders like {{product_id}} in config when a dynamic parameter should fill the value.",
+        "Keep prompts specific and include clear tool usage rules."
+      ]
+    },
+    {
+      "id": "validation",
+      "label": "Validation",
+      "icon": "ShieldCheck",
+      "summary": "Catch output collisions and unsafe flow structure before save or import.",
+      "description": "Validation focuses on output variable collisions and invalid flow JSON. Users can rename outputs or intentionally skip known-safe warnings.",
+      "features": [
+        "Collision detection across all node output variables",
+        "Open the correct node and Output tab from warning actions",
+        "Ignore one warning or skip all current warnings",
+        "Flow JSON validity checks during Paste and Import"
+      ],
+      "howTo": [
+        "Review collision warnings when they appear.",
+        "Click Rename in node to open the node Output tab.",
+        "Rename duplicate output variables.",
+        "Use Ignore only this warning only when the collision is intentional."
+      ],
+      "dataShape": {
+        "error": {
+          "type": "cross_node_collision",
+          "variableName": "agent_response",
+          "occurrences": [
+            { "nodeId": "node-1", "nodeName": "Agent A" },
+            { "nodeId": "node-2", "nodeName": "Agent B" }
+          ]
+        }
+      },
+      "tips": [
+        "Prefer unique output variable names for every node.",
+        "Skipping validation should be rare and intentional.",
+        "Imported flows should be validated before creation."
+      ]
+    },
+    {
+      "id": "tools-mcp",
+      "label": "Tools & MCP",
+      "icon": "Wrench",
+      "summary": "Register reusable capabilities and attach them to ReAct agents.",
+      "description": "Tools and MCP servers are callable capabilities. ReAct agents select from these capabilities during execution based on the tool name, description, config, and dynamic parameters.",
+      "features": [
+        "Registered tool search",
+        "MCP server tool search",
+        "Config editor from node input parameters",
+        "Dynamic parameter schema for model-filled inputs",
+        "Tool schema stored inside ReAct Agent inputParameters"
+      ],
+      "howTo": [
+        "Open a ReAct Agent node.",
+        "Go to Tools.",
+        "Click Add Tool or MCP.",
+        "Search and select a registered capability.",
+        "Review config values and add dynamic parameters if needed."
+      ],
+      "dataShape": {
+        "name": "search_products",
+        "description": "Search products by keyword.",
+        "node_type": "API Caller",
+        "config": {
+          "url": "https://dummyjson.com/products/search?q={{q}}",
+          "method": "GET"
+        },
+        "parameters": [
+          { "name": "q", "type": "string", "required": true, "description": "Search keyword", "example": "phone" }
+        ]
+      },
+      "tips": [
+        "Descriptions decide when the model chooses a tool.",
+        "Keep dynamic parameter names aligned with config placeholders.",
+        "Use MCP tools for external capability discovery."
+      ]
+    },
+    {
+      "id": "dictionary",
+      "label": "Dictionary",
+      "icon": "BookMarked",
+      "summary": "Manage reusable variables used across flows.",
+      "description": "The Dictionary stores reusable local and global values that can be referenced by templates such as {{CHAT_QUERY}} or business-specific variables.",
+      "features": [
+        "Global dictionary values",
+        "Flow-level dictionary configuration",
+        "Variable templates in node inputs",
+        "Validation for key and value shape"
+      ],
+      "howTo": [
+        "Create dictionary variables in the Dictionary page.",
+        "Open the Studio dictionary configuration.",
+        "Select or create variables needed by the flow.",
+        "Reference them using {{variable_name}} in node fields."
+      ],
+      "dataShape": {
+        "key": "CHAT_QUERY",
+        "type": "text",
+        "scope": "local",
+        "value": ""
+      },
+      "tips": [
+        "Use uppercase names for external input placeholders.",
+        "Use clear scopes so builders know where values come from."
+      ]
+    },
+    {
+      "id": "admin-registry",
+      "label": "Admin Registry",
+      "icon": "Settings",
+      "summary": "Manage registered tools, models, and agents.",
+      "description": "The Admin Registry provides controlled creation and editing of tools, models, and agents. Version is generated by the UI and still sent to backend payloads.",
+      "features": [
+        "Tools, Models, and Agents registry tables",
+        "Input/output parameter editors",
+        "Import/export JSON helpers",
+        "status=all list queries for complete admin visibility",
+        "Backend-safe version defaults"
+      ],
+      "howTo": [
+        "Open Admin Dashboard.",
+        "Choose Tools, Models, or Agents.",
+        "Add or edit entries.",
+        "Define input and output parameters.",
+        "Save registry changes."
+      ],
+      "dataShape": {
+        "name": "API Caller",
+        "type": "tool",
+        "version": "1.0.0",
+        "status": true,
+        "inputParameters": [],
+        "outputParameters": []
+      },
+      "tips": [
+        "Do not ask users for version; it is handled automatically.",
+        "Use status=all for admin list screens."
+      ]
+    },
+    {
+      "id": "voice",
+      "label": "Voice",
+      "icon": "Mic",
+      "summary": "Configure speech input and output for flows.",
+      "description": "Voice settings define text-to-speech, speech-to-text, and the interaction mode for a voice-enabled agent flow.",
+      "features": [
+        "TTS provider selection",
+        "STT provider selection",
+        "Voice/text interaction mode",
+        "Flow-level voice configuration payload"
+      ],
+      "howTo": [
+        "Enable Voice in Studio Header.",
+        "Open Voice Settings.",
+        "Choose TTS, STT, and interaction mode.",
+        "Save configuration."
+      ],
+      "dataShape": {
+        "voice_enabled": true,
+        "voice_config": {
+          "tts_provider": "piper",
+          "stt_provider": "whisper",
+          "mode": "voice_in_voice_out"
+        }
+      },
+      "tips": [
+        "Keep voice configuration per flow.",
+        "Plain text mode disables voice behavior while preserving config."
+      ]
+    }
+  ],
+  "docTemplate": {
+    "id": "new-section-id",
+    "label": "Section name",
+    "icon": "Workflow",
+    "summary": "One-line summary for the left navigation and cards.",
+    "description": "Short paragraph explaining what this section does and why users need it.",
+    "features": ["Feature one", "Feature two"],
+    "howTo": ["Step one", "Step two"],
+    "dataShape": { "example": true },
+    "tips": ["Best practice one"]
+  }
+}

@@ -10,6 +10,7 @@ import {
   BookOpen,
   Share2,
   BookMarked,
+  FileText,
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
@@ -59,6 +60,11 @@ const Menus = [
     title: "Dictionary",
     icon: BookMarked,
     path: "/dictionary",
+  },
+  {
+    title: "Docs",
+    icon: FileText,
+    path: "/docs",
   },
   {
     title: "Settings",
