@@ -301,6 +301,23 @@ const getNodeInputParameters = (tool = {}) =>
       ? tool.inputs
       : [];
 
+const getToolNodeTypeName = (tool = {}) =>
+  tool.displayName || tool.name || tool.tool_name || tool.node_type || tool.type || 'Selected Tool';
+
+const normalizeReactAgentToolSchema = (tool = {}) => ({
+  ...tool,
+  node_type: getToolNodeTypeName(tool),
+});
+
+const normalizeReactAgentToolParams = (params = []) =>
+  (Array.isArray(params) ? params : []).map((param) => {
+    if (param?.key !== 'tools' || !Array.isArray(param.value)) return param;
+    return {
+      ...param,
+      value: param.value.map(normalizeReactAgentToolSchema),
+    };
+  });
+
 const toolToCanonicalSchema = (tool = {}) => {
   const inputParameters = getNodeInputParameters(tool);
   const config = inputParameters.reduce((acc, param) => {
@@ -313,7 +330,7 @@ const toolToCanonicalSchema = (tool = {}) => {
   return {
     name: tool.displayName || tool.name || tool.tool_name || 'Selected Tool',
     description: tool.description || 'Describe what this tool returns and when the agent should use it.',
-    node_type: tool.type || tool.node_type || 'API caller',
+    node_type: getToolNodeTypeName(tool),
     config,
     parameters: [],
   };
@@ -562,7 +579,7 @@ const ReactAgentToolsPanel = ({ localInputParams, onInputChange, availableTools 
                   <div className="space-y-5 border-t border-slate-100 bg-slate-50/30 p-4">
                     <div className="grid grid-cols-1 gap-3">
                       <FieldShell label="Tool name" hint="Shown to the model and converted to a safe callable id automatically." badge={safeId || 'safe id'}>
-                        <SimpleInput value={tool.name || tool.tool_name || ''} onChange={(value) => updateTool(index, { name: value, node_type: tool.node_type || tool.type || 'API caller' })} placeholder="Get Product Details" />
+                        <SimpleInput value={tool.name || tool.tool_name || ''} onChange={(value) => updateTool(index, { name: value, node_type: value || tool.name || tool.tool_name || 'Selected Tool' })} placeholder="Get Product Details" />
                       </FieldShell>
                       <FieldShell label="Description" hint="Tell the model exactly what the tool returns and when it should call it.">
                         <SimpleTextarea value={tool.description || ''} onChange={(value) => updateTool(index, { description: value })} rows={3} placeholder="Get full details of one product by numeric id..." />
@@ -693,7 +710,7 @@ const AddToolPickerDialog = ({ open, availableTools = [], onClose, onAdd }) => {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600"><Wrench size={14} /></div>
                   <div className="min-w-0">
                     <h4 className="truncate text-[13px] font-semibold text-slate-900">{selectedTool.displayName || selectedTool.name}</h4>
-                    <p className="text-[10.5px] text-slate-400">{getToolSourceLabel(selectedTool)} · saved as <span className="font-mono">{selectedTool.type || selectedTool.node_type || 'API caller'}</span>.</p>
+                    <p className="text-[10.5px] text-slate-400">{getToolSourceLabel(selectedTool)} · saved as <span className="font-mono">{getToolNodeTypeName(selectedTool)}</span>.</p>
                   </div>
                 </div>
                 <p className="text-[11.5px] leading-relaxed text-slate-500">{selectedTool.description || 'No description provided.'}</p>
@@ -1134,11 +1151,14 @@ const NodeDetailsModal = ({
 
   const handleSaveChanges = () => {
     if (node && isDirty) {
+      const nextInputParams = normalizeReactAgentToolParams(localInputParams);
+      setLocalInputParams(nextInputParams);
+
       if (typeof onUpdateParameters === 'function') {
-        onUpdateParameters(node.id, localInputParams, 'inputParameters');
+        onUpdateParameters(node.id, nextInputParams, 'inputParameters');
         onUpdateParameters(node.id, localOutputParams, 'outputParameters');
       } else {
-        dispatch(updateNode({ flow, nodeId: node.id, updatedNode: localInputParams, parameter: 'inputParameters' }));
+        dispatch(updateNode({ flow, nodeId: node.id, updatedNode: nextInputParams, parameter: 'inputParameters' }));
         dispatch(updateNode({ flow, nodeId: node.id, updatedNode: localOutputParams, parameter: 'outputParameters' }));
       }
 
@@ -1148,14 +1168,18 @@ const NodeDetailsModal = ({
 
   const handleUpdateName = (newName) => {
     if (node && node.id) {
-      dispatch(
-        updateNode({
-          flow: flow,
-          nodeId: node.id,
-          updatedNode: newName,
-          parameter: 'displayName',
-        })
-      );
+      if (typeof onUpdateParameters === 'function') {
+        onUpdateParameters(node.id, newName, 'displayName');
+      } else {
+        dispatch(
+          updateNode({
+            flow: flow,
+            nodeId: node.id,
+            updatedNode: newName,
+            parameter: 'displayName',
+          })
+        );
+      }
     }
   };
 

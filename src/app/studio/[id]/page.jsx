@@ -531,16 +531,21 @@ const Studio = () => {
     }, []);
 
     const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters, parameter) => {
-        setNodesState((nds) => nds.map((node) => (
-            node.id === nodeId
-                ? { ...node, data: { ...node.data, [parameter]: updatedParameters } }
-                : node
-        )));
+        setNodesState((nds) => {
+            const nextNodes = nds.map((node) => (
+                node.id === nodeId
+                    ? { ...node, data: { ...node.data, [parameter]: updatedParameters } }
+                    : node
+            ));
+            nodesRef.current = nextNodes;
+            const currentFingerprint = fingerprintCanvas(nextNodes, edgesForSaveRef.current);
+            setIsDirty(savedFingerprintRef.current !== null && currentFingerprint !== savedFingerprintRef.current);
+            return nextNodes;
+        });
         setSelectedNode((current) => current?.id === nodeId
             ? { ...current, data: { ...current.data, [parameter]: updatedParameters } }
             : current
         );
-        setIsDirty(true);
         dispatch(updateNode({ flow: flowRef.current, nodeId: nodeId, updatedNode: updatedParameters, parameter: parameter }));
     }, [dispatch, setNodesState]);
 

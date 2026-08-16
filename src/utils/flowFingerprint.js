@@ -31,6 +31,7 @@ const normalizeNode = (node) => ({
   id: node?.id ?? '',
   type: node?.data?.type ?? node?.type ?? '',
   name: node?.data?.name ?? node?.name ?? '',
+  displayName: node?.data?.displayName ?? node?.displayName ?? '',
   description: node?.data?.description ?? node?.description ?? '',
   // Positions are rounded to whole pixels: sub-pixel drift from React Flow's
   // transform maths should not count as an unsaved change.
