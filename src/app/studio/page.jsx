@@ -98,14 +98,16 @@ const StudioListing = () => {
       // Clone: send the *entire* flow spec (graphSpec, inputs, voice config…)
       // but drop `id` / `agent_id` so the backend generates fresh ones.
       const { id, agent_id, createdAt, updatedAt, __clone, ...cloneBase } = details;
+      const { description: _graphSpecDescription, ...cleanGraphSpec } = details.graphSpec || {};
       const cloneSpec = {
         ...cloneBase,
         name: details.name,
         description: details.description,
         type: details.type || "flow",
-        graphSpec: {
-          ...(details.graphSpec || {}),
-        },
+        // Keep description only at the flow root. Some cloned records already
+        // carry graphSpec.description, so explicitly strip it instead of just
+        // avoiding adding a new one.
+        graphSpec: cleanGraphSpec,
       };
 
       dispatch(
