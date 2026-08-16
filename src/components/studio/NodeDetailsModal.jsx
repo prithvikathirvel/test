@@ -921,24 +921,20 @@ const ToolParameterEditor = ({ parameters, onChange }) => {
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
                     <span className="text-[12px] font-semibold text-slate-800">Dynamic field {idx + 1}</span>
-                    <p className="mt-0.5 text-[10.5px] text-slate-400">Mandatory fields first. Optional possible values last.</p>
+                    <p className="mt-0.5 text-[10.5px] text-slate-400">Fill the required details first, then add possible values only if needed.</p>
                   </div>
                   <button type="button" onClick={() => removeParam(idx)} className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={13} /></button>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Mandatory</span>
-                      <span className="h-px flex-1 bg-slate-100" />
-                    </div>
                     <div className="space-y-3">
-                      <FieldShell label="1. Parameter name" hint="Must match the config placeholder, for example {{product_id}}.">
+                      <FieldShell label="Parameter name" hint="Must match the config placeholder, for example {{product_id}}.">
                         <SimpleInput value={param.name || param.key || ''} onChange={(value) => updateParam(idx, { name: value })} placeholder="product_id" mono />
                       </FieldShell>
 
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <FieldShell label="2. Type" hint="Choose the value format.">
+                        <FieldShell label="Type" hint="Choose the value format.">
                           <select
                             value={param.type || 'string'}
                             onChange={(event) => {
@@ -953,7 +949,7 @@ const ToolParameterEditor = ({ parameters, onChange }) => {
                             {['string', 'integer', 'number', 'boolean', 'object', 'array'].map((type) => <option key={type} value={type}>{type}</option>)}
                           </select>
                         </FieldShell>
-                        <FieldShell label="3. Required" hint="Must be present before tool call.">
+                        <FieldShell label="Required" hint="Must be present before tool call.">
                           <label className="flex h-[38px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-medium text-slate-600">
                             <input type="checkbox" checked={Boolean(param.required)} onChange={(event) => updateParam(idx, { required: event.target.checked })} />
                             Required
@@ -961,22 +957,21 @@ const ToolParameterEditor = ({ parameters, onChange }) => {
                         </FieldShell>
                       </div>
 
-                      <FieldShell label="4. Description" hint="Tell the agent exactly how to choose this value.">
+                      <FieldShell label="Description" hint="Tell the agent exactly how to choose this value.">
                         <SimpleTextarea value={param.description || ''} onChange={(value) => updateParam(idx, { description: value })} rows={2} placeholder="Numeric product id returned by search_products." />
                       </FieldShell>
 
-                      <FieldShell label="5. Example value" hint="Input changes based on the selected type.">
+                      <FieldShell label="Example value" hint="Input changes based on the selected type.">
                         {renderExampleInput(param, idx)}
                       </FieldShell>
                     </div>
                   </div>
 
-                  <div>
+                  <div className="rounded-lg border border-slate-100 bg-slate-50/40 p-3">
                     <div className="mb-2 flex items-center gap-2">
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Optional</span>
-                      <span className="h-px flex-1 bg-slate-100" />
+                      <span className="rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wide text-slate-400">Optional</span>
                     </div>
-                    <FieldShell label="6. Possible values" hint="Comma separated allowed values. Leave empty if any value is allowed.">
+                    <FieldShell label="Possible values" hint="Comma separated allowed values. Leave empty if any value is allowed.">
                       <SimpleInput value={Array.isArray(param.enum) ? param.enum.join(', ') : (param.enum || '')} onChange={(value) => updateParam(idx, { enum: value ? value.split(',').map((v) => v.trim()).filter(Boolean) : null })} placeholder="asc, desc" />
                     </FieldShell>
                   </div>
@@ -1011,6 +1006,58 @@ const ReactAgentOutputPanel = ({ localOutputParams, onOutputParamUpdate, nodeCol
         <p className="text-[12px] font-medium text-slate-500">No Output Parameters</p>
       </div>
     )}
+  </div>
+);
+
+const NodeInfoPanel = ({ description, tags, basicInfo, onTest, loading }) => (
+  <div className="space-y-4">
+    <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+      <div className="flex items-center gap-2 mb-1">
+        <InfoIcon size={15} className="text-slate-600" />
+        <h4 className="text-[13px] font-semibold text-slate-800">Node Info</h4>
+      </div>
+      <p className="text-[11.5px] text-slate-500">Metadata, description, tags, and quick actions for this node.</p>
+    </div>
+
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <div className="mb-3 flex items-center gap-2 border-b border-slate-100 pb-2.5">
+          <DescriptionIcon size={14} className="text-slate-500" />
+          <span className="text-[12px] font-semibold text-slate-700">Details</span>
+        </div>
+        <DescriptionSection description={description} />
+        <TagsSection tags={tags} />
+      </div>
+
+      <div className="space-y-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="mb-3 flex items-center gap-2 border-b border-slate-100 pb-2.5">
+            <InfoIcon size={14} className="text-slate-500" />
+            <span className="text-[12px] font-semibold text-slate-700">Properties</span>
+          </div>
+          <div className="space-y-0">
+            {basicInfo.map((item) => (
+              <InfoItem key={item.label} {...item} />
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-slate-200 bg-white p-4">
+          <div className="mb-1.5 flex items-center gap-2">
+            <PlayIcon size={14} className="text-slate-500" />
+            <span className="text-[12px] font-semibold text-slate-700">Quick Test</span>
+          </div>
+          <p className="mb-3 text-[11px] text-slate-400">Run this node in isolation to preview output.</p>
+          <button
+            onClick={onTest}
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50"
+          >
+            <PlayIcon size={12} /> Run Test
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 );
 
@@ -1174,11 +1221,11 @@ const NodeDetailsModal = ({
         <Dialog
           open={open}
           onClose={onClose}
-          maxWidth="lg"
+          maxWidth="xl"
           fullWidth
           PaperProps={{
             sx: {
-              height: '82vh',
+              height: '88vh',
               borderRadius: '12px',
               border: '1px solid #e2e8f0',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.12)',
@@ -1192,8 +1239,8 @@ const NodeDetailsModal = ({
           <ModalHeader {...headerProps} />
 
           <div className="flex-1 overflow-hidden grid grid-cols-1 lg:grid-cols-12">
-            {/* Left Main Area */}
-            <div className="lg:col-span-8 border-r border-slate-100 flex flex-col h-full overflow-hidden">
+            {/* Main Area */}
+            <div className="lg:col-span-12 flex flex-col h-full overflow-hidden">
               {/* Pill-style tab bar */}
               <div className="flex items-center gap-1 px-5 pt-2.5 border-b border-slate-200 bg-white">
                 {(isReactAgentNode
@@ -1203,11 +1250,13 @@ const NodeDetailsModal = ({
                       { idx: 2, icon: <Brain size={13} />, label: 'Memory' },
                       { idx: 3, icon: <Wrench size={13} />, label: `Tools (${(getParamByKey(localInputParams, 'tools')?.value || []).length || 0})` },
                       { idx: 4, icon: <OutputIcon size={13} />, label: `Output (${localOutputParams?.length || 0})` },
+                      { idx: 5, icon: <InfoIcon size={13} />, label: 'Info' },
                     ]
                   : [
                       { idx: 0, icon: <InputIcon size={13} />, label: `Inputs (${localInputParams?.length || 0})` },
                       { idx: 1, icon: <OutputIcon size={13} />, label: `Outputs (${localOutputParams?.length || 0})` },
                       { idx: 2, icon: <BookOpen size={13} />, label: "Docs" },
+                      { idx: 3, icon: <InfoIcon size={13} />, label: 'Info' },
                     ]
                 ).map((t) => (
                   <button
@@ -1240,6 +1289,9 @@ const NodeDetailsModal = ({
                 )}
                 {isReactAgentNode && activeTab === 4 && (
                   <ReactAgentOutputPanel localOutputParams={localOutputParams} onOutputParamUpdate={handleOutputParamUpdate} nodeColor={nodeColor} />
+                )}
+                {isReactAgentNode && activeTab === 5 && (
+                  <NodeInfoPanel description={description} tags={tags} basicInfo={basicInfo} onTest={handleTestClick} loading={loading} />
                 )}
 
                 {/* Tab 0: Input Parameters */}
@@ -1379,6 +1431,9 @@ const NodeDetailsModal = ({
                     )}
                   </div>
                 )}
+                {!isReactAgentNode && activeTab === 3 && (
+                  <NodeInfoPanel description={description} tags={tags} basicInfo={basicInfo} onTest={handleTestClick} loading={loading} />
+                )}
               </div>
 
               {/* Footer */}
@@ -1401,42 +1456,6 @@ const NodeDetailsModal = ({
                     Save Changes
                   </button>
                 </div>
-              </div>
-            </div>
-
-            {/* Right Panel */}
-            <div className="lg:col-span-4 flex flex-col h-full overflow-y-auto p-4 space-y-3 bg-slate-50/50">
-              {/* Node Info Card */}
-              <div className="p-4 bg-white rounded-lg border border-slate-200">
-                <div className="flex items-center gap-2 mb-3 pb-2.5 border-b border-slate-100">
-                  <InfoIcon size={13} className="text-slate-500" />
-                  <span className="text-[12px] font-semibold text-slate-700">Details</span>
-                </div>
-                <DescriptionSection description={description} />
-                <TagsSection tags={tags} />
-                <div className="pt-2 border-t border-slate-100 space-y-0">
-                  {basicInfo.map((item) => (
-                    <InfoItem key={item.label} {...item} />
-                  ))}
-                </div>
-              </div>
-
-              {/* Quick Test Card */}
-              <div className="p-4 bg-white rounded-lg border border-slate-200">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <PlayIcon size={13} className="text-slate-500" />
-                  <span className="text-[12px] font-semibold text-slate-700">Quick Test</span>
-                </div>
-                <p className="text-[11px] text-slate-400 mb-3">
-                  Run this node in isolation to preview output.
-                </p>
-                <button
-                  onClick={handleTestClick}
-                  disabled={loading}
-                  className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 text-[12px] font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 disabled:opacity-50 rounded-md transition-colors"
-                >
-                  <PlayIcon size={12} /> Run Test
-                </button>
               </div>
             </div>
           </div>
