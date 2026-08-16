@@ -96,9 +96,10 @@ export default function FlowValidationModal({
                 <button
                   type="button"
                   onClick={() => onSkipError?.(err)}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition-colors"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg transition-colors"
+                  title="Ignore only this duplicate output warning for now"
                 >
-                  Skip this collision
+                  <CheckCircle2 size={12} /> Ignore this warning
                 </button>
               )}
               {err.occurrences ? (

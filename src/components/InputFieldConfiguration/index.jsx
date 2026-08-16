@@ -573,7 +573,7 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
                   onClick={() => setScope(false)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-md border text-left transition-colors ${
                     !editor.isGlobal
-                      ? "border-indigo-300 bg-indigo-100 text-indigo-900"
+                      ? "border-indigo-300 bg-indigo-100 text-slate-900"
                       : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                   }`}
                 >
@@ -590,7 +590,7 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
                   onClick={() => setScope(true)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-md border text-left transition-colors ${
                     editor.isGlobal
-                      ? "border-indigo-300 bg-indigo-100 text-indigo-900"
+                      ? "border-indigo-300 bg-indigo-100 text-slate-900"
                       : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
                   }`}
                 >
@@ -742,7 +742,7 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
                           }
                           className={`px-2.5 py-1 rounded-md text-[11.5px] font-medium border transition-colors ${
                             active
-                              ? "bg-indigo-100 text-indigo-900 border-indigo-300"
+                              ? "bg-indigo-100 text-slate-900 border-indigo-300"
                               : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
                           }`}
                         >
@@ -800,7 +800,7 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
                       }
                       className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${
                         editor.boolVal
-                          ? "bg-indigo-100 text-indigo-900 border-indigo-300"
+                          ? "bg-indigo-100 text-slate-900 border-indigo-300"
                           : "bg-white text-slate-600 border-slate-200"
                       }`}
                     >
@@ -840,7 +840,7 @@ export default function InputFieldConfiguration({ open, onClose, onSave }) {
               type="button"
               onClick={handleSaveField}
               disabled={!editor.keyName.trim()}
-              className="w-full py-2 text-[12.5px] font-semibold text-indigo-800 bg-indigo-100 hover:bg-indigo-200 border border-indigo-300 disabled:opacity-40 disabled:cursor-not-allowed rounded-md transition-colors"
+              className="w-full py-2 text-[12.5px] font-semibold text-slate-900 bg-indigo-100 hover:bg-indigo-200 border border-indigo-300 disabled:opacity-40 disabled:cursor-not-allowed rounded-md transition-colors"
             >
               {selectedIdx !== null ? "Update in Flow Dictionary" : "Add to Flow Dictionary"}
             </button>

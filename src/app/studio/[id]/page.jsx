@@ -371,6 +371,26 @@ const Studio = () => {
         return true;
     }, [getValidationErrorId, skippedValidationIds]);
 
+
+    const handleUpdateFlowDetails = useCallback(({ name, description }) => {
+        const currentSpec = store.getState().studio.specification || flowRef.current || {};
+        const updatedSpec = {
+            ...currentSpec,
+            name,
+            description,
+            graphSpec: currentSpec.graphSpec || flowRef.current?.graphSpec || { nodes: [], edges: [] },
+        };
+
+        dispatch(updateSpecification({ name, description }));
+        dispatch(updateFlow({
+            id: flowId,
+            updatedData: updatedSpec,
+            onSuccess: () => {
+                toast.success("Flow details updated.");
+            },
+        }));
+    }, [dispatch, flowId, store]);
+
     const handleRunFlow = useCallback(() => {
         if (!runFlowValidation()) return;
         const currentFlow = flowRef.current;
@@ -617,6 +637,7 @@ const Studio = () => {
                     onDeployFlow={handleDeployFlow}
                     isDirty={isDirty}
                     onRequestNavigate={requestNavigation}
+                    onUpdateFlowDetails={handleUpdateFlowDetails}
                 />
 
                 {/* Unsaved-changes guard for in-app navigation out of the studio */}

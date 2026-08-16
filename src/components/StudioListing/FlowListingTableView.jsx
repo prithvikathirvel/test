@@ -65,14 +65,6 @@ const compareVersions = (a, b) => {
   return 0;
 };
 
-const COLUMNS = [
-  { key: 'select', label: '', sortable: false, width: '5%' },
-  { key: 'name', label: 'Flow', sortable: true, width: '33%' },
-  { key: 'version', label: 'Version', sortable: true, width: '12%' },
-  { key: 'updatedAt', label: 'Last updated', sortable: true, width: '18%' },
-  { key: 'actions', label: '', sortable: false, width: '32%', align: 'right' },
-];
-
 const SortIcon = ({ state }) => {
   if (state === 'asc') return <ArrowUp size={12} className="text-indigo-600" />;
   if (state === 'desc') return <ArrowDown size={12} className="text-indigo-600" />;
@@ -85,6 +77,16 @@ const SortIcon = ({ state }) => {
 };
 
 const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDeleteFlow, handleCloneFlow, selectionMode = false, selectedIds = new Set(), onToggleSelect }) => {
+  const columns = useMemo(() => {
+    const base = [
+      { key: 'name', label: 'Flow', sortable: true, width: selectionMode ? '33%' : '38%' },
+      { key: 'version', label: 'Version', sortable: true, width: '12%' },
+      { key: 'updatedAt', label: 'Last updated', sortable: true, width: '18%' },
+      { key: 'actions', label: '', sortable: false, width: selectionMode ? '32%' : '32%', align: 'right' },
+    ];
+    return selectionMode ? [{ key: 'select', label: '', sortable: false, width: '5%' }, ...base] : base;
+  }, [selectionMode]);
+
   // `null` = keep the order the page already applied (updatedAt desc).
   const [sort, setSort] = useState(null);
 
@@ -118,14 +120,14 @@ const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDele
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse table-fixed">
           <colgroup>
-            {COLUMNS.map((col) => (
+            {columns.map((col) => (
               <col key={col.key} style={{ width: col.width }} />
             ))}
           </colgroup>
 
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200">
-              {COLUMNS.map((col) => {
+              {columns.map((col) => {
                 const state = sort?.key === col.key ? sort.direction : null;
                 return (
                   <th
@@ -169,8 +171,8 @@ const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDele
                   key={id}
                   className="group/row hover:bg-slate-50/70 focus-within:bg-slate-50/70 transition-colors"
                 >
-                  <td className="px-4 py-3 align-middle">
-                    {selectionMode ? (
+                  {selectionMode && (
+                    <td className="px-4 py-3 align-middle">
                       <input
                         type="checkbox"
                         checked={selected}
@@ -178,8 +180,8 @@ const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDele
                         aria-label={`Select ${flowName(flow)}`}
                         className="h-4 w-4 rounded border-slate-300 text-indigo-600"
                       />
-                    ) : null}
-                  </td>
+                    </td>
+                  )}
 
                   {/* Identity */}
                   <td className="px-4 py-3 align-middle">

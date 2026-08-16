@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Box, Typography, Tooltip, IconButton, CircularProgress } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Box, Typography, Tooltip, IconButton, CircularProgress, Dialog } from "@mui/material";
 import {
   ArrowLeft,
   Workflow,
@@ -13,6 +13,8 @@ import {
   Mic,
   MicOff,
   Settings,
+  Pencil,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -32,8 +34,15 @@ const StudioHeader = ({
   onDeployFlow,
   isDirty = false,
   onRequestNavigate,
+  onUpdateFlowDetails,
 }) => {
   const router = useRouter();
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [draftDetails, setDraftDetails] = useState({ name: flow?.name || "", description: flow?.description || "" });
+
+  useEffect(() => {
+    setDraftDetails({ name: flow?.name || "", description: flow?.description || "" });
+  }, [flow?.name, flow?.description]);
 
   const navigateToFlows = React.useCallback(() => {
     try {
@@ -80,6 +89,15 @@ const StudioHeader = ({
             <Typography className="!text-[13.5px] !font-semibold !text-slate-800 !tracking-tight !truncate max-w-[180px] sm:max-w-[280px]">
               {flow?.name || "Agent Workflow"}
             </Typography>
+            <Tooltip title="Edit flow name and description">
+              <button
+                type="button"
+                onClick={() => setDetailsOpen(true)}
+                className="hidden sm:inline-flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              >
+                <Pencil size={12} />
+              </button>
+            </Tooltip>
             <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono text-slate-500 bg-slate-100 border border-slate-200">
               v{flow?.version || "1.0.0"}
             </span>
@@ -173,15 +191,6 @@ const StudioHeader = ({
           <Sliders size={13} /> Dictionary
         </button>
 
-        <button
-          type="button"
-          onClick={onRunFlow}
-          disabled={isFlowRunning}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 shadow-2xs transition-colors disabled:opacity-60"
-        >
-          {isFlowRunning ? <CircularProgress size={12} color="inherit" /> : <Play size={13} className="fill-slate-700 text-slate-700" />}
-          <span>{isFlowRunning ? "Running..." : "Test Run"}</span>
-        </button>
 
         <button
           type="button"
@@ -205,6 +214,53 @@ const StudioHeader = ({
           <Rocket size={13} /> Deploy
         </button>
       </Box>
+
+      <Dialog
+        open={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: "14px", border: "1px solid #e2e8f0", boxShadow: "0 20px 45px -28px rgba(15,23,42,0.45)" } }}
+      >
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div>
+            <h3 className="text-[14px] font-semibold text-slate-900">Edit flow details</h3>
+            <p className="mt-0.5 text-[11.5px] text-slate-400">Updates are saved through the workflow update API.</p>
+          </div>
+          <IconButton onClick={() => setDetailsOpen(false)} size="small" className="!text-slate-400 hover:!text-slate-700">
+            <X size={15} />
+          </IconButton>
+        </div>
+        <div className="space-y-4 p-5">
+          <div>
+            <label className="mb-1.5 block text-[11.5px] font-semibold text-slate-600">Flow name</label>
+            <input
+              value={draftDetails.name}
+              onChange={(event) => setDraftDetails((current) => ({ ...current, name: event.target.value }))}
+              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-[13px] text-slate-800 outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200"
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-[11.5px] font-semibold text-slate-600">Description</label>
+            <textarea
+              value={draftDetails.description}
+              onChange={(event) => setDraftDetails((current) => ({ ...current, description: event.target.value }))}
+              rows={4}
+              className="w-full resize-y rounded-lg border border-slate-200 bg-white px-3 py-2 text-[13px] text-slate-800 outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200"
+            />
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-3">
+          <button onClick={() => setDetailsOpen(false)} className="rounded-lg px-3 py-2 text-xs font-medium text-slate-600 hover:bg-white">Cancel</button>
+          <button
+            onClick={() => { onUpdateFlowDetails?.(draftDetails); setDetailsOpen(false); }}
+            disabled={!draftDetails.name?.trim() || !draftDetails.description?.trim()}
+            className="rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-slate-800 disabled:opacity-40"
+          >
+            Save details
+          </button>
+        </div>
+      </Dialog>
     </Box>
   );
 };
