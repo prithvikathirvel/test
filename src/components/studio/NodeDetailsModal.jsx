@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Drawer,
@@ -336,6 +336,26 @@ const findRegisteredToolForSchema = (schema = {}, registeredTools = []) => {
   });
 };
 
+const flattenMcpTools = (mcpTools = {}) => {
+  if (!mcpTools || typeof mcpTools !== 'object' || Array.isArray(mcpTools)) return [];
+
+  return Object.entries(mcpTools).flatMap(([serverName, tools]) =>
+    (Array.isArray(tools) ? tools : []).map((tool, index) => ({
+      ...tool,
+      id: tool.id || `${serverName}-${tool.name || index}`,
+      name: tool.displayName || tool.name || 'MCP Tool',
+      displayName: tool.displayName || tool.name || 'MCP Tool',
+      type: 'MCP Tool',
+      node_type: 'MCP Tool',
+      sourceKind: 'mcp',
+      sourceLabel: serverName,
+    }))
+  );
+};
+
+const getToolSourceLabel = (tool = {}) =>
+  tool.sourceKind === 'mcp' ? `MCP · ${tool.sourceLabel || 'Server'}` : 'Tool library';
+
 const FieldShell = ({ label, hint, children, badge }) => (
   <div className="space-y-1.5">
     <div className="flex items-start justify-between gap-2">
@@ -583,7 +603,7 @@ const AddToolPickerDialog = ({ open, availableTools = [], onClose, onAdd }) => {
   }, [open]);
 
   const filteredTools = availableTools.filter((tool) => {
-    const haystack = `${tool.name || ''} ${tool.displayName || ''} ${tool.description || ''} ${tool.type || ''}`.toLowerCase();
+    const haystack = `${tool.name || ''} ${tool.displayName || ''} ${tool.description || ''} ${tool.type || ''} ${tool.sourceLabel || ''} ${tool.sourceKind || ''}`.toLowerCase();
     return haystack.includes(search.trim().toLowerCase());
   });
 
@@ -620,8 +640,8 @@ const AddToolPickerDialog = ({ open, availableTools = [], onClose, onAdd }) => {
     >
       <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
         <div>
-          <h3 className="text-[15px] font-semibold text-slate-900">Add tool to ReAct Agent</h3>
-          <p className="mt-0.5 text-[11.5px] text-slate-400">Search registered tools, review its node inputs, then attach it to the agent.</p>
+          <h3 className="text-[15px] font-semibold text-slate-900">Add Tool or MCP to ReAct Agent</h3>
+          <p className="mt-0.5 text-[11.5px] text-slate-400">Search registered tools and MCP servers, review inputs, then attach it to the agent.</p>
         </div>
         <IconButton onClick={onClose} size="small" className="!rounded-md !text-slate-400 hover:!bg-slate-100 hover:!text-slate-700">
           <CloseIcon size={15} />
@@ -635,7 +655,7 @@ const AddToolPickerDialog = ({ open, availableTools = [], onClose, onAdd }) => {
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search tools..."
+              placeholder="Search tools or MCP..."
               className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-[12.5px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200"
             />
           </div>
@@ -653,7 +673,7 @@ const AddToolPickerDialog = ({ open, availableTools = [], onClose, onAdd }) => {
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600"><Wrench size={13} /></div>
                     <div className="min-w-0">
                       <p className="truncate text-[12px] font-semibold text-slate-800">{tool.displayName || tool.name || 'Unnamed tool'}</p>
-                      <p className="truncate text-[10.5px] text-slate-400">{tool.type || tool.node_type || 'Registered tool'}</p>
+                      <p className="truncate text-[10.5px] text-slate-400">{getToolSourceLabel(tool)}</p>
                     </div>
                   </div>
                   {tool.description && <p className="mt-1.5 line-clamp-2 text-[10.5px] leading-snug text-slate-500">{tool.description}</p>}
@@ -673,7 +693,7 @@ const AddToolPickerDialog = ({ open, availableTools = [], onClose, onAdd }) => {
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600"><Wrench size={14} /></div>
                   <div className="min-w-0">
                     <h4 className="truncate text-[13px] font-semibold text-slate-900">{selectedTool.displayName || selectedTool.name}</h4>
-                    <p className="text-[10.5px] text-slate-400">The hidden node_type will be saved as <span className="font-mono">{selectedTool.type || selectedTool.node_type || 'API caller'}</span>.</p>
+                    <p className="text-[10.5px] text-slate-400">{getToolSourceLabel(selectedTool)} · saved as <span className="font-mono">{selectedTool.type || selectedTool.node_type || 'API caller'}</span>.</p>
                   </div>
                 </div>
                 <p className="text-[11.5px] leading-relaxed text-slate-500">{selectedTool.description || 'No description provided.'}</p>
@@ -810,76 +830,89 @@ const ToolParameterEditor = ({ parameters, onChange }) => {
   const addParam = () => onChange([...(parameters || []), createEmptyToolParameter()]);
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <div className="rounded-xl border border-slate-200 bg-white">
+      <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h5 className="text-[12.5px] font-semibold text-slate-800">Dynamic Parameters</h5>
-          <p className="mt-0.5 text-[10.5px] leading-snug text-slate-400">Arguments the agent must decide at runtime before calling this tool. Example: product_id or search query.</p>
+          <p className="mt-0.5 text-[10.5px] leading-snug text-slate-400">Values the agent must decide at runtime, such as product_id or search query.</p>
         </div>
         <button type="button" onClick={addParam} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11.5px] font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300">
           <Plus size={12} /> Add field
         </button>
       </div>
-      {parameters.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-5 text-center">
-          <p className="text-[12px] font-medium text-slate-500">No dynamic parameters</p>
-          <p className="mt-0.5 text-[11px] text-slate-400">Use config placeholders like {'{{q}}'} and add matching dynamic parameters only when the model should fill them.</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {parameters.map((param, idx) => (
-            <div key={idx} className="rounded-xl border border-slate-200 bg-slate-50/40 p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <span className="text-[11.5px] font-semibold text-slate-700">Dynamic field {idx + 1}</span>
-                  <p className="text-[10.5px] text-slate-400">Define one value the LLM can supply to the tool.</p>
-                </div>
-                <button type="button" onClick={() => removeParam(idx)} className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={13} /></button>
-              </div>
 
-              <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
-                <div className="md:col-span-5">
-                  <FieldShell label="Parameter name" hint="Must match the placeholder used in config, for example {{product_id}}.">
-                    <SimpleInput value={param.name || param.key || ''} onChange={(value) => updateParam(idx, { name: value })} placeholder="product_id" mono />
-                  </FieldShell>
+      <div className="p-4">
+        {parameters.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-5 text-center">
+            <p className="text-[12px] font-medium text-slate-500">No dynamic parameters</p>
+            <p className="mt-0.5 text-[11px] text-slate-400">Use config placeholders like {'{{q}}'} and add matching dynamic parameters only when the model should fill them.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {parameters.map((param, idx) => (
+              <div key={idx} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+                <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-4 py-3">
+                  <div>
+                    <span className="text-[12px] font-semibold text-slate-800">Dynamic field {idx + 1}</span>
+                    <p className="mt-0.5 text-[10.5px] text-slate-400">Create one argument the LLM can provide to this tool.</p>
+                  </div>
+                  <button type="button" onClick={() => removeParam(idx)} className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={13} /></button>
                 </div>
-                <div className="md:col-span-3">
-                  <FieldShell label="Type" hint="Expected value type.">
-                    <select value={param.type || 'string'} onChange={(event) => updateParam(idx, { type: event.target.value })} className={reactInputClass}>
-                      {['string', 'integer', 'number', 'boolean', 'object', 'array'].map((type) => <option key={type} value={type}>{type}</option>)}
-                    </select>
-                  </FieldShell>
-                </div>
-                <div className="md:col-span-4">
-                  <FieldShell label="Example" hint="Helps users and the model understand the value.">
-                    <SimpleInput value={param.example ?? ''} onChange={(value) => updateParam(idx, { example: value })} placeholder="121" />
-                  </FieldShell>
-                </div>
-                <div className="md:col-span-12">
-                  <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-medium text-slate-600">
-                    <input type="checkbox" checked={Boolean(param.required)} onChange={(event) => updateParam(idx, { required: event.target.checked })} />
-                    Required before calling this tool
-                  </label>
-                </div>
-                <div className="md:col-span-12">
-                  <FieldShell label="Description" hint="Tell the agent exactly how to choose this value.">
-                    <SimpleTextarea value={param.description || ''} onChange={(value) => updateParam(idx, { description: value })} rows={2} placeholder="Numeric product id returned by search_products." />
-                  </FieldShell>
-                </div>
-                <div className="md:col-span-12">
-                  <FieldShell label="Allowed values" hint="Optional comma separated list. Leave empty when any value is allowed.">
-                    <SimpleInput value={Array.isArray(param.enum) ? param.enum.join(', ') : (param.enum || '')} onChange={(value) => updateParam(idx, { enum: value ? value.split(',').map((v) => v.trim()).filter(Boolean) : null })} placeholder="asc, desc" />
-                  </FieldShell>
+
+                <div className="grid grid-cols-1 gap-0 lg:grid-cols-12">
+                  <div className="border-b border-slate-100 p-4 lg:col-span-5 lg:border-b-0 lg:border-r">
+                    <div className="mb-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Identity</p>
+                      <p className="mt-0.5 text-[10.5px] text-slate-400">Name, value type, and whether it is mandatory.</p>
+                    </div>
+                    <div className="space-y-3">
+                      <FieldShell label="Parameter name" hint="Must match a config placeholder, for example {{product_id}}.">
+                        <SimpleInput value={param.name || param.key || ''} onChange={(value) => updateParam(idx, { name: value })} placeholder="product_id" mono />
+                      </FieldShell>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <FieldShell label="Type" hint="Expected value.">
+                          <select value={param.type || 'string'} onChange={(event) => updateParam(idx, { type: event.target.value })} className={reactInputClass}>
+                            {['string', 'integer', 'number', 'boolean', 'object', 'array'].map((type) => <option key={type} value={type}>{type}</option>)}
+                          </select>
+                        </FieldShell>
+                        <FieldShell label="Required" hint="Block call if missing.">
+                          <label className="flex h-[38px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-medium text-slate-600">
+                            <input type="checkbox" checked={Boolean(param.required)} onChange={(event) => updateParam(idx, { required: event.target.checked })} />
+                            Required
+                          </label>
+                        </FieldShell>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 lg:col-span-7">
+                    <div className="mb-3">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Guidance</p>
+                      <p className="mt-0.5 text-[10.5px] text-slate-400">Help the model choose a valid value.</p>
+                    </div>
+                    <div className="space-y-3">
+                      <FieldShell label="Description" hint="Explain exactly how the agent should choose this value.">
+                        <SimpleTextarea value={param.description || ''} onChange={(value) => updateParam(idx, { description: value })} rows={2} placeholder="Numeric product id returned by search_products." />
+                      </FieldShell>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <FieldShell label="Example" hint="A sample value.">
+                          <SimpleInput value={param.example ?? ''} onChange={(value) => updateParam(idx, { example: value })} placeholder="121" />
+                        </FieldShell>
+                        <FieldShell label="Allowed values" hint="Optional comma list.">
+                          <SimpleInput value={Array.isArray(param.enum) ? param.enum.join(', ') : (param.enum || '')} onChange={(value) => updateParam(idx, { enum: value ? value.split(',').map((v) => v.trim()).filter(Boolean) : null })} placeholder="asc, desc" />
+                        </FieldShell>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
-
 
 const ReactAgentOutputPanel = ({ localOutputParams, onOutputParamUpdate, nodeColor }) => (
   <div className="space-y-4">
@@ -924,6 +957,7 @@ const NodeDetailsModal = ({
 }) => {
   const dispatch = useDispatch();
   const registeredTools = useSelector((state) => state.studio.tools || []);
+  const registeredMcpTools = useSelector((state) => state.studio.mcpTools || {});
   // Default to big screen centered modal
   const [isExpanded, setIsExpanded] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
@@ -941,6 +975,11 @@ const NodeDetailsModal = ({
       setIsDirty(false);
     }
   }, [node]);
+
+  const selectableTools = useMemo(
+    () => [...(registeredTools || []), ...flattenMcpTools(registeredMcpTools)],
+    [registeredTools, registeredMcpTools]
+  );
 
   const nodeDocs = getNodeDocs(node);
 
@@ -1080,7 +1119,7 @@ const NodeDetailsModal = ({
             {/* Left Main Area */}
             <div className="lg:col-span-8 border-r border-slate-100 flex flex-col h-full overflow-hidden">
               {/* Pill-style tab bar */}
-              <div className="flex items-center gap-0.5 px-5 py-1.5 border-b border-slate-100 bg-slate-50/50">
+              <div className="flex items-center gap-1 px-5 pt-2.5 border-b border-slate-200 bg-white">
                 {(isReactAgentNode
                   ? [
                       { idx: 0, icon: <Sliders size={13} />, label: 'Configuration' },
@@ -1098,10 +1137,10 @@ const NodeDetailsModal = ({
                   <button
                     key={t.idx}
                     onClick={() => setActiveTab(t.idx)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium transition-colors ${
+                    className={`relative flex items-center gap-1.5 px-3 py-2 text-[12px] font-semibold transition-colors border-b-2 ${
                       activeTab === t.idx
-                        ? "bg-white text-slate-800 shadow-sm border border-slate-200"
-                        : "text-slate-500 hover:text-slate-700 hover:bg-white/60"
+                        ? "border-slate-800 text-slate-900 bg-slate-50/70"
+                        : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50/70"
                     }`}
                   >
                     {t.icon}
@@ -1121,7 +1160,7 @@ const NodeDetailsModal = ({
                   <ReactAgentMemoryPanel localInputParams={localInputParams} onInputChange={handleInputChange} nodeColor={nodeColor} />
                 )}
                 {isReactAgentNode && activeTab === 3 && (
-                  <ReactAgentToolsPanel localInputParams={localInputParams} onInputChange={handleInputChange} availableTools={registeredTools} />
+                  <ReactAgentToolsPanel localInputParams={localInputParams} onInputChange={handleInputChange} availableTools={selectableTools} />
                 )}
                 {isReactAgentNode && activeTab === 4 && (
                   <ReactAgentOutputPanel localOutputParams={localOutputParams} onOutputParamUpdate={handleOutputParamUpdate} nodeColor={nodeColor} />
@@ -1359,7 +1398,7 @@ const NodeDetailsModal = ({
                   <ReactAgentMemoryPanel localInputParams={localInputParams} onInputChange={handleInputChange} nodeColor={nodeColor} />
                 </CustomAccordion>
                 <CustomAccordion title="Tools" icon={<Wrench size={14} />} emptyStateMessage="No tools configured.">
-                  <ReactAgentToolsPanel localInputParams={localInputParams} onInputChange={handleInputChange} availableTools={registeredTools} />
+                  <ReactAgentToolsPanel localInputParams={localInputParams} onInputChange={handleInputChange} availableTools={selectableTools} />
                 </CustomAccordion>
                 <CustomAccordion title="Output" icon={<OutputIcon size={14} />} emptyStateMessage="No output parameters configured.">
                   <ReactAgentOutputPanel localOutputParams={localOutputParams} onOutputParamUpdate={handleOutputParamUpdate} nodeColor={nodeColor} />
