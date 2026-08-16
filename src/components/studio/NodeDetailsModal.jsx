@@ -35,6 +35,7 @@ import {
   Trash2,
   Database,
   TerminalSquare,
+  Search,
 } from 'lucide-react';
 import { getNodeColor } from '@/utils/commonFunction';
 import { getParameterComponent } from './InputParameterComponents';
@@ -279,19 +280,6 @@ const sanitizeToolId = (value = '') =>
     .replace(/^_+|_+$/g, '')
     .slice(0, 60);
 
-const createEmptyTool = () => ({
-  name: 'New Tool',
-  description: 'Describe what this tool returns and exactly when the agent should use it.',
-  node_type: 'API caller',
-  config: {
-    url: '',
-    method: 'GET',
-    headers: { Accept: 'application/json' },
-    timeout: '20',
-  },
-  parameters: [],
-});
-
 const createEmptyToolParameter = () => ({
   name: 'input_name',
   type: 'string',
@@ -480,7 +468,7 @@ const ReactAgentToolsPanel = ({ localInputParams, onInputChange, availableTools 
   const toolsParam = getParamByKey(localInputParams, 'tools');
   const tools = Array.isArray(toolsParam?.value) ? toolsParam.value : [];
   const [openIndex, setOpenIndex] = useState(0);
-  const [toolSearch, setToolSearch] = useState('');
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     if (openIndex > Math.max(tools.length - 1, 0)) setOpenIndex(Math.max(tools.length - 1, 0));
@@ -491,10 +479,11 @@ const ReactAgentToolsPanel = ({ localInputParams, onInputChange, availableTools 
   const updateToolConfig = (index, config) => updateTool(index, { config });
   const updateToolParameters = (index, parameters) => updateTool(index, { parameters });
 
-  const addTool = () => {
-    const next = [...tools, createEmptyTool()];
+  const addSelectedTool = (toolSchema) => {
+    const next = [...tools, toolSchema];
     updateTools(next);
     setOpenIndex(next.length - 1);
+    setPickerOpen(false);
   };
 
   const removeTool = (index) => {
@@ -502,61 +491,32 @@ const ReactAgentToolsPanel = ({ localInputParams, onInputChange, availableTools 
     setOpenIndex((current) => Math.max(0, Math.min(current, tools.length - 2)));
   };
 
-  const filteredAvailableTools = availableTools.filter((tool) => {
-    const haystack = `${tool.name || ''} ${tool.displayName || ''} ${tool.description || ''} ${tool.type || ''}`.toLowerCase();
-    return haystack.includes(toolSearch.trim().toLowerCase());
-  });
-
-  const selectRegisteredTool = (tool) => {
-    const next = [...tools, toolToCanonicalSchema(tool)];
-    updateTools(next);
-    setOpenIndex(next.length - 1);
-    setToolSearch('');
-  };
-
   return (
     <div className="space-y-4">
       <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <Wrench size={15} className="text-indigo-600" />
               <h4 className="text-[13px] font-semibold text-slate-800">Tools</h4>
             </div>
-            <p className="text-[11.5px] text-slate-500">Each tool describes a callable node. The model sees the name, description and typed parameters; the runtime uses node_type and config to execute the node.</p>
+            <p className="text-[11.5px] text-slate-500">Choose registered tools the agent can call. Each selected tool stores its node input values inside the tool config.</p>
           </div>
-          <button onClick={addTool} className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-[12px] font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-colors">
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-[12px] font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-colors"
+          >
             <Plus size={13} /> Add tool
           </button>
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-3">
-        <FieldShell label="Add from registered tools" hint="Search /tools and select a node. Its inputParameters are copied into config so you can edit values here.">
-          <SimpleInput value={toolSearch} onChange={setToolSearch} placeholder="Search API caller, email, web search, retrieval..." />
-        </FieldShell>
-        {toolSearch.trim() && (
-          <div className="mt-2 max-h-52 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50/60 p-1.5">
-            {filteredAvailableTools.length > 0 ? filteredAvailableTools.slice(0, 12).map((tool, idx) => (
-              <button key={tool.id || tool.key || idx} onClick={() => selectRegisteredTool(tool)} className="flex w-full items-start gap-2 rounded-md px-2.5 py-2 text-left hover:bg-white hover:border-slate-200 border border-transparent transition-colors">
-                <Wrench size={13} className="mt-0.5 shrink-0 text-slate-500" />
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[12px] font-semibold text-slate-800">{tool.displayName || tool.name || 'Unnamed tool'}</span>
-                  <span className="mt-0.5 block line-clamp-2 text-[10.5px] leading-snug text-slate-400">{tool.description || tool.type || 'No description'}</span>
-                </span>
-              </button>
-            )) : (
-              <div className="p-3 text-center text-[11.5px] text-slate-400">No registered tools found for this search.</div>
-            )}
-          </div>
-        )}
-      </div>
-
       {tools.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-200 p-10 text-center">
+        <div className="rounded-lg border border-dashed border-slate-200 p-10 text-center bg-white">
           <Wrench size={22} className="mx-auto mb-2 text-slate-300" />
-          <p className="text-[12px] font-medium text-slate-500">No tools yet</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">Add a tool so the ReAct agent can call APIs, retrieval, email, databases, MCP tools, or other registered nodes.</p>
+          <p className="text-[12px] font-medium text-slate-500">No tools selected</p>
+          <p className="text-[11px] text-slate-400 mt-0.5">Click Add tool to search registered tools and attach one to this agent.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -567,13 +527,13 @@ const ReactAgentToolsPanel = ({ localInputParams, onInputChange, availableTools 
             const config = tool.config && typeof tool.config === 'object' && !Array.isArray(tool.config) ? tool.config : {};
             return (
               <div key={index} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                <button onClick={() => setOpenIndex(isOpen ? -1 : index)} className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500"><Wrench size={14} /></div>
+                <button type="button" onClick={() => setOpenIndex(isOpen ? -1 : index)} className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600"><Wrench size={14} /></div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="truncate text-[12.5px] font-semibold text-slate-800">{tool.name || tool.tool_name || 'Unnamed Tool'}</span>
                     </div>
-                    <p className="mt-0.5 truncate text-[10.5px] text-slate-400">id: {safeId || 'generated from name'} · {parameters.length} input{parameters.length === 1 ? '' : 's'}</p>
+                    <p className="mt-0.5 truncate text-[10.5px] text-slate-400">id: {safeId || 'generated from name'} · {Object.keys(config).length} config value{Object.keys(config).length === 1 ? '' : 's'} · {parameters.length} dynamic parameter{parameters.length === 1 ? '' : 's'}</p>
                   </div>
                   <button type="button" onClick={(event) => { event.stopPropagation(); removeTool(index); }} className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={14} /></button>
                 </button>
@@ -581,14 +541,12 @@ const ReactAgentToolsPanel = ({ localInputParams, onInputChange, availableTools 
                 {isOpen && (
                   <div className="space-y-5 border-t border-slate-100 bg-slate-50/30 p-4">
                     <div className="grid grid-cols-1 gap-3">
-                      <FieldShell label="Name" hint="Human name shown to the model. It becomes a safe id automatically." badge={safeId || 'safe id'}>
+                      <FieldShell label="Tool name" hint="Shown to the model and converted to a safe callable id automatically." badge={safeId || 'safe id'}>
                         <SimpleInput value={tool.name || tool.tool_name || ''} onChange={(value) => updateTool(index, { name: value, node_type: tool.node_type || tool.type || 'API caller' })} placeholder="Get Product Details" />
                       </FieldShell>
-                      <div>
-                        <FieldShell label="Description" hint="Most important field for tool selection: say what it returns and when to use it.">
-                          <SimpleTextarea value={tool.description || ''} onChange={(value) => updateTool(index, { description: value })} rows={3} placeholder="Get full details of one product by numeric id..." />
-                        </FieldShell>
-                      </div>
+                      <FieldShell label="Description" hint="Tell the model exactly what the tool returns and when it should call it.">
+                        <SimpleTextarea value={tool.description || ''} onChange={(value) => updateTool(index, { description: value })} rows={3} placeholder="Get full details of one product by numeric id..." />
+                      </FieldShell>
                     </div>
 
                     <ToolConfigEditor config={config} registeredTool={findRegisteredToolForSchema(tool, availableTools)} onChange={(configValue) => updateToolConfig(index, configValue)} />
@@ -600,9 +558,179 @@ const ReactAgentToolsPanel = ({ localInputParams, onInputChange, availableTools 
           })}
         </div>
       )}
+
+      <AddToolPickerDialog
+        open={pickerOpen}
+        availableTools={availableTools}
+        onClose={() => setPickerOpen(false)}
+        onAdd={addSelectedTool}
+      />
     </div>
   );
 };
+
+const AddToolPickerDialog = ({ open, availableTools = [], onClose, onAdd }) => {
+  const [search, setSearch] = useState('');
+  const [selectedTool, setSelectedTool] = useState(null);
+  const [draftConfig, setDraftConfig] = useState({});
+
+  useEffect(() => {
+    if (!open) {
+      setSearch('');
+      setSelectedTool(null);
+      setDraftConfig({});
+    }
+  }, [open]);
+
+  const filteredTools = availableTools.filter((tool) => {
+    const haystack = `${tool.name || ''} ${tool.displayName || ''} ${tool.description || ''} ${tool.type || ''}`.toLowerCase();
+    return haystack.includes(search.trim().toLowerCase());
+  });
+
+  const handleSelect = (tool) => {
+    setSelectedTool(tool);
+    setDraftConfig(toolToCanonicalSchema(tool).config || {});
+  };
+
+  const handleConfigValueChange = (key, value) => {
+    setDraftConfig((current) => ({ ...current, [key]: value }));
+  };
+
+  const handleAdd = () => {
+    if (!selectedTool) return;
+    onAdd({ ...toolToCanonicalSchema(selectedTool), config: draftConfig });
+  };
+
+  const selectedInputs = getNodeInputParameters(selectedTool || {});
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: '14px',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 24px 60px -24px rgba(15, 23, 42, 0.35)',
+          overflow: 'hidden',
+        },
+      }}
+    >
+      <div className="flex items-center justify-between border-b border-slate-100 bg-white px-5 py-4">
+        <div>
+          <h3 className="text-[15px] font-semibold text-slate-900">Add tool to ReAct Agent</h3>
+          <p className="mt-0.5 text-[11.5px] text-slate-400">Search registered tools, review its node inputs, then attach it to the agent.</p>
+        </div>
+        <IconButton onClick={onClose} size="small" className="!rounded-md !text-slate-400 hover:!bg-slate-100 hover:!text-slate-700">
+          <CloseIcon size={15} />
+        </IconButton>
+      </div>
+
+      <div className="grid max-h-[68vh] grid-cols-1 overflow-hidden md:grid-cols-12">
+        <div className="border-r border-slate-100 bg-slate-50/50 p-4 md:col-span-5">
+          <div className="relative mb-3">
+            <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search tools..."
+              className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-[12.5px] text-slate-800 placeholder:text-slate-300 outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-200"
+            />
+          </div>
+          <div className="space-y-1.5 overflow-y-auto pr-1 md:max-h-[52vh]">
+            {filteredTools.length > 0 ? filteredTools.map((tool, index) => {
+              const selected = selectedTool === tool;
+              return (
+                <button
+                  key={tool.id || tool.key || index}
+                  type="button"
+                  onClick={() => handleSelect(tool)}
+                  className={`w-full rounded-lg border px-3 py-2.5 text-left transition-colors ${selected ? 'border-slate-400 bg-white' : 'border-transparent hover:border-slate-200 hover:bg-white'}`}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-indigo-50 text-indigo-600"><Wrench size={13} /></div>
+                    <div className="min-w-0">
+                      <p className="truncate text-[12px] font-semibold text-slate-800">{tool.displayName || tool.name || 'Unnamed tool'}</p>
+                      <p className="truncate text-[10.5px] text-slate-400">{tool.type || tool.node_type || 'Registered tool'}</p>
+                    </div>
+                  </div>
+                  {tool.description && <p className="mt-1.5 line-clamp-2 text-[10.5px] leading-snug text-slate-500">{tool.description}</p>}
+                </button>
+              );
+            }) : (
+              <div className="rounded-lg border border-dashed border-slate-200 bg-white p-8 text-center text-[12px] text-slate-400">No tools found.</div>
+            )}
+          </div>
+        </div>
+
+        <div className="overflow-y-auto p-5 md:col-span-7 md:max-h-[68vh]">
+          {selectedTool ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600"><Wrench size={14} /></div>
+                  <div className="min-w-0">
+                    <h4 className="truncate text-[13px] font-semibold text-slate-900">{selectedTool.displayName || selectedTool.name}</h4>
+                    <p className="text-[10.5px] text-slate-400">The hidden node_type will be saved as <span className="font-mono">{selectedTool.type || selectedTool.node_type || 'API caller'}</span>.</p>
+                  </div>
+                </div>
+                <p className="text-[11.5px] leading-relaxed text-slate-500">{selectedTool.description || 'No description provided.'}</p>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                <h5 className="text-[12px] font-semibold text-slate-800">Node input values</h5>
+                <p className="mt-0.5 text-[10.5px] text-slate-400">These values will be stored inside this tool's config. Use placeholders like {'{{product_id}}'} when the agent should fill a value later.</p>
+                <div className="mt-3 space-y-3">
+                  {selectedInputs.length > 0 ? selectedInputs.map((input) => {
+                    const key = input.key || input.name;
+                    return (
+                      <div key={key} className="rounded-lg border border-slate-200 bg-white p-3">
+                        <div className="mb-1.5 flex items-start justify-between gap-2">
+                          <div>
+                            <label className="font-mono text-[11.5px] font-semibold text-slate-700">{key}</label>
+                            {input.description && <p className="mt-0.5 text-[10.5px] leading-snug text-slate-400">{input.description}</p>}
+                          </div>
+                          <span className="rounded-md border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase text-slate-500">{input.type || 'text'}</span>
+                        </div>
+                        <textarea
+                          value={typeof draftConfig[key] === 'object' ? JSON.stringify(draftConfig[key], null, 2) : String(draftConfig[key] ?? '')}
+                          onChange={(event) => handleConfigValueChange(key, event.target.value)}
+                          rows={typeof draftConfig[key] === 'object' ? 3 : 1}
+                          placeholder={input.example !== undefined ? String(input.example) : `Enter ${key}`}
+                          className={`${reactInputClass} font-mono text-[11.5px] resize-y`}
+                        />
+                      </div>
+                    );
+                  }) : (
+                    <div className="rounded-lg border border-dashed border-slate-200 bg-white p-6 text-center text-[11.5px] text-slate-400">This tool has no configurable node inputs.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="flex h-full min-h-[360px] items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/60 p-8 text-center">
+              <div>
+                <Search size={24} className="mx-auto mb-2 text-slate-300" />
+                <p className="text-[12px] font-semibold text-slate-600">Select a tool to review</p>
+                <p className="mt-1 text-[11px] text-slate-400">Pick from the registered tools list on the left.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-white px-5 py-3">
+        <button type="button" onClick={onClose} className="rounded-lg px-3 py-2 text-[12px] font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+        <button type="button" onClick={handleAdd} disabled={!selectedTool} className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3.5 py-2 text-[12px] font-semibold text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40">
+          <Plus size={13} /> Add selected tool
+        </button>
+      </div>
+    </Dialog>
+  );
+};
+
 
 const ToolConfigEditor = ({ config, registeredTool, onChange }) => {
   const entries = Object.entries(config || {});
@@ -682,35 +810,67 @@ const ToolParameterEditor = ({ parameters, onChange }) => {
   const addParam = () => onChange([...(parameters || []), createEmptyToolParameter()]);
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
-      <div className="mb-3 flex items-start justify-between gap-2">
+    <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h5 className="text-[12px] font-semibold text-slate-800">Dynamic Parameters</h5>
-          <p className="text-[10.5px] text-slate-400">Typed arguments the model must fill before calling the tool. Omit them only when the node needs no dynamic inputs.</p>
+          <h5 className="text-[12.5px] font-semibold text-slate-800">Dynamic Parameters</h5>
+          <p className="mt-0.5 text-[10.5px] leading-snug text-slate-400">Arguments the agent must decide at runtime before calling this tool. Example: product_id or search query.</p>
         </div>
-        <button onClick={addParam} className="inline-flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 text-[11px] font-medium text-slate-600 hover:bg-slate-50"><Plus size={12} /> Add field</button>
+        <button type="button" onClick={addParam} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11.5px] font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300">
+          <Plus size={12} /> Add field
+        </button>
       </div>
       {parameters.length === 0 ? (
-        <div className="rounded-md border border-dashed border-slate-200 p-4 text-center text-[11.5px] text-slate-400">No LLM-filled parameters for this tool.</div>
+        <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-5 text-center">
+          <p className="text-[12px] font-medium text-slate-500">No dynamic parameters</p>
+          <p className="mt-0.5 text-[11px] text-slate-400">Use config placeholders like {'{{q}}'} and add matching dynamic parameters only when the model should fill them.</p>
+        </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {parameters.map((param, idx) => (
-            <div key={idx} className="rounded-lg border border-slate-200 bg-slate-50/40 p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-slate-600">Field {idx + 1}</span>
-                <button onClick={() => removeParam(idx)} className="rounded-md p-1 text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={13} /></button>
+            <div key={idx} className="rounded-xl border border-slate-200 bg-slate-50/40 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <span className="text-[11.5px] font-semibold text-slate-700">Dynamic field {idx + 1}</span>
+                  <p className="text-[10.5px] text-slate-400">Define one value the LLM can supply to the tool.</p>
+                </div>
+                <button type="button" onClick={() => removeParam(idx)} className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={13} /></button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                <SimpleInput value={param.name || param.key || ''} onChange={(value) => updateParam(idx, { name: value })} placeholder="product_id" mono />
-                <select value={param.type || 'string'} onChange={(event) => updateParam(idx, { type: event.target.value })} className={reactInputClass}>
-                  {['string', 'integer', 'number', 'boolean', 'object', 'array'].map((type) => <option key={type} value={type}>{type}</option>)}
-                </select>
-                <SimpleInput value={param.example ?? ''} onChange={(value) => updateParam(idx, { example: value })} placeholder="Example" />
-                <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] text-slate-600">
-                  <input type="checkbox" checked={Boolean(param.required)} onChange={(event) => updateParam(idx, { required: event.target.checked })} /> Required
-                </label>
-                <div className="md:col-span-4"><SimpleTextarea value={param.description || ''} onChange={(value) => updateParam(idx, { description: value })} rows={2} placeholder="Explain when and how to fill this input." /></div>
-                <div className="md:col-span-4"><SimpleInput value={Array.isArray(param.enum) ? param.enum.join(', ') : (param.enum || '')} onChange={(value) => updateParam(idx, { enum: value ? value.split(',').map((v) => v.trim()).filter(Boolean) : null })} placeholder="Optional enum values: asc, desc" /></div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-12">
+                <div className="md:col-span-5">
+                  <FieldShell label="Parameter name" hint="Must match the placeholder used in config, for example {{product_id}}.">
+                    <SimpleInput value={param.name || param.key || ''} onChange={(value) => updateParam(idx, { name: value })} placeholder="product_id" mono />
+                  </FieldShell>
+                </div>
+                <div className="md:col-span-3">
+                  <FieldShell label="Type" hint="Expected value type.">
+                    <select value={param.type || 'string'} onChange={(event) => updateParam(idx, { type: event.target.value })} className={reactInputClass}>
+                      {['string', 'integer', 'number', 'boolean', 'object', 'array'].map((type) => <option key={type} value={type}>{type}</option>)}
+                    </select>
+                  </FieldShell>
+                </div>
+                <div className="md:col-span-4">
+                  <FieldShell label="Example" hint="Helps users and the model understand the value.">
+                    <SimpleInput value={param.example ?? ''} onChange={(value) => updateParam(idx, { example: value })} placeholder="121" />
+                  </FieldShell>
+                </div>
+                <div className="md:col-span-12">
+                  <label className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-[12px] font-medium text-slate-600">
+                    <input type="checkbox" checked={Boolean(param.required)} onChange={(event) => updateParam(idx, { required: event.target.checked })} />
+                    Required before calling this tool
+                  </label>
+                </div>
+                <div className="md:col-span-12">
+                  <FieldShell label="Description" hint="Tell the agent exactly how to choose this value.">
+                    <SimpleTextarea value={param.description || ''} onChange={(value) => updateParam(idx, { description: value })} rows={2} placeholder="Numeric product id returned by search_products." />
+                  </FieldShell>
+                </div>
+                <div className="md:col-span-12">
+                  <FieldShell label="Allowed values" hint="Optional comma separated list. Leave empty when any value is allowed.">
+                    <SimpleInput value={Array.isArray(param.enum) ? param.enum.join(', ') : (param.enum || '')} onChange={(value) => updateParam(idx, { enum: value ? value.split(',').map((v) => v.trim()).filter(Boolean) : null })} placeholder="asc, desc" />
+                  </FieldShell>
+                </div>
               </div>
             </div>
           ))}
@@ -719,6 +879,7 @@ const ToolParameterEditor = ({ parameters, onChange }) => {
     </div>
   );
 };
+
 
 const ReactAgentOutputPanel = ({ localOutputParams, onOutputParamUpdate, nodeColor }) => (
   <div className="space-y-4">
