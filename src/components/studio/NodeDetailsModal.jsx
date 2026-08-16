@@ -301,20 +301,28 @@ const getNodeInputParameters = (tool = {}) =>
       ? tool.inputs
       : [];
 
-const getToolNodeTypeName = (tool = {}) =>
-  tool.displayName || tool.name || tool.tool_name || tool.node_type || tool.type || 'Selected Tool';
+const isGenericRegistryType = (value) => ['tool', 'tools', 'agent', 'model'].includes(String(value || '').trim().toLowerCase());
 
-const normalizeReactAgentToolSchema = (tool = {}) => ({
-  ...tool,
-  node_type: getToolNodeTypeName(tool),
-});
+const getToolNodeTypeName = (tool = {}) => {
+  if (tool.node_type && !isGenericRegistryType(tool.node_type)) return tool.node_type;
+  if (tool.type && !isGenericRegistryType(tool.type)) return tool.type;
+  return tool.displayName || tool.name || tool.tool_name || 'Selected Tool';
+};
 
-const normalizeReactAgentToolParams = (params = []) =>
+const normalizeReactAgentToolSchema = (tool = {}, availableTools = []) => {
+  const registeredTool = findRegisteredToolForSchema(tool, availableTools);
+  return {
+    ...tool,
+    node_type: getToolNodeTypeName(registeredTool || tool),
+  };
+};
+
+const normalizeReactAgentToolParams = (params = [], availableTools = []) =>
   (Array.isArray(params) ? params : []).map((param) => {
     if (param?.key !== 'tools' || !Array.isArray(param.value)) return param;
     return {
       ...param,
-      value: param.value.map(normalizeReactAgentToolSchema),
+      value: param.value.map((tool) => normalizeReactAgentToolSchema(tool, availableTools)),
     };
   });
 
@@ -348,7 +356,7 @@ const findRegisteredToolForSchema = (schema = {}, registeredTools = []) => {
     const configMatches = inputKeys.length > 0 && inputKeys.every((key) => configKeys.has(key));
 
     return (schemaName && names.includes(schemaName))
-      || (schemaType && type === schemaType && configMatches)
+      || configMatches
       || (schemaType && type === schemaType && schemaName && names.some((name) => name.includes(schemaName)));
   });
 };
@@ -579,7 +587,7 @@ const ReactAgentToolsPanel = ({ localInputParams, onInputChange, availableTools 
                   <div className="space-y-5 border-t border-slate-100 bg-slate-50/30 p-4">
                     <div className="grid grid-cols-1 gap-3">
                       <FieldShell label="Tool name" hint="Shown to the model and converted to a safe callable id automatically." badge={safeId || 'safe id'}>
-                        <SimpleInput value={tool.name || tool.tool_name || ''} onChange={(value) => updateTool(index, { name: value, node_type: value || tool.name || tool.tool_name || 'Selected Tool' })} placeholder="Get Product Details" />
+                        <SimpleInput value={tool.name || tool.tool_name || ''} onChange={(value) => updateTool(index, { name: value })} placeholder="Get Product Details" />
                       </FieldShell>
                       <FieldShell label="Description" hint="Tell the model exactly what the tool returns and when it should call it.">
                         <SimpleTextarea value={tool.description || ''} onChange={(value) => updateTool(index, { description: value })} rows={3} placeholder="Get full details of one product by numeric id..." />
@@ -1115,7 +1123,7 @@ const NodeDetailsModal = ({
       setActiveTab(initialActiveTab);
       setIsDirty(false);
     }
-  }, [node, initialActiveTab]);
+  }, [node?.id, initialActiveTab]);
 
   const selectableTools = useMemo(
     () => [...(registeredTools || []), ...flattenMcpTools(registeredMcpTools)],
@@ -1125,8 +1133,12 @@ const NodeDetailsModal = ({
   const nodeDocs = getNodeDocs(node);
 
   const handleInputChange = (updatedParams) => {
-    setLocalInputParams(updatedParams);
+    const nextParams = normalizeReactAgentToolParams(updatedParams, selectableTools);
+    setLocalInputParams(nextParams);
     setIsDirty(true);
+    if (node?.id && typeof onUpdateParameters === 'function') {
+      onUpdateParameters(node.id, nextParams, 'inputParameters');
+    }
   };
 
   const handleOutputParamUpdate = (index, updatedParam) => {
@@ -1134,6 +1146,9 @@ const NodeDetailsModal = ({
     updated[index] = updatedParam;
     setLocalOutputParams(updated);
     setIsDirty(true);
+    if (node?.id && typeof onUpdateParameters === 'function') {
+      onUpdateParameters(node.id, updated, 'outputParameters');
+    }
   };
 
   const handleCopyExample = () => {
@@ -1151,7 +1166,7 @@ const NodeDetailsModal = ({
 
   const handleSaveChanges = () => {
     if (node && isDirty) {
-      const nextInputParams = normalizeReactAgentToolParams(localInputParams);
+      const nextInputParams = normalizeReactAgentToolParams(localInputParams, selectableTools);
       setLocalInputParams(nextInputParams);
 
       if (typeof onUpdateParameters === 'function') {
