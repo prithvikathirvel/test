@@ -260,12 +260,14 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
       style={{
         borderColor: selected ? accent.bar : undefined,
         boxShadow: selected
-          ? `0 0 0 3px ${accent.ring}, 0 10px 22px -18px ${accent.bar}`
-          : "0 1px 2px rgba(15,23,42,0.05), 0 6px 14px -12px rgba(15,23,42,0.18)",
+          ? `0 0 0 3px ${accent.ring}, 0 12px 28px -18px ${accent.bar}, 0 2px 8px rgba(15,23,42,0.08)`
+          : `0 1px 2px rgba(15,23,42,0.04), 0 8px 20px -18px ${accent.bar}`,
       }}
     >
       {/* Accent bar */}
-      <div className="h-1 rounded-t-[11px]" style={{ background: accent.bar }} />
+      <div className="overflow-hidden rounded-t-[11px]">
+        <div className="h-1 w-full" style={{ background: accent.bar }} />
+      </div>
 
       {/* Header */}
       <div className="flex items-center gap-3 px-3.5 py-4">

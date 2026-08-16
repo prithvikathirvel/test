@@ -17,6 +17,28 @@ import { useState } from "react";
 
 const ICON_SIZE = 16;
 
+const navTooltipProps = {
+  arrow: true,
+  placement: "right",
+  slotProps: {
+    tooltip: {
+      sx: {
+        bgcolor: "#0f172a",
+        color: "#f8fafc",
+        border: "1px solid rgba(148, 163, 184, 0.22)",
+        borderRadius: "10px",
+        px: 1.25,
+        py: 0.75,
+        fontSize: "11px",
+        fontWeight: 600,
+        letterSpacing: "0.01em",
+        boxShadow: "0 12px 30px -18px rgba(15, 23, 42, 0.55)",
+      },
+    },
+    arrow: { sx: { color: "#0f172a" } },
+  },
+};
+
 const Menus = [
   {
     title: "Flow Studio",
@@ -118,7 +140,7 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
               isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
             }`}
           >
-            <Tooltip title="Collapse sidebar" placement="right">
+            <Tooltip title="Collapse sidebar" {...navTooltipProps}>
               <IconButton
                 onClick={handleToggle}
                 size="small"
@@ -147,8 +169,7 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
                 <Tooltip
                   key={menu.title}
                   title={isOpen ? "" : menu.title}
-                  placement="right"
-                  arrow
+                  {...navTooltipProps}
                 >
                   <Link href={menu.path} className="no-underline block w-full">
                     <div
@@ -181,7 +202,7 @@ export default function Sidenav({ open: initialOpen = true, onToggle }) {
       </Box>
 
       <Box className="p-2 border-t border-gray-100 flex justify-center">
-        <Tooltip title={isOpen ? "Collapse sidebar" : "Expand sidebar"} placement="right">
+        <Tooltip title={isOpen ? "Collapse sidebar" : "Expand sidebar"} {...navTooltipProps}>
           <IconButton
             onClick={handleToggle}
             size="small"

@@ -105,7 +105,6 @@ const StudioListing = () => {
         type: details.type || "flow",
         graphSpec: {
           ...(details.graphSpec || {}),
-          description: details.description,
         },
       };
 
@@ -190,7 +189,7 @@ const StudioListing = () => {
 
   return (
     <Box className="min-h-screen bg-[#f8fafc]">
-      {studioSaveFlowLoader && <BlurredLoader title="Creating Flow..." />}
+      {studioSaveFlowLoader && <BlurredLoader title={cloneTarget ? "Cloning Flow..." : "Creating Flow..."} />}
 
       <Box className="px-6 lg:px-5 py-5">
         <PageHeader

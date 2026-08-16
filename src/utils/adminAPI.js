@@ -22,7 +22,8 @@ const ENDPOINTS = {
 };
 
 export const listRegistry = async (kind) => {
-  const { data } = await APIKit.get(ENDPOINTS[kind].list);
+  const separator = ENDPOINTS[kind].list.includes("?") ? "&" : "?";
+  const { data } = await APIKit.get(`${ENDPOINTS[kind].list}${separator}status=all`);
   return Array.isArray(data) ? data : [];
 };
 
@@ -201,7 +202,6 @@ export const REGISTRY_CONFIG = {
       { key: "status", label: "Status", type: "toggle", required: true, help: "Whether this tool is enabled." },
       { key: "isPublic", label: "Public", type: "toggle", required: true, help: "Visible to other users in the workspace." },
       { key: "isActive", label: "Active", type: "toggle", required: true, help: "Currently available for use in flows." },
-      { key: "version", label: "Version", type: "text", required: true, placeholder: "1.0.0" },
       { key: "createdBy", label: "Created By", type: "text", required: true, placeholder: "user@example.com" },
     ],
   },
@@ -220,7 +220,6 @@ export const REGISTRY_CONFIG = {
       { key: "status", label: "Status", type: "toggle", required: false, help: "Whether this model is enabled." },
       { key: "isPublic", label: "Public", type: "toggle", required: true, help: "Visible to other users in the workspace." },
       { key: "isActive", label: "Active", type: "toggle", required: true, help: "Currently available for use in flows." },
-      { key: "version", label: "Version", type: "text", required: true, placeholder: "1.0.0" },
       { key: "createdBy", label: "Created By", type: "text", required: true, placeholder: "user@example.com" },
     ],
   },
@@ -241,7 +240,6 @@ export const REGISTRY_CONFIG = {
       { key: "status", label: "Status", type: "toggle", required: true, help: "Whether this agent is enabled." },
       { key: "isPublic", label: "Public", type: "toggle", required: true, help: "Visible to other users in the workspace." },
       { key: "isActive", label: "Active", type: "toggle", required: true, help: "Currently available for use in flows." },
-      { key: "version", label: "Version", type: "text", required: true, placeholder: "1" },
       { key: "createdBy", label: "Created By", type: "text", required: true, placeholder: "user@example.com" },
     ],
   },
@@ -270,6 +268,7 @@ export const buildPayload = (kind, values) => {
     }
     payload[field.key] = value;
   });
+  payload.version = values.version || (kind === "agents" ? "1" : "1.0.0");
   return payload;
 };
 

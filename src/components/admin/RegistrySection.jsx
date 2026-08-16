@@ -163,7 +163,7 @@ const RegistrySection = ({ kind }) => {
   );
 
   const basicFields = useMemo(
-    () => config.fields.filter((f) => f.type !== "params" && f.type !== "outputParams"),
+    () => config.fields.filter((f) => f.type !== "params" && f.type !== "outputParams" && f.key !== "version"),
     [config.fields]
   );
 
@@ -189,8 +189,9 @@ const RegistrySection = ({ kind }) => {
       else if (f.type === "params" || f.type === "outputParams") values[f.key] = [];
       else values[f.key] = "";
     });
-    // The registry type is fixed, never user-editable.
+    // The registry type/version are fixed, never user-editable.
     values.type = fixedType;
+    values.version = kind === "agents" ? "1" : "1.0.0";
     const me = getCurrentUserFromToken();
     if (me?.email) values.createdBy = me.email;
     return values;
@@ -238,7 +239,6 @@ const RegistrySection = ({ kind }) => {
     if (sel.name && hasField("name")) updates.name = sel.name;
     if (sel.description && hasField("description")) updates.description = sel.description;
     if (Array.isArray(sel.tags) && hasField("tags")) updates.tags = sel.tags.join(", ");
-    if (sel.version != null && hasField("version")) updates.version = String(sel.version);
     if (sel.specifications && hasField("specifications")) {
       updates.specifications =
         typeof sel.specifications === "object"
@@ -252,8 +252,9 @@ const RegistrySection = ({ kind }) => {
       updates.outputParameters = paramsToEditor(sel.outputParameters, { forceOutputKey: true });
     }
 
-    // The registry `type` is fixed and must never be overridden by an import.
+    // The registry `type` and `version` are fixed and must never be overridden by an import.
     delete updates.type;
+    delete updates.version;
 
     setFormValues((prev) => ({ ...prev, ...updates }));
     toast.success("JSON imported — you can continue editing.");
