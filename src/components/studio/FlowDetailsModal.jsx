@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogActions, Box, Typography, IconButton } from '@mui/material';
-import { X, Network, FileJson, AlertTriangle, Upload, ClipboardPaste, FileText } from 'lucide-react';
+import { X, Network, AlertTriangle, Upload, ClipboardPaste, FileText, CheckCircle2 } from 'lucide-react';
 import InputBox from '@/components/Common/InputBox';
 import CustomButton from '@/components/Common/CustomButton';
 import { validateFlowOutputVariables } from '@/utils/flowValidation';
@@ -15,14 +15,114 @@ const cleanGraphSpec = (graphSpec) => {
   return rest;
 };
 
+const validateFlowJsonShape = (json) => {
+  if (!json || typeof json !== 'object' || Array.isArray(json)) {
+    return 'The pasted JSON must be a flow object.';
+  }
+  if (!json.graphSpec || typeof json.graphSpec !== 'object') {
+    return 'This is not a valid flow JSON: missing graphSpec object.';
+  }
+  if (!Array.isArray(json.graphSpec.nodes)) {
+    return 'This is not a valid flow JSON: graphSpec.nodes must be an array.';
+  }
+  if (!Array.isArray(json.graphSpec.edges)) {
+    return 'This is not a valid flow JSON: graphSpec.edges must be an array.';
+  }
+  return '';
+};
+
 const parseFlowJson = (text) => {
-  if (!text?.trim()) return { flow: null, error: '' };
+  if (!text?.trim()) return { flow: null, error: '', isValidFlow: false };
   try {
     const parsed = JSON.parse(text);
-    return { flow: parsed, error: '' };
+    const shapeError = validateFlowJsonShape(parsed);
+    if (shapeError) return { flow: null, error: shapeError, isValidFlow: false };
+    return { flow: parsed, error: '', isValidFlow: true };
   } catch (err) {
-    return { flow: null, error: `Invalid JSON: ${err.message}` };
+    return { flow: null, error: `Invalid JSON: ${err.message}`, isValidFlow: false };
   }
+};
+
+const FlowSummary = ({ flow }) => {
+  if (!flow) return null;
+  const name = flow.name || flow.agent_name || 'Untitled Flow';
+  const description = flow.description || flow.agent_description || flow.graphSpec?.description || 'No description in JSON.';
+  const nodes = Array.isArray(flow.graphSpec?.nodes) ? flow.graphSpec.nodes : [];
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <CheckCircle2 size={15} className="text-emerald-600" />
+        <span className="text-[12px] font-semibold text-slate-800">Valid flow JSON detected</span>
+      </div>
+      <div className="space-y-2 text-[12px]">
+        <div>
+          <span className="font-semibold text-slate-600">Name: </span>
+          <span className="text-slate-800">{name}</span>
+        </div>
+        <div>
+          <span className="font-semibold text-slate-600">Description: </span>
+          <span className="text-slate-600">{description}</span>
+        </div>
+      </div>
+      <div className="mt-3">
+        <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+          Nodes ({nodes.length})
+        </p>
+        <div className="flex max-h-24 flex-wrap gap-1.5 overflow-y-auto">
+          {nodes.length > 0 ? nodes.map((node, index) => (
+            <span key={node.node_id || index} className="rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[10.5px] font-medium text-slate-600">
+              {node.displayName || node.name || node.node_id || `Node ${index + 1}`}
+            </span>
+          )) : (
+            <span className="text-[11px] text-slate-400">No nodes found.</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CollisionWarnings = ({ errors, onIgnoreOne, onIgnoreAll }) => {
+  if (!errors.length) return null;
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+      <div className="mb-2 flex items-center gap-2 text-amber-800">
+        <AlertTriangle size={15} />
+        <span className="text-[12px] font-semibold">Output collision warning</span>
+      </div>
+      <p className="mb-3 text-[11.5px] text-amber-800/80">
+        These warnings are in the imported JSON. You can ignore them and continue, or fix the JSON before creating.
+      </p>
+      <div className="space-y-2">
+        {errors.map((err, idx) => (
+          <div key={idx} className="rounded-lg border border-amber-200 bg-white/80 p-3 text-[11.5px] text-slate-700">
+            <p>{err.message}</p>
+            {err.occurrences?.length > 0 && (
+              <p className="mt-1 text-slate-500">Nodes: {err.occurrences.map((o) => o.nodeName).join(', ')}</p>
+            )}
+            <div className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-2">
+              <p className="mb-1 text-[10.5px] text-slate-500">Use only if this duplicate output is intentional.</p>
+              <button
+                type="button"
+                onClick={() => onIgnoreOne(err)}
+                className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[10.5px] font-semibold text-slate-800 hover:bg-slate-100"
+              >
+                <CheckCircle2 size={11} /> Ignore only this warning
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={onIgnoreAll}
+        className="mt-3 rounded-md bg-slate-800 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-900"
+      >
+        Skip all warnings
+      </button>
+    </div>
+  );
 };
 
 const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
@@ -59,20 +159,17 @@ const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
   const importParse = useMemo(() => parseFlowJson(sourceText), [sourceText]);
   const importedFlow = canImport && activeMode !== 'blank' ? importParse.flow : null;
 
-  useEffect(() => {
-    if (!importedFlow || activeMode === 'blank') return;
-    setFlowDetails((prev) => ({
-      name: importedFlow.name || importedFlow.agent_name || prev.name,
-      description: importedFlow.description || importedFlow.agent_description || importedFlow.graphSpec?.description || prev.description,
-    }));
-    setValidationErrors([]);
-  }, [importedFlow, activeMode]);
+  const activeDetails = importedFlow
+    ? {
+        name: importedFlow.name || importedFlow.agent_name || '',
+        description: importedFlow.description || importedFlow.agent_description || importedFlow.graphSpec?.description || '',
+      }
+    : flowDetails;
 
   const runImportedValidation = () => {
     if (activeMode === 'blank') return true;
-    const candidateNodes = importedFlow?.graphSpec?.nodes || [];
-    if (candidateNodes.length === 0) return true;
-    const result = validateFlowOutputVariables(candidateNodes);
+    if (!importedFlow) return false;
+    const result = validateFlowOutputVariables(importedFlow.graphSpec?.nodes || []);
     const activeErrors = (result.errors || []).filter((err) => !skippedValidationIds.has(getValidationErrorId(err)));
     if (activeErrors.length > 0) {
       setValidationErrors(activeErrors);
@@ -87,6 +184,7 @@ const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
     const text = await file.text();
     setImportText(text);
     setValidationErrors([]);
+    setSkippedValidationIds(new Set());
   };
 
   const handleSubmit = () => {
@@ -96,11 +194,22 @@ const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
     onSubmit({
       ...initialData,
       ...(importedFlow || {}),
-      name: flowDetails?.name,
-      description: flowDetails?.description,
+      name: activeDetails?.name,
+      description: activeDetails?.description,
       graphSpec: importedGraphSpec || (initialData?.graphSpec ? cleanGraphSpec(initialData.graphSpec) : undefined),
     });
     onClose();
+  };
+
+  const ignoreOne = (err) => {
+    const id = getValidationErrorId(err);
+    setSkippedValidationIds((prev) => new Set([...prev, id]));
+    setValidationErrors((current) => current.filter((item) => getValidationErrorId(item) !== id));
+  };
+
+  const ignoreAll = () => {
+    setSkippedValidationIds((prev) => new Set([...prev, ...validationErrors.map(getValidationErrorId)]));
+    setValidationErrors([]);
   };
 
   const modeTabs = [
@@ -108,6 +217,10 @@ const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
     { id: 'paste', label: 'Paste', icon: ClipboardPaste, help: 'Paste a flow JSON payload.' },
     { id: 'import', label: 'Import', icon: Upload, help: 'Upload a .json flow file.' },
   ];
+
+  const canSubmit = activeMode === 'blank'
+    ? Boolean(flowDetails.name?.trim() && flowDetails.description?.trim())
+    : Boolean(importedFlow && activeDetails.name?.trim() && activeDetails.description?.trim() && !importParse.error);
 
   return (
     <Dialog
@@ -151,7 +264,11 @@ const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
                 <button
                   key={id}
                   type="button"
-                  onClick={() => { setActiveMode(id); setValidationErrors([]); }}
+                  onClick={() => {
+                    setActiveMode(id);
+                    setValidationErrors([]);
+                    setSkippedValidationIds(new Set());
+                  }}
                   className={`rounded-lg px-3 py-2 text-left transition-colors ${activeMode === id ? 'bg-white border border-slate-300 text-slate-900' : 'border border-transparent text-slate-500 hover:bg-white/70'}`}
                 >
                   <span className="flex items-center gap-1.5 text-[12px] font-semibold"><Icon size={13} /> {label}</span>
@@ -161,31 +278,32 @@ const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
             </div>
           )}
 
-          <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Basic details</span>
-              {importedFlow && <span className="text-[10.5px] text-slate-400">Auto-filled from JSON — edit if needed</span>}
+          {(!canImport || activeMode === 'blank') && (
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600">Basic details</span>
+              </div>
+              <div className="space-y-4">
+                <InputBox
+                  id="name"
+                  label="Flow Name"
+                  autoFocus={true}
+                  value={flowDetails.name}
+                  onChange={(value) => setFlowDetails((prev) => ({ ...prev, name: value }))}
+                  placeholder="e.g. Customer Support Triage Agent"
+                  type="text"
+                />
+                <InputBox
+                  id="description"
+                  label="Flow Description"
+                  value={flowDetails.description}
+                  onChange={(value) => setFlowDetails((prev) => ({ ...prev, description: value }))}
+                  placeholder="Describe the primary purpose and execution trigger of this flow"
+                  type="text"
+                />
+              </div>
             </div>
-            <div className="space-y-4">
-              <InputBox
-                id="name"
-                label="Flow Name"
-                autoFocus={true}
-                value={flowDetails.name}
-                onChange={(value) => setFlowDetails((prev) => ({ ...prev, name: value }))}
-                placeholder="e.g. Customer Support Triage Agent"
-                type="text"
-              />
-              <InputBox
-                id="description"
-                label="Flow Description"
-                value={flowDetails.description}
-                onChange={(value) => setFlowDetails((prev) => ({ ...prev, description: value }))}
-                placeholder="Describe the primary purpose and execution trigger of this flow"
-                type="text"
-              />
-            </div>
-          </div>
+          )}
 
           {canImport && activeMode === 'paste' && (
             <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
@@ -195,12 +313,17 @@ const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
               </div>
               <textarea
                 value={pasteText}
-                onChange={(event) => { setPasteText(event.target.value); setValidationErrors([]); }}
+                onChange={(event) => {
+                  setPasteText(event.target.value);
+                  setValidationErrors([]);
+                  setSkippedValidationIds(new Set());
+                }}
                 rows={8}
                 placeholder='{ "name": "Shopping Assistant", "description": "...", "graphSpec": { "nodes": [], "edges": [] } }'
                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 font-mono text-[11.5px] text-slate-800 outline-none resize-y focus:border-slate-400 focus:ring-1 focus:ring-slate-200"
               />
-              {importParse.error && <p className="mt-1 text-[11px] text-red-500">{importParse.error}</p>}
+              {pasteText.trim() && importParse.error && <p className="mt-2 text-[11.5px] font-medium text-red-600">{importParse.error}</p>}
+              {pasteText.trim() && importedFlow && <FlowSummary flow={importedFlow} />}
             </div>
           )}
 
@@ -213,62 +336,21 @@ const FlowDetailsModal = ({ open, onClose, onSubmit, initialData }) => {
               <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-8 text-center hover:bg-slate-50">
                 <Upload size={20} className="mb-2 text-slate-400" />
                 <span className="text-[12px] font-semibold text-slate-700">Choose a .json file</span>
-                <span className="mt-0.5 text-[11px] text-slate-400">The flow name and description will be filled automatically.</span>
+                <span className="mt-0.5 text-[11px] text-slate-400">After upload, details and nodes will be shown below.</span>
                 <input type="file" accept="application/json,.json" onChange={handleFileImport} className="hidden" />
               </label>
-              {importText && <p className="mt-2 text-[11px] text-emerald-600">JSON loaded. Review details and create the flow.</p>}
-              {importParse.error && <p className="mt-1 text-[11px] text-red-500">{importParse.error}</p>}
+              {importText.trim() && importParse.error && <p className="mt-2 text-[11.5px] font-medium text-red-600">{importParse.error}</p>}
+              {importText.trim() && importedFlow && <div className="mt-3"><FlowSummary flow={importedFlow} /></div>}
             </div>
           )}
 
-          {validationErrors.length > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <div className="mb-2 flex items-center gap-2 text-amber-800">
-                <AlertTriangle size={15} />
-                <span className="text-[12px] font-semibold">Output collision warning</span>
-              </div>
-              <p className="mb-3 text-[11.5px] text-amber-800/80">These warnings are in the imported JSON. You can skip them and continue, or fix the JSON before creating.</p>
-              <div className="space-y-2">
-                {validationErrors.map((err, idx) => (
-                  <div key={idx} className="rounded-lg border border-amber-200 bg-white/80 p-3 text-[11.5px] text-slate-700">
-                    <p>{err.message}</p>
-                    {err.occurrences?.length > 0 && <p className="mt-1 text-slate-500">Nodes: {err.occurrences.map((o) => o.nodeName).join(', ')}</p>}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const id = getValidationErrorId(err);
-                        setSkippedValidationIds((prev) => new Set([...prev, id]));
-                        setValidationErrors((current) => current.filter((item) => getValidationErrorId(item) !== id));
-                      }}
-                      className="mt-2 inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[10.5px] font-semibold text-slate-700 hover:bg-slate-50"
-                    >
-                      Ignore this warning
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setSkippedValidationIds((prev) => new Set([...prev, ...validationErrors.map(getValidationErrorId)]));
-                  setValidationErrors([]);
-                }}
-                className="mt-3 rounded-md bg-slate-800 px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-slate-900"
-              >
-                Skip all warnings
-              </button>
-            </div>
-          )}
+          <CollisionWarnings errors={validationErrors} onIgnoreOne={ignoreOne} onIgnoreAll={ignoreAll} />
         </div>
       </DialogContent>
 
       <DialogActions className="!px-6 !py-4 border-t border-slate-100 bg-slate-50/50 flex justify-end gap-2.5">
         <CustomButton variant="outlined" onClick={onClose}>Cancel</CustomButton>
-        <CustomButton
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={!flowDetails.name?.trim() || !flowDetails.description?.trim() || Boolean(importParse.error)}
-        >
+        <CustomButton variant="contained" onClick={handleSubmit} disabled={!canSubmit}>
           {isClone ? 'Clone Flow' : isEdit ? 'Save Changes' : 'Create Flow'}
         </CustomButton>
       </DialogActions>

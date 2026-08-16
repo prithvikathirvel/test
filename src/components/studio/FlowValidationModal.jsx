@@ -90,18 +90,22 @@ export default function FlowValidationModal({
               {err.message}
             </p>
 
-            {/* Quick Action Buttons to jump to conflicting nodes */}
-            <div className="pt-2 border-t border-slate-100 flex flex-wrap gap-2">
-              {allowSkip && (
+            {allowSkip && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                <p className="mb-1.5 text-[10.5px] font-medium text-slate-500">If this duplicate is intentional, ignore only this warning.</p>
                 <button
                   type="button"
                   onClick={() => onSkipError?.(err)}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-lg transition-colors"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold text-slate-800 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg transition-colors"
                   title="Ignore only this duplicate output warning for now"
                 >
-                  <CheckCircle2 size={12} /> Ignore this warning
+                  <CheckCircle2 size={12} /> Ignore only this warning
                 </button>
-              )}
+              </div>
+            )}
+
+            {/* Quick Action Buttons to jump to conflicting nodes */}
+            <div className="pt-2 border-t border-slate-100 flex flex-wrap gap-2">
               {err.occurrences ? (
                 err.occurrences.map((occ, oIdx) => (
                   <button

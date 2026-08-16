@@ -1077,6 +1077,7 @@ const NodeDetailsModal = ({
   },
   flow,
   onOpenExecutionOutput,
+  initialActiveTab = 0,
 }) => {
   const dispatch = useDispatch();
   const registeredTools = useSelector((state) => state.studio.tools || []);
@@ -1094,10 +1095,10 @@ const NodeDetailsModal = ({
     if (node?.data) {
       setLocalInputParams(node.data.inputParameters || []);
       setLocalOutputParams(node.data.outputParameters || []);
-      setActiveTab(0);
+      setActiveTab(initialActiveTab);
       setIsDirty(false);
     }
-  }, [node]);
+  }, [node, initialActiveTab]);
 
   const selectableTools = useMemo(
     () => [...(registeredTools || []), ...flattenMcpTools(registeredMcpTools)],

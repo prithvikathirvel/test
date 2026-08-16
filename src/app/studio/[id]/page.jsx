@@ -56,6 +56,7 @@ const Studio = () => {
     const [edges, setEdgesState, onEdgesChange] = useEdgesState([]);
     const [selectedNode, setSelectedNode] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
+    const [nodeModalInitialTab, setNodeModalInitialTab] = useState(0);
     const [outputModalOpen, setOutputModalOpen] = useState(false);
     const [inputConfigOpen, setInputConfigOpen] = useState(false);
     // Unsaved-changes tracking. `savedFingerprintRef` holds the fingerprint of
@@ -404,11 +405,13 @@ const Studio = () => {
     }, [dispatch, runFlowValidation]);
 
     const onNodeClick = useCallback((event, node) => {
+        setNodeModalInitialTab(0);
         setSelectedNode(node);
         setModalOpen(true);
     }, []);
 
     const handleOpenNodeDetails = useCallback((node) => {
+        setNodeModalInitialTab(0);
         setSelectedNode(node);
         setModalOpen(true);
     }, []);
@@ -520,6 +523,8 @@ const Studio = () => {
         setValidationModalOpen(false);
         const foundNode = targetNode || nodesValidationRef.current.find(n => n.id === nodeId);
         if (foundNode) {
+            const nodeType = String(foundNode.type || foundNode.data?.type || "").toLowerCase();
+            setNodeModalInitialTab(nodeType.startsWith("react_agent") ? 4 : 1);
             setSelectedNode(foundNode);
             setModalOpen(true);
         }
@@ -535,6 +540,7 @@ const Studio = () => {
             ? { ...current, data: { ...current.data, [parameter]: updatedParameters } }
             : current
         );
+        setIsDirty(true);
         dispatch(updateNode({ flow: flowRef.current, nodeId: nodeId, updatedNode: updatedParameters, parameter: parameter }));
     }, [dispatch, setNodesState]);
 
@@ -718,6 +724,7 @@ const Studio = () => {
                             }}
                             flow={flow}
                             onOpenExecutionOutput={handleOpenExecutionOutput}
+                            initialActiveTab={nodeModalInitialTab}
                         />
 
                         {/* Flow Validation Collision Modal */}
