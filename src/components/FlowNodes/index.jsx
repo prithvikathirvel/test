@@ -255,9 +255,14 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
   return (
     <div
       className={`group relative w-[286px] rounded-xl border bg-white transition-[border-color,background-color,box-shadow] duration-200 ${
-        selected ? "border-slate-400 bg-slate-50/40" : "border-slate-200 hover:border-slate-300"
+        selected ? "bg-slate-50/40" : "border-slate-200 hover:border-slate-300"
       }`}
-      style={selected ? { boxShadow: `0 0 0 3px ${accent.ring}` } : undefined}
+      style={{
+        borderColor: selected ? accent.bar : undefined,
+        boxShadow: selected
+          ? `0 0 0 3px ${accent.ring}, 0 10px 22px -18px ${accent.bar}`
+          : "0 1px 2px rgba(15,23,42,0.05), 0 6px 14px -12px rgba(15,23,42,0.18)",
+      }}
     >
       {/* Accent bar */}
       <div className="h-1 rounded-t-[11px]" style={{ background: accent.bar }} />
@@ -265,7 +270,7 @@ const CustomNode = memo(function CustomNode({ id, data, type, selected }) {
       {/* Header */}
       <div className="flex items-center gap-3 px-3.5 py-4">
         <div
-          className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center ${accent.iconBg}`}
+          className={`shrink-0 h-8 w-8 rounded-lg flex items-center justify-center shadow-sm ${accent.iconBg}`}
         >
           {nodeType === "iterator" ? (
             <span className="animate-[spin_3s_linear_infinite] text-white">{icon}</span>
