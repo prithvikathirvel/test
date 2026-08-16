@@ -1133,23 +1133,13 @@ const NodeDetailsModal = ({
 
   const handleSaveChanges = () => {
     if (node && isDirty) {
-      dispatch(
-        updateNode({
-          flow: flow,
-          nodeId: node.id,
-          updatedNode: localInputParams,
-          parameter: 'inputParameters',
-        })
-      );
-
-      dispatch(
-        updateNode({
-          flow: flow,
-          nodeId: node.id,
-          updatedNode: localOutputParams,
-          parameter: 'outputParameters',
-        })
-      );
+      if (typeof onUpdateParameters === 'function') {
+        onUpdateParameters(node.id, localInputParams, 'inputParameters');
+        onUpdateParameters(node.id, localOutputParams, 'outputParameters');
+      } else {
+        dispatch(updateNode({ flow, nodeId: node.id, updatedNode: localInputParams, parameter: 'inputParameters' }));
+        dispatch(updateNode({ flow, nodeId: node.id, updatedNode: localOutputParams, parameter: 'outputParameters' }));
+      }
 
       setIsDirty(false);
     }

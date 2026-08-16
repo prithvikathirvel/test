@@ -19,7 +19,7 @@ const flowVersion = (flow) => {
  * destructive actions — cards themselves stay white + slate so the listing
  * reads as a catalogue, not a palette.
  */
-const FlowListingGridView = ({ flows, handleOpenStudio, handleDeleteFlow }) => {
+const FlowListingGridView = ({ flows, handleOpenStudio, handleDeleteFlow, selectionMode = false, selectedIds = new Set(), onToggleSelect }) => {
   return (
     <Box className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
       {flows.map((flow) => {
@@ -30,8 +30,19 @@ const FlowListingGridView = ({ flows, handleOpenStudio, handleDeleteFlow }) => {
         return (
           <article
             key={id}
-            className="group flex flex-col bg-white rounded-lg border border-slate-200 hover:border-slate-300 transition-colors"
+            className={`group relative flex flex-col bg-white rounded-lg border transition-colors ${selectedIds.has(id) ? "border-indigo-300 bg-indigo-50/20" : "border-slate-200 hover:border-slate-300"}`}
           >
+            {selectionMode && (
+              <label className="absolute right-3 top-3 z-10 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(id)}
+                  onChange={() => onToggleSelect?.(id)}
+                  className="mr-1.5 align-middle"
+                />
+                Select
+              </label>
+            )}
             <div className="p-4 flex-1 flex flex-col min-w-0">
               <div className="flex items-start gap-3">
                 <span className="h-8 w-8 shrink-0 rounded-md border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-500">

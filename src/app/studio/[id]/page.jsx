@@ -75,6 +75,7 @@ const Studio = () => {
     const [renderFlow, setRenderFlow] = useState(false);
     const [validationModalOpen, setValidationModalOpen] = useState(false);
     const [validationErrors, setValidationErrors] = useState([]);
+    const [skippedValidationIds, setSkippedValidationIds] = useState(() => new Set());
     const params = useParams();
     const flowId = params.id;
     const flow = useSelector(state => state.studio.flow);
@@ -351,18 +352,24 @@ const Studio = () => {
         nodesValidationRef.current = nodes;
     }, [nodes]);
 
+    const getValidationErrorId = useCallback((err) => {
+        const occurrences = err?.occurrences?.map((occ) => `${occ.nodeId}:${occ.paramIndex}`).sort().join("|");
+        return `${err?.type || "error"}:${err?.variableName || ""}:${occurrences || `${err?.nodeId}:${err?.paramIndex}`}`;
+    }, []);
+
     // Reads the latest nodes through a ref so the identity of this callback (and
     // therefore of every handler depending on it) stays stable across renders.
     const runFlowValidation = useCallback(() => {
         const result = validateFlowOutputVariables(nodesValidationRef.current);
-        if (!result.isValid) {
-            setValidationErrors(result.errors);
+        const activeErrors = (result.errors || []).filter((err) => !skippedValidationIds.has(getValidationErrorId(err)));
+        if (activeErrors.length > 0) {
+            setValidationErrors(activeErrors);
             setValidationModalOpen(true);
-            toast.error(`Validation Failed: ${result.errors.length} output variable conflict(s) detected.`);
+            toast.error(`Validation Failed: ${activeErrors.length} output variable conflict(s) detected.`);
             return false;
         }
         return true;
-    }, []);
+    }, [getValidationErrorId, skippedValidationIds]);
 
     const handleRunFlow = useCallback(() => {
         if (!runFlowValidation()) return;
@@ -499,8 +506,17 @@ const Studio = () => {
     }, []);
 
     const handleUpdateNodeParameters = useCallback((nodeId, updatedParameters, parameter) => {
+        setNodesState((nds) => nds.map((node) => (
+            node.id === nodeId
+                ? { ...node, data: { ...node.data, [parameter]: updatedParameters } }
+                : node
+        )));
+        setSelectedNode((current) => current?.id === nodeId
+            ? { ...current, data: { ...current.data, [parameter]: updatedParameters } }
+            : current
+        );
         dispatch(updateNode({ flow: flowRef.current, nodeId: nodeId, updatedNode: updatedParameters, parameter: parameter }));
-    }, [dispatch]);
+    }, [dispatch, setNodesState]);
 
     const handleInputConfigSave = useCallback(() => {
         // Persistence + toast live in InputFieldConfiguration so we don't
@@ -540,6 +556,22 @@ const Studio = () => {
     const handleOpenVoiceModal = useCallback(() => setIsVoiceModalOpen(true), []);
     const handleCloseInputConfig = useCallback(() => setInputConfigOpen(false), []);
     const handleOpenInputConfig = useCallback(() => setInputConfigOpen(true), []);
+    const handleSkipValidationError = useCallback((err) => {
+        const id = getValidationErrorId(err);
+        setSkippedValidationIds((prev) => new Set([...prev, id]));
+        setValidationErrors((current) => {
+            const next = current.filter((item) => getValidationErrorId(item) !== id);
+            if (next.length === 0) setValidationModalOpen(false);
+            return next;
+        });
+    }, [getValidationErrorId]);
+
+    const handleSkipAllValidationErrors = useCallback(() => {
+        setSkippedValidationIds((prev) => new Set([...prev, ...validationErrors.map(getValidationErrorId)]));
+        setValidationModalOpen(false);
+        toast.info("Skipped current output collision warnings for this session.");
+    }, [validationErrors, getValidationErrorId]);
+
     const handleCloseValidationModal = useCallback(() => setValidationModalOpen(false), []);
 
 
@@ -673,6 +705,9 @@ const Studio = () => {
                             onClose={handleCloseValidationModal}
                             errors={validationErrors}
                             onFixNode={handleFixNode}
+                            allowSkip
+                            onSkipError={handleSkipValidationError}
+                            onSkipAll={handleSkipAllValidationErrors}
                         />
                     </Box>
                 </Box>

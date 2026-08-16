@@ -9,6 +9,9 @@ export default function FlowValidationModal({
   onClose,
   errors = [],
   onFixNode,
+  onSkipError,
+  onSkipAll,
+  allowSkip = false,
 }) {
   return (
     <Dialog
@@ -89,6 +92,15 @@ export default function FlowValidationModal({
 
             {/* Quick Action Buttons to jump to conflicting nodes */}
             <div className="pt-2 border-t border-slate-100 flex flex-wrap gap-2">
+              {allowSkip && (
+                <button
+                  type="button"
+                  onClick={() => onSkipError?.(err)}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg transition-colors"
+                >
+                  Skip this collision
+                </button>
+              )}
               {err.occurrences ? (
                 err.occurrences.map((occ, oIdx) => (
                   <button
@@ -117,7 +129,16 @@ export default function FlowValidationModal({
       </div>
 
       {/* Footer Button */}
-      <div className="mt-5 pt-3 border-t border-slate-100 flex justify-end">
+      <div className="mt-5 pt-3 border-t border-slate-100 flex justify-end gap-2">
+        {allowSkip && errors.length > 0 && (
+          <button
+            type="button"
+            onClick={onSkipAll}
+            className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-xl transition-colors"
+          >
+            Skip all
+          </button>
+        )}
         <button
           type="button"
           onClick={onClose}

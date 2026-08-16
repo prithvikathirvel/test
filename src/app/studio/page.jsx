@@ -13,6 +13,8 @@ import {
   Activity,
   Timer,
   CheckCircle2,
+  Trash2,
+  CheckSquare,
 } from "lucide-react";
 import { getAllFlows, saveFlow, updateSpecification, deleteFlow } from "@/redux/slices/studioSlice";
 import FlowDetailsModal from "@/components/studio/FlowDetailsModal";
@@ -45,6 +47,8 @@ const StudioListing = () => {
   // Item 8 — deletion is irreversible, so it is always confirmed first.
   const [flowPendingDeletion, setFlowPendingDeletion] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [multiSelectMode, setMultiSelectMode] = useState(false);
+  const [selectedFlowIds, setSelectedFlowIds] = useState(() => new Set());
 
   useEffect(() => {
     dispatch(getAllFlows());
@@ -70,6 +74,37 @@ const StudioListing = () => {
   const handleCancelDelete = () => {
     if (isDeleting) return;
     setFlowPendingDeletion(null);
+  };
+
+  const toggleFlowSelection = (flowId) => {
+    setSelectedFlowIds((current) => {
+      const next = new Set(current);
+      if (next.has(flowId)) next.delete(flowId);
+      else next.add(flowId);
+      return next;
+    });
+  };
+
+  const clearMultiSelection = () => {
+    setSelectedFlowIds(new Set());
+    setMultiSelectMode(false);
+  };
+
+  const handleBulkDeleteSelected = () => {
+    const ids = [...selectedFlowIds];
+    if (ids.length === 0) return;
+
+    // Future bulk endpoint sample:
+    // DELETE /agent-flows/bulk
+    // payload: { ids: ["flow-id-1", "flow-id-2"], hardDelete: true }
+    setIsDeleting(true);
+    Promise.all(ids.map((id) => dispatch(deleteFlow({ data: id, onSuccess: () => {} })).unwrap()))
+      .then(() => {
+        setSelectedFlowIds(new Set());
+        setMultiSelectMode(false);
+        dispatch(getAllFlows());
+      })
+      .finally(() => setIsDeleting(false));
   };
 
   const handleConfirmDelete = () => {
@@ -127,7 +162,7 @@ const StudioListing = () => {
       name: details.name,
       description: details.description,
       type: "flow",
-      graphSpec: {
+      graphSpec: details.graphSpec || {
         nodes: [],
         edges: [],
       },
@@ -141,7 +176,7 @@ const StudioListing = () => {
       version: "1.0.0",
       isPublic: true,
       createdBy: "user",
-      inputs: [],
+      inputs: Array.isArray(details.inputs) ? details.inputs : [],
     };
 
     dispatch(
@@ -246,6 +281,28 @@ const StudioListing = () => {
           </Box>
 
           <Box className="flex items-center justify-end gap-2">
+            {multiSelectMode && (
+              <span className="hidden xl:inline text-[10.5px] text-slate-400">
+                Future bulk API: <span className="font-mono">DELETE /agent-flows/bulk</span> · <span className="font-mono">{`{ ids: [...], hardDelete: true }`}</span>
+              </span>
+            )}
+            {multiSelectMode && selectedFlowIds.size > 0 && (
+              <button
+                type="button"
+                onClick={handleBulkDeleteSelected}
+                disabled={isDeleting}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-60"
+              >
+                <Trash2 size={13} /> Delete {selectedFlowIds.size}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => multiSelectMode ? clearMultiSelection() : setMultiSelectMode(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              <CheckSquare size={13} /> {multiSelectMode ? "Cancel selection" : "Multi select"}
+            </button>
             <div className="flex items-center bg-white p-0.5 rounded-lg border border-slate-200 shadow-2xs">
               <button
                 onClick={() => setViewMode("list")}
@@ -279,6 +336,9 @@ const StudioListing = () => {
                 flows={paginatedFlows}
                 handleOpenStudio={handleOpenStudio}
                 handleDeleteFlow={handleDeleteFlow}
+                selectionMode={multiSelectMode}
+                selectedIds={selectedFlowIds}
+                onToggleSelect={toggleFlowSelection}
               />
             ) : (
               <FlowListingTableView
@@ -286,6 +346,9 @@ const StudioListing = () => {
                 handleOpenStudio={handleOpenStudio}
                 handleDeleteFlow={handleDeleteFlow}
                 handleCloneFlow={handleCloneFlow}
+                selectionMode={multiSelectMode}
+                selectedIds={selectedFlowIds}
+                onToggleSelect={toggleFlowSelection}
               />
             )}
 

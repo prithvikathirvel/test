@@ -66,7 +66,8 @@ const compareVersions = (a, b) => {
 };
 
 const COLUMNS = [
-  { key: 'name', label: 'Flow', sortable: true, width: '38%' },
+  { key: 'select', label: '', sortable: false, width: '5%' },
+  { key: 'name', label: 'Flow', sortable: true, width: '33%' },
   { key: 'version', label: 'Version', sortable: true, width: '12%' },
   { key: 'updatedAt', label: 'Last updated', sortable: true, width: '18%' },
   { key: 'actions', label: '', sortable: false, width: '32%', align: 'right' },
@@ -83,7 +84,7 @@ const SortIcon = ({ state }) => {
   );
 };
 
-const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDeleteFlow, handleCloneFlow }) => {
+const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDeleteFlow, handleCloneFlow, selectionMode = false, selectedIds = new Set(), onToggleSelect }) => {
   // `null` = keep the order the page already applied (updatedAt desc).
   const [sort, setSort] = useState(null);
 
@@ -161,12 +162,25 @@ const FlowListingTableView = ({ filteredFlows = [], handleOpenStudio, handleDele
             {rows.map((flow) => {
               const description = flowDesc(flow);
               const id = flowId(flow);
+              const selected = selectedIds.has(id);
 
               return (
                 <tr
                   key={id}
                   className="group/row hover:bg-slate-50/70 focus-within:bg-slate-50/70 transition-colors"
                 >
+                  <td className="px-4 py-3 align-middle">
+                    {selectionMode ? (
+                      <input
+                        type="checkbox"
+                        checked={selected}
+                        onChange={() => onToggleSelect?.(id)}
+                        aria-label={`Select ${flowName(flow)}`}
+                        className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                      />
+                    ) : null}
+                  </td>
+
                   {/* Identity */}
                   <td className="px-4 py-3 align-middle">
                     <div className="flex items-center gap-3 min-w-0">

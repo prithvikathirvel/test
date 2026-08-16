@@ -34,7 +34,8 @@ export const validateFlowOutputVariables = (nodes = []) => {
   }
 
   nodes.forEach((node) => {
-    const nodeName = node.data?.name || node.name || "Unnamed Node";
+    const nodeId = node.id || node.node_id;
+    const nodeName = node.data?.displayName || node.displayName || node.data?.name || node.name || nodeId || "Unnamed Node";
     const outputParams = node.data?.outputParameters || node.outputParameters || [];
 
     const nodeSeenKeys = new Set();
@@ -54,7 +55,7 @@ export const validateFlowOutputVariables = (nodes = []) => {
         errors.push({
           type: "empty_key",
           variableName: "(empty)",
-          nodeId: node.id,
+          nodeId: nodeId,
           nodeName: nodeName,
           node: node,
           paramIndex,
@@ -68,7 +69,7 @@ export const validateFlowOutputVariables = (nodes = []) => {
         errors.push({
           type: "duplicate_in_node",
           variableName: key,
-          nodeId: node.id,
+          nodeId: nodeId,
           nodeName: nodeName,
           node: node,
           paramIndex,
@@ -83,7 +84,7 @@ export const validateFlowOutputVariables = (nodes = []) => {
         variableMap[key] = [];
       }
       variableMap[key].push({
-        nodeId: node.id,
+        nodeId: nodeId,
         nodeName: nodeName,
         node: node,
         paramIndex,
