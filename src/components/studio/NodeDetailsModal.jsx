@@ -829,12 +829,79 @@ const ToolParameterEditor = ({ parameters, onChange }) => {
   const removeParam = (idx) => onChange(parameters.filter((_, index) => index !== idx));
   const addParam = () => onChange([...(parameters || []), createEmptyToolParameter()]);
 
+  const normalizeExampleValue = (type, value) => {
+    if (type === 'integer' || type === 'number') {
+      if (value === '') return '';
+      const num = Number(value);
+      return Number.isNaN(num) ? value : num;
+    }
+    if (type === 'boolean') return value === true || value === 'true';
+    if (type === 'object' || type === 'array') {
+      if (typeof value !== 'string') return value;
+      try {
+        const parsed = JSON.parse(value);
+        return parsed;
+      } catch (_) {
+        return value;
+      }
+    }
+    return value;
+  };
+
+  const renderExampleInput = (param, idx) => {
+    const type = param.type || 'string';
+    const value = param.example ?? '';
+    const updateExample = (nextValue) => updateParam(idx, { example: normalizeExampleValue(type, nextValue) });
+
+    if (type === 'boolean') {
+      return (
+        <select value={String(Boolean(value))} onChange={(event) => updateExample(event.target.value)} className={reactInputClass}>
+          <option value="true">true</option>
+          <option value="false">false</option>
+        </select>
+      );
+    }
+
+    if (type === 'integer' || type === 'number') {
+      return (
+        <input
+          type="number"
+          step={type === 'integer' ? '1' : 'any'}
+          value={value ?? ''}
+          onChange={(event) => updateExample(event.target.value)}
+          placeholder={type === 'integer' ? '121' : '19.99'}
+          className={`${reactInputClass} font-mono`}
+        />
+      );
+    }
+
+    if (type === 'object' || type === 'array') {
+      return (
+        <textarea
+          value={typeof value === 'string' ? value : JSON.stringify(value, null, 2)}
+          onChange={(event) => updateExample(event.target.value)}
+          rows={4}
+          placeholder={type === 'array' ? '["asc", "desc"]' : '{"id": 121}'}
+          className={`${reactInputClass} font-mono text-[11.5px] resize-y`}
+        />
+      );
+    }
+
+    return (
+      <SimpleInput
+        value={value}
+        onChange={updateExample}
+        placeholder="phone"
+      />
+    );
+  };
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white">
       <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h5 className="text-[12.5px] font-semibold text-slate-800">Dynamic Parameters</h5>
-          <p className="mt-0.5 text-[10.5px] leading-snug text-slate-400">Values the agent must decide at runtime, such as product_id or search query.</p>
+          <p className="mt-0.5 text-[10.5px] leading-snug text-slate-400">Define the values the agent must provide when calling this tool.</p>
         </div>
         <button type="button" onClick={addParam} className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11.5px] font-semibold text-slate-600 hover:bg-slate-50 hover:border-slate-300">
           <Plus size={12} /> Add field
@@ -845,64 +912,73 @@ const ToolParameterEditor = ({ parameters, onChange }) => {
         {parameters.length === 0 ? (
           <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 p-5 text-center">
             <p className="text-[12px] font-medium text-slate-500">No dynamic parameters</p>
-            <p className="mt-0.5 text-[11px] text-slate-400">Use config placeholders like {'{{q}}'} and add matching dynamic parameters only when the model should fill them.</p>
+            <p className="mt-0.5 text-[11px] text-slate-400">Add a field only when the model should fill a config placeholder like {'{{product_id}}'}.</p>
           </div>
         ) : (
           <div className="space-y-4">
             {parameters.map((param, idx) => (
-              <div key={idx} className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-                <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-4 py-3">
+              <div key={idx} className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
                     <span className="text-[12px] font-semibold text-slate-800">Dynamic field {idx + 1}</span>
-                    <p className="mt-0.5 text-[10.5px] text-slate-400">Create one argument the LLM can provide to this tool.</p>
+                    <p className="mt-0.5 text-[10.5px] text-slate-400">Mandatory fields first. Optional possible values last.</p>
                   </div>
                   <button type="button" onClick={() => removeParam(idx)} className="rounded-md p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600"><Trash2 size={13} /></button>
                 </div>
 
-                <div className="grid grid-cols-1 gap-0 lg:grid-cols-12">
-                  <div className="border-b border-slate-100 p-4 lg:col-span-5 lg:border-b-0 lg:border-r">
-                    <div className="mb-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Identity</p>
-                      <p className="mt-0.5 text-[10.5px] text-slate-400">Name, value type, and whether it is mandatory.</p>
+                <div className="space-y-4">
+                  <div>
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Mandatory</span>
+                      <span className="h-px flex-1 bg-slate-100" />
                     </div>
                     <div className="space-y-3">
-                      <FieldShell label="Parameter name" hint="Must match a config placeholder, for example {{product_id}}.">
+                      <FieldShell label="1. Parameter name" hint="Must match the config placeholder, for example {{product_id}}.">
                         <SimpleInput value={param.name || param.key || ''} onChange={(value) => updateParam(idx, { name: value })} placeholder="product_id" mono />
                       </FieldShell>
+
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <FieldShell label="Type" hint="Expected value.">
-                          <select value={param.type || 'string'} onChange={(event) => updateParam(idx, { type: event.target.value })} className={reactInputClass}>
+                        <FieldShell label="2. Type" hint="Choose the value format.">
+                          <select
+                            value={param.type || 'string'}
+                            onChange={(event) => {
+                              const nextType = event.target.value;
+                              updateParam(idx, {
+                                type: nextType,
+                                example: normalizeExampleValue(nextType, param.example ?? ''),
+                              });
+                            }}
+                            className={reactInputClass}
+                          >
                             {['string', 'integer', 'number', 'boolean', 'object', 'array'].map((type) => <option key={type} value={type}>{type}</option>)}
                           </select>
                         </FieldShell>
-                        <FieldShell label="Required" hint="Block call if missing.">
+                        <FieldShell label="3. Required" hint="Must be present before tool call.">
                           <label className="flex h-[38px] items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-[12px] font-medium text-slate-600">
                             <input type="checkbox" checked={Boolean(param.required)} onChange={(event) => updateParam(idx, { required: event.target.checked })} />
                             Required
                           </label>
                         </FieldShell>
                       </div>
+
+                      <FieldShell label="4. Description" hint="Tell the agent exactly how to choose this value.">
+                        <SimpleTextarea value={param.description || ''} onChange={(value) => updateParam(idx, { description: value })} rows={2} placeholder="Numeric product id returned by search_products." />
+                      </FieldShell>
+
+                      <FieldShell label="5. Example value" hint="Input changes based on the selected type.">
+                        {renderExampleInput(param, idx)}
+                      </FieldShell>
                     </div>
                   </div>
 
-                  <div className="p-4 lg:col-span-7">
-                    <div className="mb-3">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Guidance</p>
-                      <p className="mt-0.5 text-[10.5px] text-slate-400">Help the model choose a valid value.</p>
+                  <div>
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Optional</span>
+                      <span className="h-px flex-1 bg-slate-100" />
                     </div>
-                    <div className="space-y-3">
-                      <FieldShell label="Description" hint="Explain exactly how the agent should choose this value.">
-                        <SimpleTextarea value={param.description || ''} onChange={(value) => updateParam(idx, { description: value })} rows={2} placeholder="Numeric product id returned by search_products." />
-                      </FieldShell>
-                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        <FieldShell label="Example" hint="A sample value.">
-                          <SimpleInput value={param.example ?? ''} onChange={(value) => updateParam(idx, { example: value })} placeholder="121" />
-                        </FieldShell>
-                        <FieldShell label="Allowed values" hint="Optional comma list.">
-                          <SimpleInput value={Array.isArray(param.enum) ? param.enum.join(', ') : (param.enum || '')} onChange={(value) => updateParam(idx, { enum: value ? value.split(',').map((v) => v.trim()).filter(Boolean) : null })} placeholder="asc, desc" />
-                        </FieldShell>
-                      </div>
-                    </div>
+                    <FieldShell label="6. Possible values" hint="Comma separated allowed values. Leave empty if any value is allowed.">
+                      <SimpleInput value={Array.isArray(param.enum) ? param.enum.join(', ') : (param.enum || '')} onChange={(value) => updateParam(idx, { enum: value ? value.split(',').map((v) => v.trim()).filter(Boolean) : null })} placeholder="asc, desc" />
+                    </FieldShell>
                   </div>
                 </div>
               </div>
